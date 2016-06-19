@@ -9,7 +9,10 @@ float SUBDIVISION = 360 / DIAMOND_VERTICES;
 float DIAMOND_HEIGHT = HEIGHT * 0.75f;
 float DEGREES_PER_SECOND = 45;
 float V_SCALING_FACTOR = 0.2;
-float DIAMOND_RADIUS = WIDTH / 2 - WIDTH / 10;
+float MAX_RADIUS = WIDTH / 4;
+float MIN_RADIUS = 0;
+float RADIUS_INCREMENT = 25;
+
 color BACKGROUND_COLOR;
 color DRAW_COLOR;
 
@@ -19,8 +22,11 @@ float baseDegree = 0;
 float tempDegree;
 float x = 0;
 float y;
-float lastX;
-float lastY;
+float lastX1;
+float lastY1;
+float lastX2;
+float lastY2;
+float radius;
 
 void setup()
 {
@@ -32,24 +38,41 @@ void setup()
   surface.setSize(WIDTH, HEIGHT);  
   fill(DRAW_COLOR);
   stroke(DRAW_COLOR);
+  println(MIN_RADIUS);
+  println(MAX_RADIUS);
 }
 
 void draw() {
   delta = (millis() - lastFrame) / 1000f;
   background(BACKGROUND_COLOR);
+  
+  radius += RADIUS_INCREMENT * delta;
+  
+  if ( ((RADIUS_INCREMENT < 0) && radius < MIN_RADIUS) || ((RADIUS_INCREMENT > 0) && radius > MAX_RADIUS)) {
+    RADIUS_INCREMENT *= -1;  
+  }  
+                    
 
   baseDegree +=  DEGREES_PER_SECOND * delta;
   baseDegree = baseDegree % 360;
   for (int i = 0; i < DIAMOND_VERTICES; i++) {
     tempDegree = baseDegree + SUBDIVISION * i;
     tempDegree = tempDegree % 360;
-      x = (sin(radians(tempDegree)) * DIAMOND_RADIUS) + MIDX;
-      y = (cos(radians(tempDegree)) * DIAMOND_RADIUS * V_SCALING_FACTOR) + MIDY;
+      x = (sin(radians(tempDegree)) * radius) + MIDX;
+      y = (cos(radians(tempDegree)) * radius * V_SCALING_FACTOR) + MIDY;
       line(x, y, MIDX, MIDY + DIAMOND_HEIGHT / 2);
       line(x, y, MIDX, MIDY - DIAMOND_HEIGHT / 2);
-      line(x, y, lastX, lastY);
-      lastX = x;
-      lastY = y;
+      line(x, y, lastX1, lastY1);
+      lastX1 = x;
+      lastY1 = y;
+      
+      x = (sin(radians(tempDegree)) * radius / 2) + MIDX;
+      y = (cos(radians(tempDegree)) * radius / 2 * V_SCALING_FACTOR) + MIDY;
+      line(x, y, MIDX, MIDY + DIAMOND_HEIGHT / 2);
+      line(x, y, MIDX, MIDY - DIAMOND_HEIGHT / 2);
+      line(x, y, lastX2, lastY2);
+      lastX2 = x;
+      lastY2 = y;
   }
   lastFrame = millis();
 }
