@@ -6,29 +6,35 @@ int FRAME_RATE = 60;
 int STROKE_WEIGHT = 4;
 
 color BACKGROUND_COLOR;
-color DRAW_COLOR;
+color WAVE_COLOR_1;
+color WAVE_COLOR_2;
+color WAVE_COLOR_3;
+
+boolean firstTime = true;
 
 int lastFrame;
 float delta;
 
 float strokeTimer = 0;
-float strokeIntervalLength = 3;
-float strokeMinSize = 5;
-float strokeMaxSize = 15;
+float strokeIntervalLength = 2.5;
+float strokeMinSize = 3;
+float strokeMaxSize = 45;
 
-float strokeRange = .1;
+float strokeRange = .45;
 
 void setup()
 {
-  BACKGROUND_COLOR = color(#60c4f2);
-  DRAW_COLOR = color(#f2bc60);
+  BACKGROUND_COLOR = color(#14455b);
+  WAVE_COLOR_1 = color(#30ace5);
+  WAVE_COLOR_2 = color(#30e5d5);
+  WAVE_COLOR_3 = color(#309ce5);
+
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
   size(1, 1); //Work around for Processing 3.
   surface.setSize(WIDTH, HEIGHT);  
-  fill(DRAW_COLOR);
-  stroke(DRAW_COLOR);
- 
+  fill(WAVE_COLOR_1);
+  stroke(WAVE_COLOR_1);
 }
 
 void draw() {
@@ -37,32 +43,60 @@ void draw() {
 
   // Manage timer for length of stroke.
   strokeTimer += delta;
-  if(strokeTimer >= strokeIntervalLength) {
+  if (strokeTimer >= strokeIntervalLength) {
     strokeTimer -= strokeIntervalLength;
   }
   float strokeProgress = (float) strokeTimer / (float) strokeIntervalLength;
   background(BACKGROUND_COLOR);
-  stroke(DRAW_COLOR);
-  fill(DRAW_COLOR);
-  
+  stroke(WAVE_COLOR_1);
+  fill(WAVE_COLOR_1);
+
   float perc;
   float baseY = HEIGHT / 2;
   for (int i = 0; i < 600; i ++) {
     perc = (float)i / (float) WIDTH;
+    float distanceFromStrokeProgress = shortestDistance(perc, strokeProgress, 0, 1);
+    float stroke = strokeMinSize;
+    if (Math.abs(distanceFromStrokeProgress) < strokeRange) {
+      float alpha = (distanceFromStrokeProgress / strokeRange);
+      if (alpha < 0) {
+        alpha = 1 - (alpha + 1);
+      }
+      stroke = lerp(strokeMaxSize, strokeMinSize, alpha);
+    }
+    
     float x = (float) (perc * (2 * Math.PI));
     float y = baseY + (HEIGHT / 2) * sin(x);
-    float stroke = strokeMinSize;
-    float floor = strokeProgress - strokeRange;
-    float ceil = strokeProgress + strokeRange;
-
-    if (perc > floor && perc < ceil) {
-      if (perc > strokeProgress) {
-        stroke = lerp(strokeMinSize, strokeMaxSize, (ceil - perc) / strokeRange);
-      } else {
-        stroke = lerp(strokeMinSize, strokeMaxSize, (perc - floor) / strokeRange);
-      }
-    } 
-     
+    
+    stroke(WAVE_COLOR_1);
+    fill(WAVE_COLOR_1);
+    ellipse(i, y, stroke, stroke);
+    
+    y = baseY + (HEIGHT / 2) * (cos(x)/6);
+    stroke(WAVE_COLOR_2);
+    fill(WAVE_COLOR_2);
+    ellipse(i, y, stroke, stroke);
+    
+    y = HEIGHT - (baseY + (HEIGHT / 2) * (cos(x)/6));
+    stroke(WAVE_COLOR_3);
+    fill(WAVE_COLOR_3);
     ellipse(i, y, stroke, stroke);
   }
+}
+
+float shortestDistance(float pt1, float pt2, float floor, float ceil) {
+  if (floor > ceil || pt1 < floor || pt1 > ceil || pt2 < floor || pt2 > ceil) {
+    println("[WARN]: A provided value exceeds bounds.");
+    return 0; //Numbers are outside of range
+  }
+  float distance = pt2 - pt1;
+  float midPoint = (ceil - floor) / 2;
+  if (Math.abs(distance) > midPoint) {
+    if (pt1 > pt2) {
+      distance = (ceil - pt1) + (pt2 - floor);
+    } else {
+      distance = -1 * ((pt1 - floor) + (ceil - pt2));
+    }
+  }
+  return distance;
 }
