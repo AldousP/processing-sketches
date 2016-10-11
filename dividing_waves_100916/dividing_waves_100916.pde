@@ -1,5 +1,5 @@
-int WIDTH = 600;
-int HEIGHT = WIDTH;
+int WIDTH = 1280;
+int HEIGHT = 720;
 int MIDX = WIDTH / 2;
 int MIDY = HEIGHT / 2;
 int FRAME_RATE = 60;
@@ -16,13 +16,13 @@ int lastFrame;
 float delta;
 
 float strokeTimer = 0;
-float strokeIntervalLength = 2.5;
-float strokeMinSize = 3;
-float strokeMaxSize = 60;
+float strokeIntervalLength = 5f;
+float strokeMinSize = 5;
+float strokeMaxSize = 40;
 
 float strokeRange = .15;
 
-int cosCo = 1;
+float cosCo = 1;
 
 void setup()
 {
@@ -47,8 +47,10 @@ void draw() {
   strokeTimer += delta;
   if (strokeTimer >= strokeIntervalLength) {
     strokeTimer -= strokeIntervalLength;
-    cosCo ++;
+    
   }
+  
+  cosCo += delta * 2.5;
   float strokeProgress = (float) strokeTimer / (float) strokeIntervalLength;
   background(BACKGROUND_COLOR);
   stroke(WAVE_COLOR_1);
@@ -56,7 +58,7 @@ void draw() {
   
   float perc;
   float baseY = HEIGHT / 2;
-  for (int i = 0; i < 600; i ++) {
+  for (int i = 0; i < WIDTH; i ++) {
     perc = (float)i / (float) WIDTH;
     float distanceFromStrokeProgress = shortestDistance(perc, strokeProgress, 0, 1);
     float stroke = strokeMinSize;
@@ -75,10 +77,10 @@ void draw() {
     //fill(WAVE_COLOR_1);
     //ellipse(i, y, stroke, stroke);
     
-    y = baseY + (HEIGHT / 2) * (cos(x * cosCo));
+    y = baseY + (HEIGHT / 2) * sin(x * cosCo);
     stroke(WAVE_COLOR_2);
     fill(WAVE_COLOR_2);
-    ellipse(i, y, stroke, stroke);
+    ellipse(perc * width, y, stroke, stroke);
     
     //y = HEIGHT - (baseY + (HEIGHT / 2) * (cos(x)/6));
     //stroke(WAVE_COLOR_3);
