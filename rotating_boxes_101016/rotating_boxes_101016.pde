@@ -1,9 +1,9 @@
-int WIDTH = 800;
-int HEIGHT = WIDTH;
+int WIDTH = 1280;
+int HEIGHT = 720;
 int MIDX = WIDTH / 2;
 int MIDY = HEIGHT / 2;
 int FRAME_RATE = 60;
-int STROKE_WEIGHT = 4;
+int STROKE_WEIGHT = 3;
 
 color BACKGROUND_COLOR;
 color DRAW_COLOR;
@@ -13,8 +13,8 @@ float delta;
 float rectW = WIDTH / 16;
 float rectH = rectW;
 
-int gridX = 8;
-int gridY = 8;
+int gridX = 3;
+int gridY = 1;
 
 float gridSubdivisionX = WIDTH / gridX;
 float gridSubdivisionY = HEIGHT / gridY;
@@ -22,17 +22,34 @@ float gridSubdivisionY = HEIGHT / gridY;
 float drawPosX = 0;
 float drawPosY = 0;
 
+float linePos = 0;
+float lineSpeed = 100;
+
+color LINE_COLOR;
+
+float[][] currentRotation;
+float[][] rotationSpeed;
+
+float maxRotationSpeed = 45;
+float decayRate = 25;
+
 void setup()
 {
+  LINE_COLOR = color(#f44283);
   BACKGROUND_COLOR = color(#33a4aa);
   DRAW_COLOR = color(#edf6f7);
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
   size(1, 1); //Work around for Processing 3.
   surface.setSize(WIDTH, HEIGHT);  
-  fill(DRAW_COLOR);
+  //fill(DRAW_COLOR);
   stroke(DRAW_COLOR);
   rectMode(CENTER);
+  
+  
+  //INITIALIZE SPEED VALUES
+  currentRotation = new float[gridX][gridY];
+  rotationSpeed = new float[gridX][gridY];  
 }
 
 void draw() {
@@ -42,40 +59,62 @@ void draw() {
   // RESET THE CAMERA
   translate(width/2, height/2);
   background(#ffffff);
-
+  
+  linePos += lineSpeed * delta;
+  
+  if (linePos > WIDTH)
+    linePos = linePos - WIDTH;
 
   // DRAW THE BOXES
   drawPosX = (gridSubdivisionX / 2 + -1 * (WIDTH / 2));
   drawPosY = (gridSubdivisionY / 2 + -1 * (HEIGHT / 2));
   int progress = 0;
   for (int i = 0; i < gridX; i ++) {
-    for (int j = 0; j < gridY; j++) {
-      float perc =  (float)progress / (float)(gridX * gridY);
-      float normalizedSin = sin;
-      normalizedSin /= 2;
-      normalizedSin += 0.5f;
-      float distanceFromSequence = shortestDistance(perc, normalizedSin, 0, 1);
-      translate(drawPosX, drawPosY);
-      //A rotate(radians(currentRotation));
-      stroke(#9e9e9e);
+    for (int j = 0; j < gridY; j++) {     
       
+      float currRotation = currentRotation[i][j];
+      float currSpeed = rotationSpeed[i][j];
+      
+      rotationSpeed[i][j] += (maxRotationSpeed * delta);
+      currentRotation[i][j] += rotationSpeed[i][j] * delta;
+      
+      float currentPosition = (float)progress / (float)(gridX * gridY);
+      float distanceFromLine = shortestDistance(currentPosition, (linePos / WIDTH), 0, 1);
+      distanceFromLine += (1 / (gridX * gridY));
+      
+      //println(currentPosition + ", linePOS: " + (linePos / WIDTH));
+       
+      translate(drawPosX, drawPosY);
+      rotate(radians(currRotation));
+      stroke(#9e9e9e);
       //line(0, 99900, 0, -99999);
       //line(99999, 0, -99999, 0);
       fill(0, 0, 0);
       fill(255, 255, 255);
       noFill();
-      ellipse(0, 0, rectW * 2 * normalizedSin, rectH * 2 * normalizedSin);
       rect(0, 0, rectW, rectH);
-      fill(0, 0, 255);
-      //B rotate(-radians(currentRotation));
+      // DRAW SPEED
+      fill(#AAAAAA);
+      rotate(-radians(currRotation));
+      //textSize(distanceFromLine);
+      text(distanceFromLine, 0, 0);
       translate(-drawPosX, -drawPosY);
       drawPosY += gridSubdivisionY;
+      
+      rotationSpeed[i][j] -= (decayRate * delta);
       progress ++;
     }
     drawPosX += gridSubdivisionX;
     drawPosY = (gridSubdivisionY / 2 + -1 * (HEIGHT / 2));
   }
+  
+  ////// DRAW THE SEQUENCER LINE //////
+  stroke(LINE_COLOR);
+  line(linePos - (WIDTH / 2) , (HEIGHT/2 + 1), linePos - (WIDTH / 2) , - (WIDTH / 2));
+  textSize(36);
+  text((linePos / WIDTH), linePos - (WIDTH / 2), (HEIGHT/2 + 1));
 
+  
   ////// DEBUG ///////
   //draw a red dot at 
   //the center of the sketch
