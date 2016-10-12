@@ -14,7 +14,7 @@ float rectW = WIDTH / 16;
 float rectH = rectW;
 
 int gridX = 3;
-int gridY = 1;
+int gridY = 3;
 
 float gridSubdivisionX = WIDTH / gridX;
 float gridSubdivisionY = HEIGHT / gridY;
@@ -24,14 +24,18 @@ float drawPosY = 0;
 
 float linePos = 0;
 float lineSpeed = 100;
+float accelerationRange = .05;
 
 color LINE_COLOR;
 
 float[][] currentRotation;
 float[][] rotationSpeed;
 
-float maxRotationSpeed = 45;
-float decayRate = 25;
+float maxRotationSpeed = 300;
+float decayRate = 35;
+
+int Y_AXIS = 1;
+int X_AXIS = 2;
 
 void setup()
 {
@@ -45,76 +49,80 @@ void setup()
   //fill(DRAW_COLOR);
   stroke(DRAW_COLOR);
   rectMode(CENTER);
-  
-  
+
   //INITIALIZE SPEED VALUES
   currentRotation = new float[gridX][gridY];
-  rotationSpeed = new float[gridX][gridY];  
+  rotationSpeed = new float[gridX][gridY];
 }
 
 void draw() {
   delta = (millis() - lastFrame) / 1000f;
   lastFrame = millis();
-
+ 
   // RESET THE CAMERA
   translate(width/2, height/2);
-  background(#ffffff);
-  
+  //background(#f77471);
+
   linePos += lineSpeed * delta;
-  
+
   if (linePos > WIDTH)
     linePos = linePos - WIDTH;
+    
+  setGradient(0, 0, WIDTH, HEIGHT, DRAW_COLOR, BACKGROUND_COLOR, X_AXIS);
+
+  ////// DRAW THE SEQUENCER LINE //////
+  //stroke(LINE_COLOR);
+  //line(linePos - (WIDTH / 2) , (HEIGHT/2 + 1), linePos - (WIDTH / 2) , - (WIDTH / 2));
+  //line((linePos - WIDTH * accelerationRange) - (WIDTH / 2) , (HEIGHT/2 + 1), (linePos - WIDTH * accelerationRange) - (WIDTH / 2) , - (WIDTH / 2));
+  //line((linePos + WIDTH * accelerationRange) - (WIDTH / 2) , (HEIGHT/2 + 1), (linePos + WIDTH * accelerationRange) - (WIDTH / 2) , - (WIDTH / 2));
+  //fill(LINE_COLOR);
+  //textSize(36);
+  //text((linePos / WIDTH), linePos - (WIDTH / 2), (HEIGHT/2 + 1));
 
   // DRAW THE BOXES
   drawPosX = (gridSubdivisionX / 2 + -1 * (WIDTH / 2));
   drawPosY = (gridSubdivisionY / 2 + -1 * (HEIGHT / 2));
   int progress = 0;
-  for (int i = 0; i < gridX; i ++) {
-    for (int j = 0; j < gridY; j++) {     
-      
+  for (int i = 0; i < gridX; i++) {
+    for (int j = 0; j < gridY; j++) {
+
       float currRotation = currentRotation[i][j];
       float currSpeed = rotationSpeed[i][j];
-      
-      rotationSpeed[i][j] += (maxRotationSpeed * delta);
-      currentRotation[i][j] += rotationSpeed[i][j] * delta;
-      
-      float currentPosition = (float)progress / (float)(gridX * gridY);
+
+      float currentPosition = (float)progress / (float) (gridX);
+      currentPosition += ((float)1 / (float)(gridX) / 2);
       float distanceFromLine = shortestDistance(currentPosition, (linePos / WIDTH), 0, 1);
-      distanceFromLine += (1 / (gridX * gridY));
-      
-      //println(currentPosition + ", linePOS: " + (linePos / WIDTH));
-       
+
+      if (Math.abs(distanceFromLine) < accelerationRange) {
+        rotationSpeed[i][j] += (maxRotationSpeed * (1 - Math.abs(distanceFromLine)) * delta);
+      }
+      currentRotation[i][j] += rotationSpeed[i][j] * delta;
+
       translate(drawPosX, drawPosY);
       rotate(radians(currRotation));
       stroke(#9e9e9e);
       //line(0, 99900, 0, -99999);
       //line(99999, 0, -99999, 0);
-      fill(0, 0, 0);
-      fill(255, 255, 255);
-      noFill();
+      noStroke();
+      fill(DRAW_COLOR);
       rect(0, 0, rectW, rectH);
       // DRAW SPEED
       fill(#AAAAAA);
       rotate(-radians(currRotation));
-      //textSize(distanceFromLine);
-      text(distanceFromLine, 0, 0);
       translate(-drawPosX, -drawPosY);
       drawPosY += gridSubdivisionY;
-      
+
       rotationSpeed[i][j] -= (decayRate * delta);
-      progress ++;
+      if (rotationSpeed[i][j] < 0) {
+        rotationSpeed[i][j] = 0;
+      }
     }
+    progress ++;
+
     drawPosX += gridSubdivisionX;
     drawPosY = (gridSubdivisionY / 2 + -1 * (HEIGHT / 2));
   }
-  
-  ////// DRAW THE SEQUENCER LINE //////
-  stroke(LINE_COLOR);
-  line(linePos - (WIDTH / 2) , (HEIGHT/2 + 1), linePos - (WIDTH / 2) , - (WIDTH / 2));
-  textSize(36);
-  text((linePos / WIDTH), linePos - (WIDTH / 2), (HEIGHT/2 + 1));
 
-  
   ////// DEBUG ///////
   //draw a red dot at 
   //the center of the sketch
@@ -140,4 +148,27 @@ float shortestDistance(float pt1, float pt2, float floor, float ceil) {
     }
   }
   return distance;
+}
+
+
+void setGradient(int x, int y, float w, float h, color c1, color c2, int axis ) {
+
+  noFill();
+
+  if (axis == Y_AXIS) {  // Top to bottom gradient
+    for (int i = y; i <= y+h; i++) {
+      float inter = map(i, y, y+h, 0, 1);
+      color c = lerpColor(c1, c2, inter);
+      stroke(c);
+      line(x, i, x+w, i);
+    }
+  }  
+  else if (axis == X_AXIS) {  // Left to right gradient
+    for (int i = x; i <= x+w; i++) {
+      float inter = map(i, x, x+w, 0, 1);
+      color c = lerpColor(c1, c2, inter);
+      stroke(c);
+      line(i, y, i, y+h);
+    }
+  }
 }
