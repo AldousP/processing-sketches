@@ -1,10 +1,11 @@
-int WIDTH = 600;
-int HEIGHT = WIDTH;
-int MIDX = WIDTH / 2;
-int MIDY = HEIGHT / 2;
+int MIDX = width / 2;
+int MIDY = height / 2;
 int FRAME_RATE = 60;
-int STROKE_WEIGHT = 4;
+int STROKE_WEIGHT = 1;
 
+boolean DEBUG = true;
+
+color DEBUG_COLOR;
 color BACKGROUND_COLOR;
 color DRAW_COLOR;
 
@@ -13,20 +14,24 @@ float delta;
 
 void setup()
 {
-  BACKGROUND_COLOR = color(#60c4f2);
-  DRAW_COLOR = color(#f2bc60);
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
-  size(1, 1); //Work around for Processing 3.
-  surface.setSize(WIDTH, HEIGHT);  
-  fill(DRAW_COLOR);
-  stroke(DRAW_COLOR);
+  size(600, 600); 
+  // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT 
+  DEBUG_COLOR = color(#FFFFFF);
+  BACKGROUND_COLOR = color(#467796);
+  DRAW_COLOR = color(#FFFFFF); 
 }
 
 void draw() {
   delta = (millis() - lastFrame) / 1000f;
-  background(BACKGROUND_COLOR);
-  stroke(DRAW_COLOR);
- 
   lastFrame = millis();
+  background(BACKGROUND_COLOR);
+  if (DEBUG) {
+    noFill();
+    stroke(DEBUG_COLOR);
+    line(-1, height / 2, height + 1, height / 2);
+    line(width / 2, -1, width / 2, height + 1);
+  }
+  noFill();
 }
