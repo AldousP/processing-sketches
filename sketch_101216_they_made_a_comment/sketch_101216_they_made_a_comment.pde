@@ -5,27 +5,49 @@ int MIDY = HEIGHT / 2;
 int FRAME_RATE = 60;
 int STROKE_WEIGHT = 4;
 
+boolean DEBUG = true;
+
+color DEBUG_COLOR;
 color BACKGROUND_COLOR;
 color DRAW_COLOR;
+color TEXT_COLOR;
 
 int lastFrame;
 float delta;
 
-float textPosX = 0;
+float textSize = HEIGHT / 10;
+float textPosX = WIDTH / 2;
 float textPosY = HEIGHT / 2;
-float textMoveSpeed;
-float textSize = 64;
-String text = "They made a comment";
 
-float ballTimer = 0;
-float ballLength = 5;
+String lineAText = "\"You Made Work...";
+float lineASlideTimer;
+float lineASlideLength = 5;
+PVector lineAStartPos = new PVector(WIDTH / 2, -HEIGHT / 2);
+PVector lineAEndPos = new PVector(WIDTH / 2, HEIGHT / 2);
+PVector lineAPos = new PVector(lineAStartPos.x, lineAStartPos.y);
 
-int weight = 0;
+String lineBText = " they made a comment.\"";
+float lineBTextSize = HEIGHT / 16;
+float lineBStartDelay = lineASlideLength;
+float lineBSlideTimer;
+float lineBSlideLength = 5;
+PVector lineBStartPos = new PVector(WIDTH / 2, HEIGHT + HEIGHT / 2);
+PVector lineBEndPos = new PVector(WIDTH / 2, HEIGHT / 2 + (HEIGHT / 4));
+PVector lineBPos = new PVector(lineBStartPos.x, lineBStartPos.y);
+
+float padding = 0.05;
+float borderW = WIDTH - padding * 2 * WIDTH;
+float borderH = HEIGHT - padding * 2 * HEIGHT;
+float borderX = WIDTH * padding;
+float borderY = HEIGHT * padding;
+float borderStroke = padding * 12;
 
 void setup()
 {
-  BACKGROUND_COLOR = color(#cba5cc);
+  DEBUG_COLOR = color(#FFFFFF);
+  BACKGROUND_COLOR = color(#2c3254);
   DRAW_COLOR = color(#FFFFFF);
+  TEXT_COLOR = color(#FFFFFF);
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
   size(1, 1); //Work around for Processing 3.
@@ -38,51 +60,58 @@ void draw() {
   delta = (millis() - lastFrame) / 1000f;
   lastFrame = millis();
   background(BACKGROUND_COLOR);
-
   
-  //textPosX += 100 * delta;
-  
-  ballTimer += delta;
-  
-  if (ballTimer > ballLength) {
-    ballTimer -= ballLength;
+  if (DEBUG) {
+    noFill();
+    stroke(DEBUG_COLOR);
+    line(-1, HEIGHT / 2, WIDTH + 1, HEIGHT / 2);
+    line(WIDTH / 2, -1, WIDTH / 2, HEIGHT + 1);
   }
   
-  //float ballAlpha = ballTimer / ballLength;
-  //float ballPos = ballAlpha * WIDTH;
+  // UPDATE TIMERS AND TEXT POSITION
+  if (lineASlideTimer <  lineASlideLength) {
+    lineASlideTimer += delta;
+    // ONE TIME SLIDE
+    if (lineASlideTimer > lineASlideLength)
+      lineASlideTimer = lineASlideLength;
+  }
   
-  //fill(DRAW_COLOR); 
-  //ellipse(ballPos, HEIGHT / 2, 32, 32);
-
-  //int slowDown = 20;
-  //ballAlpha = ((ballAlpha * (slowDown - 1)) + 1) / slowDown; 
-  //println(ballAlpha);
-  //ballPos = ballAlpha * WIDTH;
-  //ellipse(ballPos, HEIGHT / 4, 32, 32);
+ if (lineBSlideTimer <  lineBSlideLength + lineBStartDelay) {
+    lineBSlideTimer += delta;
+    // ONE TIME SLIDE
+    if (lineBSlideTimer > lineBSlideLength + lineBStartDelay)
+      lineBSlideTimer = lineBSlideLength + lineBStartDelay;
+  }
   
-  //stroke(DRAW_COLOR);
-  //fill(DRAW_COLOR);
-  //textSize(textSize);
-  ////text(text, textPosX, textPosY);
+  float alpha = alphaSmooth((float)lineASlideTimer / (float)lineASlideLength);
+  lineAPos.y = lineAStartPos.y + ((lineAEndPos.y - lineAStartPos.y) * alpha);
   
-  //float alpha = (float)ballTimer / ballLength;
-  //float modAlpha = sin((float)((alpha * Math.PI) / 2));
-  //float x = HEIGHT * modAlpha;
-  //ellipse(x, HEIGHT / 2, 5, 5);
+  if (lineBSlideTimer > lineBStartDelay) {
+    alpha = (float)(lineBSlideTimer - lineBStartDelay) / (float)lineBSlideLength;
+   } else {
+     alpha = 0;
+   }
   
-  int N = 600;
-  int A = 0;
-  int B = WIDTH;
-  float v;
-  float x;
-  for (int i = 0; i < N; i++) {
-    v = i / N;
-    v = 0.5 - cos((float)(-v * Math.PI)) * 0.5;
-    x = (A * v) + (B * (1 - v));
-    ellipse(, HEIGHT / 2, 15, 15);
-  } 
+  alpha = alphaSmooth(alpha);
+  println(alpha);
+  lineBPos.y = lineBStartPos.y + ((lineBEndPos.y - lineBStartPos.y) * alpha);
+  
+  // DRAW TEXT
+  fill(TEXT_COLOR);
+  noStroke();
+  textAlign(CENTER);
+  textSize(textSize);
+  text(lineAText, lineAPos.x, lineAPos.y);
+  textSize(lineBTextSize);
+  text(lineBText, lineBPos.x, lineBPos.y);
+  
+  // DRAW BORDER
+  noFill();
+  stroke(DRAW_COLOR);
+  strokeWeight(borderStroke);
+  rect(borderX, borderY, borderW, borderH);
 }
 
-float smoothStep(float x) {
-  return (x) * (x) * (3 - 2 * (x));
+float alphaSmooth (float alpha) {
+  return alpha * alpha * (3 - 2 * (alpha));
 }
