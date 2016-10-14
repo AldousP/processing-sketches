@@ -15,7 +15,7 @@ float delta;
 
 float padding = 0.05;
 
-float sequenceLength = 1;
+float sequenceLength = 5;
 float sequenceTimer;
 float sequenceStartPoint;
 float sequenceEndPoint;
@@ -35,7 +35,7 @@ void setup()
 
   DEBUG_COLOR = color(#FFFFFF);
   BACKGROUND_COLOR = color(#467796);
-  DRAW_COLOR = color(#FFFFFF); 
+  DRAW_COLOR = color(#FFFFFF);
 }
 
 void draw() {
@@ -53,19 +53,36 @@ void draw() {
   if (sequenceTimer > sequenceLength)
     sequenceTimer -= sequenceLength;
 
-  float alpha = sequenceTimer / sequenceLength;
-  
-  float ballPosX = alpha * sequenceDistance + sequenceStartPoint;
-  float ballPosY = (sequenceDistance / 5) * 1 + sequenceStartPoint;
- 
+  float alpha = (float)sequenceTimer / (float)sequenceLength;
+
+  float ballPosX;
+  float ballPosY;
+
   noFill();
   stroke(DRAW_COLOR);
   rect(sequenceStartPoint, sequenceStartPoint, sequenceDistance, sequenceDistance);
+  noStroke();
+
+  ballPosX = alpha * sequenceDistance + sequenceStartPoint;
+  ballPosY = (sequenceDistance / 5) * 1 + sequenceStartPoint;
+  fill(#77ffff);
   ellipse(ballPosX, ballPosY, ballSize, ballSize);
+
+  ballPosX = alphaSmooth(alpha) * sequenceDistance + sequenceStartPoint;
   ballPosY = (sequenceDistance / 5) * 2 + sequenceStartPoint;
+  fill(#a82d2d);
   ellipse(ballPosX, ballPosY, ballSize, ballSize);
+
+  ballPosX = pow(alpha, 6) * sequenceDistance + sequenceStartPoint;
   ballPosY = (sequenceDistance / 5) * 3 + sequenceStartPoint;
+  fill(#0cafb7);
   ellipse(ballPosX, ballPosY, ballSize, ballSize);
-  ballPosY = (sequenceDistance / 5) * 3 + sequenceStartPoint;
+
+  ballPosY = (sequenceDistance / 5) * 4 + sequenceStartPoint;
+  fill(#2fb70c);
   ellipse(ballPosX, ballPosY, ballSize, ballSize);
+}
+
+float alphaSmooth(float alpha) {
+  return alpha * alpha * alpha * (alpha * (alpha * 6 - 15) + 10);
 }
