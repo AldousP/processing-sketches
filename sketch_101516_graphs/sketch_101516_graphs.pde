@@ -1,4 +1,3 @@
-
 int MIDX = width / 2;
 int MIDY = height / 2;
 int FRAME_RATE = 60;
@@ -9,6 +8,8 @@ boolean DEBUG = true;
 color DEBUG_COLOR;
 color BACKGROUND_COLOR;
 color DRAW_COLOR;
+
+float E = (float) Math.E;
 
 int lastFrame;
 float delta;
@@ -25,10 +26,13 @@ float modelXRangeLow = -6.28;
 float modelXRangeHigh = 6.28;
 float modelInc = .001;
 
-float modelYRangeLow = -1;
-float modelYRangeHigh = 1;
+float modelYRangeLow = -10;
+float modelYRangeHigh = 10;
 
-float camSpeed = .05f;
+float camSpeed = .5f;
+
+float xPower = 0;
+
 
 void setup()
 {
@@ -40,7 +44,7 @@ void setup()
   yPaddingOffset = height * padding;
   canvasWidth = width - xPaddingOffset * 2;
   canvasHeight = height - yPaddingOffset * 2; 
-  
+
   DEBUG_COLOR = color(#FFFFFF);
   BACKGROUND_COLOR = color(#12747c);
   DRAW_COLOR = color(#FFFFFF);
@@ -56,50 +60,54 @@ void draw() {
   stroke(DRAW_COLOR);
   rect(xPaddingOffset, yPaddingOffset, canvasWidth, canvasHeight);
   noStroke();
-  
+
   fill(DRAW_COLOR);
-  
+
   // DRAW RANGE TEXT
   textAlign(CENTER);
   text(modelXRangeLow, xPaddingOffset, yPaddingOffset + canvasHeight / 2);
   text(modelXRangeHigh, xPaddingOffset + canvasWidth, yPaddingOffset + canvasHeight / 2);
   text(modelYRangeLow, xPaddingOffset + canvasWidth / 2, yPaddingOffset + canvasHeight);
   text(modelYRangeHigh, xPaddingOffset + canvasWidth / 2, yPaddingOffset);
-  
+
   stroke(DRAW_COLOR);
   if (modelXRangeLow < 0 && modelXRangeHigh > 0) {
     float linePosX = (abs(modelXRangeLow) / (modelXRangeHigh - modelXRangeLow)) * canvasWidth + xPaddingOffset;
     line(linePosX, yPaddingOffset, linePosX, yPaddingOffset + canvasHeight);
   }
-  
+
   if (modelYRangeLow < 0 && modelYRangeHigh > 0) {
     float linePosY = height - ((abs(modelYRangeLow) / (modelYRangeHigh - modelYRangeLow)) * canvasHeight + yPaddingOffset);
     line(xPaddingOffset, linePosY, xPaddingOffset + canvasWidth, linePosY);
   }
-  
+
   float alpha;
   float xPos, yPos;
   float modelYVal;
-  for (float i = modelXRangeLow; i < modelXRangeHigh; i += modelInc) {
-    alpha = (i - modelXRangeLow) / (modelXRangeHigh - modelXRangeLow);
+  for (float modelX = modelXRangeLow; modelX < modelXRangeHigh; modelX += modelInc) {
+    alpha = (modelX - modelXRangeLow) / (modelXRangeHigh - modelXRangeLow);
     xPos = canvasWidth * alpha + xPaddingOffset;
 
-    modelYVal = sin(i);
-    
+    // GRAPHING FUNCTION 
+    //modelYVal = (modelX + 2) / (pow(modelX, 2) + 1 );
+    modelYVal = pow(E, -pow(modelX, xPower));
+
     alpha = 1 - ((modelYVal - modelYRangeLow) / (modelYRangeHigh - modelYRangeLow));
     if (alpha > 1) {
-      alpha = 1.1;  
+      alpha = 1.1;
     }
-    
+
     if (alpha < 0) {
       alpha = -.1;
     }
     yPos = ((canvasHeight * alpha) + yPaddingOffset);
-    ellipse(xPos, yPos, pointSize, pointSize);    
+    ellipse(xPos, yPos, pointSize, pointSize);
   }
- 
-  modelYRangeHigh += camSpeed * delta;
-  modelYRangeLow += camSpeed * delta;
+  
+  xPower += 1 * delta;
+
+  //modelYRangeHigh += camSpeed * delta;
+  //modelYRangeLow += camSpeed * delta;
 }
 
 float alphaSmooth(float alpha) {

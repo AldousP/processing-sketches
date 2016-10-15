@@ -78,6 +78,7 @@ void draw() {
   fill(#0cafb7);
   ellipse(ballPosX, ballPosY, ballSize, ballSize);
 
+  ballPosX = pow(alpha, 12) * sequenceDistance + sequenceStartPoint;
   ballPosY = (sequenceDistance / 5) * 4 + sequenceStartPoint;
   fill(#2fb70c);
   ellipse(ballPosX, ballPosY, ballSize, ballSize);
