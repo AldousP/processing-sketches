@@ -22,23 +22,27 @@ float canvasHeight;
 
 float pointSize = 1;
 
-float modelXRangeLow = -6.28;
-float modelXRangeHigh = 6.28;
-float modelInc = .001;
+float modelXRangeLow = -10;
+float modelXRangeHigh = 10;
+float modelInc = .15;
 
 float modelYRangeLow = -10;
 float modelYRangeHigh = 10;
 
-float camSpeed = .5f;
+float camSpeed = .015f;
 
-float xPower = 0;
+float coeff = 0;
+float sequenceTimer;
+float sequenceTimerLength = 3;
 
+float curveHeight = 10;
+float curveWidth = 1;
 
 void setup()
 {
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
-  size(600, 600); 
+  size(700, 700); 
   // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT   
   xPaddingOffset = width * padding;
   yPaddingOffset = height * padding;
@@ -54,6 +58,18 @@ void draw() {
   delta = (millis() - lastFrame) / 1000f;
   lastFrame = millis();
   background(BACKGROUND_COLOR);
+
+  sequenceTimer += delta;
+  if (sequenceTimer >= sequenceTimerLength) 
+    sequenceTimer -= sequenceTimerLength;
+  float sequenceAlpha = sequenceTimer / sequenceTimerLength;
+  if (sequenceAlpha < .5) {
+    sequenceAlpha *= 2;
+  } else {
+    sequenceAlpha = 1 - ((sequenceAlpha - .5) * 2 );
+  }
+
+  coeff = lerp(-curveHeight, curveHeight, alphaSmooth(sequenceAlpha));
 
   // DRAW GRAPH BORDER
   noFill();
@@ -89,8 +105,7 @@ void draw() {
     xPos = canvasWidth * alpha + xPaddingOffset;
 
     // GRAPHING FUNCTION 
-    //modelYVal = (modelX + 2) / (pow(modelX, 2) + 1 );
-    modelYVal = pow(E, -pow(modelX, xPower));
+    modelYVal = coeff * pow(E, -((1/curveWidth) * pow(modelX, 2)));
 
     alpha = 1 - ((modelYVal - modelYRangeLow) / (modelYRangeHigh - modelYRangeLow));
     if (alpha > 1) {
@@ -104,10 +119,7 @@ void draw() {
     ellipse(xPos, yPos, pointSize, pointSize);
   }
   
-  xPower += 1 * delta;
-
-  //modelYRangeHigh += camSpeed * delta;
-  //modelYRangeLow += camSpeed * delta;
+  curveWidth += 1 * delta;
 }
 
 float alphaSmooth(float alpha) {
