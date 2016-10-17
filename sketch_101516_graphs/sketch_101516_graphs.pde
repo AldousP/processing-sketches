@@ -29,7 +29,7 @@ float modelInc = .15;
 float modelYRangeLow = -10;
 float modelYRangeHigh = 10;
 
-float camSpeed = .015f;
+float camSpeed = .0015f;
 
 float coeff = 0;
 float sequenceTimer;
