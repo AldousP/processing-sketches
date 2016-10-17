@@ -15,7 +15,6 @@ int lastFrame;
 float delta;
 
 WaterColumn[] columns;
-ArrayList<Particle> particles = new ArrayList<Particle>();
 ArrayList<RainDrop> rain = new ArrayList<RainDrop>();
 ArrayList<RainDrop> garbage = new ArrayList<RainDrop>();
 
@@ -159,13 +158,6 @@ void splash(int index, float speed) {
     columns[index].speed = speed;
 }
 
-void updateParticle(Particle particle) {
-  final float gravity = 0.3;
-  particle.velocity.y += gravity;
-  particle.position.y += particle.velocity.y;
-  particle.orientation = getAngle(particle.velocity);
-}
-
 class WaterColumn {
   public float targetHeight;
   public float colHeight;
@@ -175,18 +167,6 @@ class WaterColumn {
     float x = targetHeight - colHeight;
     speed += tension * x - speed * dampening;
     colHeight += speed;
-  }
-}
-
-class Particle {
-  public PVector position;
-  public PVector velocity;
-  public float orientation;
-
-  Particle (PVector position, PVector velocity, float orientation) {
-    this.position = position;
-    this.velocity = velocity;
-    this.orientation = orientation;
   }
 }
 

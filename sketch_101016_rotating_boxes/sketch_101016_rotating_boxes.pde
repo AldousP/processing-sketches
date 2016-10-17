@@ -10,11 +10,11 @@ color DRAW_COLOR;
 
 int lastFrame;
 float delta;
-float rectW = WIDTH / 16;
+float rectW = WIDTH / 32;
 float rectH = rectW;
 
-int gridX = 3;
-int gridY = 1;
+int gridX = 8;
+int gridY = 8;
 
 float gridSubdivisionX = WIDTH / gridX;
 float gridSubdivisionY = HEIGHT / gridY;
@@ -32,7 +32,7 @@ float[][] currentRotation;
 float[][] rotationSpeed;
 
 float maxRotationSpeed = 300;
-float decayRate = 25;
+float decayRate = 15;
 
 int Y_AXIS = 1;
 int X_AXIS = 2;
