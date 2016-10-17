@@ -28,14 +28,14 @@ float waterLine;
 float[] polygon;
 
 float unit = 50;
-int springsPerUnit = 1;
+int springsPerSide = 3;
+int verts = 4;
 
 void setup() {
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
   size(600, 600); 
   // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT   
-  waterLine =  height - height / 3;
   DEBUG_COLOR = color(#ba73a4);
   BACKGROUND_COLOR = color(#73baaa);
   DRAW_COLOR = color(#FFFFFF);
@@ -43,18 +43,37 @@ void setup() {
   float polygonX = width / 2;
   float polygonY = height / 2;
 
-  polygon = polygon(polygonX, polygonY, width / 4, 4);
-
-  springs = new Spring[polygon.length / 2];
+  polygon = polygon(polygonX, polygonY, width / 4, verts);
+  springs = new Spring[(polygon.length / 2) * springsPerSide];
 
   Spring s;
-  for (int i = 0; i < springs.length; i++) {
-    s = new Spring();
-    s.x = polygon[i * 2];
-    s.y = polygon[i * 2 + 1];
-    s.speed = 0;
-    
-    springs[i] = s;
+  int springIndex = 0;
+  for (int v = 0; v < verts; v++) {
+
+    int index = v;
+
+    float px1 = polygon[index * 2];
+    float py1 = polygon[index * 2 + 1];
+
+    index ++;
+    if (index > verts - 1) {
+      index = 0;
+    }
+
+    float px2 = polygon[index * 2];
+    float py2 = polygon[index * 2 + 1];
+
+    float midX = (px1 + px2) / 2;
+    float midY = (py1 + py2) / 2;
+
+    float distance = sqrt(pow(px2 - px1, 2) + pow(py2 - py1, 2));
+
+    for (int i = 0; i < springsPerSide; i ++) {
+      s = new Spring();
+      s.rotation = getRelativeRotationOfPoint(midX, midY, polygonX, polygonY);
+      springs[springIndex] = s;
+      springIndex ++;
+    }
   }
 }
 
@@ -65,7 +84,7 @@ void draw() {
 
   noStroke();
   fill(DRAW_COLOR);
-  updateSimulation();
+  //updateSimulation();
 
   stroke(DRAW_COLOR);
   strokeWeight(1);
@@ -81,7 +100,31 @@ void draw() {
   for (int i = 0; i < springs.length; i ++) {
     float alpha = (float) i / (float)springs.length;
     Spring col = springs[i];
-    col.render();
+    //col.render();
+  }
+
+  for (int i = 0; i < springs.length; i++) {
+    int currentVert = i / springsPerSide;
+    float px1 = polygon[currentVert * 2];
+    float py1 = polygon[currentVert * 2 + 1];
+
+    currentVert ++;
+    if (currentVert > verts - 1) {
+      currentVert = 0;
+    }
+
+    float px2 = polygon[currentVert * 2];
+    float py2 = polygon[currentVert * 2 + 1];
+
+    float midX = (px1 + px2) / 2;
+    float midY = (py1 + py2) / 2;
+    stroke(DEBUG_COLOR);
+    noFill();
+    ellipse(px1, py1, 10, 10);
+    ellipse(px2, py2, 10, 10);
+    ellipse(midX, midY, 15, 15);
+    stroke(128, 0, 0);
+    line(px1, py1, px2, py2);
   }
 }
 
@@ -170,6 +213,14 @@ float[] polygon(float x, float y, float radius, int npoints) {
   return polygon;
 }
 
+public float getRelativeRotationOfPoint(float originX, float originY, float ptX, float ptY) {
+  float result = degrees(atan2(ptY - originY, ptX - originX));
+  if (result < 0) {
+    result += 360;
+  }
+  return result;
+}
+
 class Spring {
   float length = 20;
   float currentLength = 2;
@@ -177,7 +228,7 @@ class Spring {
   float y;
   float rotation = 180;
   float speed;
-  
+
   void update(float dampening, float tension) {
     float diff = length - currentLength;
     speed += tension * diff - speed * dampening;
