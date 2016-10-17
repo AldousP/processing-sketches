@@ -30,7 +30,7 @@ float[] polygon;
 float unit = 50;
 int springsPerUnit = 1;
 
-  void setup() {
+void setup() {
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
   size(600, 600); 
@@ -40,15 +40,21 @@ int springsPerUnit = 1;
   BACKGROUND_COLOR = color(#73baaa);
   DRAW_COLOR = color(#FFFFFF);
 
-  polygon = polygon(width / 2, height /2, width / 4, 4);
-  
+  float polygonX = width / 2;
+  float polygonY = height / 2;
+
+  polygon = polygon(polygonX, polygonY, width / 4, 4);
+
   springs = new Spring[polygon.length / 2];
 
-  for (int i = 0; i < springs.length; i++){
-    springs[i] = new Spring();
-    springs[i].x = polygon[i * 2];
-    springs[i].y = polygon[i * 2 + 1];
-    springs[i].speed = 0;
+  Spring s;
+  for (int i = 0; i < springs.length; i++) {
+    s = new Spring();
+    s.x = polygon[i * 2];
+    s.y = polygon[i * 2 + 1];
+    s.speed = 0;
+    
+    springs[i] = s;
   }
 }
 
@@ -71,7 +77,7 @@ void draw() {
     lastX = polygon[i];
     lastY = polygon[i + 1];
   }
-  
+
   for (int i = 0; i < springs.length; i ++) {
     float alpha = (float) i / (float)springs.length;
     Spring col = springs[i];
@@ -165,27 +171,26 @@ float[] polygon(float x, float y, float radius, int npoints) {
 }
 
 class Spring {
-  public float length = 20;
-  public float currentLength = 2;
-  public float x;
-  public float y;
-  public float rotation = 180;
-  public float speed;
-
+  float length = 20;
+  float currentLength = 2;
+  float x;
+  float y;
+  float rotation = 180;
+  float speed;
+  
   void update(float dampening, float tension) {
     float diff = length - currentLength;
     speed += tension * diff - speed * dampening;
     currentLength += speed;
   }
-  
+
   void render() {
-    rotation += 1;
     noFill();
     stroke(DRAW_COLOR);
     ellipse(x, y, 15, 15);
     stroke(DEBUG_COLOR);
-    float oX = cos(radians(rotation)) * length;
-    float oY = sin(radians(rotation)) * length;
-    ellipse(oX + x, oY + y, 15, 15);
+    float oX = cos(radians(rotation)) * length + x;
+    float oY = sin(radians(rotation)) * length + y;
+    ellipse(oX, oY, 15, 15);
   }
 }
