@@ -119,7 +119,13 @@ void draw() {
     ellipse(xPos, yPos, pointSize, pointSize);
   }
   
-  curveWidth += 1 * delta;
+  padding += 10 * delta;
+  xPaddingOffset = width * padding;
+  yPaddingOffset = height * padding;
+  canvasWidth = width - xPaddingOffset * 2;
+  canvasHeight = height - yPaddingOffset * 2; 
+  curveHeight += 10 * delta;
+  curveWidth += 10 * delta;
 }
 
 float alphaSmooth(float alpha) {
