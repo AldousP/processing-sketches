@@ -15,8 +15,8 @@ float delta;
 
 Spring[] springs;
 
-int gridX = 1;
-int gridY = 1;
+int gridX = 16;
+int gridY = 16;
 
 float tension = 0.065f;
 float dampening = 0.05f;
@@ -28,7 +28,7 @@ float canvasOffsetY;
 float canvasWidth;
 float canvasHeight;
 
-float attractRadius = 169;
+float attractRadius = 80;
 
 void setup() {
   strokeWeight(STROKE_WEIGHT);
@@ -82,8 +82,6 @@ void draw() {
 
   int springIndex = 0;
   Spring s;
-  float lastX = 0;
-  float lastY = 0;
   for (int i = 0; i < gridX; i++) {
     for (int j = 0; j < gridY; j++) {
       s = springs[springIndex];
@@ -91,16 +89,14 @@ void draw() {
       // Draw Neighbors
       if (springIndex < springs.length - 1) {
         if (j != gridY - 1) {
-          line(springs[springIndex + 1].x, springs[springIndex + 1].y, s.x, s.y);
+          line(springs[springIndex + 1].oX, springs[springIndex + 1].oY, s.oX, s.oY);
         }
 
         if (springIndex + gridY < springs.length) {
-          line(springs[springIndex + gridY].x, springs[springIndex + gridY].y, s.x, s.y);
+          line(springs[springIndex + gridY].oX, springs[springIndex + gridY].oY, s.oX, s.oY);
         }
       }
       springIndex ++;
-      lastX = s.oX;
-      lastY = s.oY;
     }
   }
 
@@ -108,11 +104,12 @@ void draw() {
     stroke(DRAW_COLOR);
   }
 
+  noFill();
   ellipse(
     constrain(mouseX, canvasOffsetX, canvasOffsetX + canvasWidth), 
     constrain(mouseY, canvasOffsetY, canvasOffsetY + canvasHeight), 
-    attractRadius, 
-    attractRadius
+    attractRadius * 2, 
+    attractRadius * 2
     );
 }
 
@@ -121,41 +118,9 @@ float getAngle(PVector vec) {
   return (float)Math.atan2(vec.y, vec.x);
 }
 
-void applyGravity(float x, float y) {
-}
-
 void updateSimulation() {
   for (int i = 0; i < springs.length; i++)
     springs[i].update(dampening, tension);
-
-  float[] lDeltas = new float[springs.length];
-  float[] rDeltas = new float[springs.length];
-
-  // do some passes where springs pull on their neighbours
-  for (int j = 0; j < 8; j++)
-  {
-    for (int i = 0; i < springs.length; i++)
-    {
-      if (i > 0)
-      {
-        lDeltas[i] = spread * (springs[i].currentLength - springs[i - 1].currentLength);
-        springs[i - 1].speed += lDeltas[i];
-      }
-      if (i < springs.length - 1)
-      {
-        rDeltas[i] = spread * (springs[i].currentLength - springs[i + 1].currentLength);
-        springs[i + 1].speed += rDeltas[i];
-      }
-    }
-
-    for (int i = 0; i < springs.length; i++)
-    {
-      if (i > 0)
-        springs[i - 1].currentLength += lDeltas[i];
-      if (i < springs.length - 1)
-        springs[i + 1].currentLength += rDeltas[i];
-    }
-  }
 }
 
 public float getRelativeRotationOfPoint(float originX, float originY, float ptX, float ptY) {
@@ -175,40 +140,38 @@ class Spring {
   float oX;
   float oY;
   boolean inRange;
+  float rotation;
+  float distance;
+  float size = (canvasWidth / gridX / 2);
 
   void update(float dampening, float tension) {
     float diff = length - currentLength;
     speed += tension * diff - speed * dampening;
     currentLength += speed;
 
-    oX = currentLength + x;
-    oY = currentLength + y;
     inRange = false;
+
     if (mousePressed) {
       float xPos = constrain(mouseX, canvasOffsetX, canvasOffsetX + canvasWidth);
       float yPos = constrain(mouseY, canvasOffsetY, canvasOffsetY + canvasHeight);
       float distanceToPoint = sqrt(pow(x - xPos, 2) + pow(y - yPos, 2));
-      float rotation = getRelativeRotationOfPoint(x, y, xPos, yPos);
+      distance = distanceToPoint;
       float alphaDistance = distanceToPoint / attractRadius;
-      if (distanceToPoint < attractRadius / 2) {
+      if (distanceToPoint < attractRadius) {
+        rotation = getRelativeRotationOfPoint(x, y, xPos, yPos);
         inRange = true;
-        speed = (1 -alphaDistance) * attractRadius;
-        oX = cos(radians(rotation)) * currentLength + x;
-        oY = sin(radians(rotation)) * currentLength + y;
+        speed = (alphaDistance) * 1;
       }
     }
+
+    oX = cos(radians(rotation)) * currentLength + x;
+    oY = sin(radians(rotation)) * currentLength + y;
   }
 
   void render() {
     noFill();
-
     stroke(DRAW_COLOR);
-    if (inRange) {
-      stroke(255, 0, 0);
-    }
-    ellipse(x, y, 15, 15);
-    stroke(DEBUG_COLOR);
-    ellipse(oX, oY, 15, 15);
-    line(x, y, oX, oY);
+    fill(DRAW_COLOR);
+    ellipse(oX, oY, size, size);
   }
 }
