@@ -19,10 +19,10 @@ ArrayList<RainDrop> rain = new ArrayList<RainDrop>();
 ArrayList<RainDrop> garbage = new ArrayList<RainDrop>();
 
 float rainTimer;
-float rainInterval = 10;
+float rainInterval = 5;
 
-float tension = 0.0045f;
-float dampening = 0.005f;
+float tension = 0.00045f;
+float dampening = 0.0005f;
 float spread = 0.25f;
 
 float waterLine;
@@ -60,15 +60,15 @@ void draw() {
   rainInterval = max(.00001, rainInterval);
 
   if (rainTimer > rainInterval) {
-    rain.add(new RainDrop(random(0, width), - height / 2));
+    rain.add(new RainDrop(random(0, width - 1), - height / 2));
     rainTimer -= rainInterval;
   }
 
   for (RainDrop drop : rain) {
-    drop.draw(delta);
-    if (drop.y > waterLine) {
+    drop.draw(delta); 
+    int index = (int) ( (float)(drop.x / (float)width) * (float)columns.length);
+    if (drop.y > columns[index].colHeight) {
       garbage.add(drop); 
-      int index = (int) ( (float)(drop.x / (float)width) * (float)columns.length);
       splash(index, drop.velocity);
     }
   }

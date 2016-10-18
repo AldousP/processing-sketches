@@ -16,11 +16,8 @@ float delta;
 
 Spring[] springs;
 
-float rainTimer;
-float rainInterval = 1;
-
-float tension = 0.045f;
-float dampening = 0.005f;
+float tension = 0.065f;
+float dampening = 0.05f;
 float spread = 0.45f;
 
 float waterLine;
@@ -28,8 +25,8 @@ float waterLine;
 float[] polygon;
 
 float unit = 50;
-int springsPerSide = 3;
-int verts = 4;
+int springsPerSide = 2;
+int verts = 16;
 
 void setup() {
   strokeWeight(STROKE_WEIGHT);
@@ -43,7 +40,7 @@ void setup() {
   float polygonX = width / 2;
   float polygonY = height / 2;
 
-  polygon = polygon(polygonX, polygonY, width / 4, verts);
+  polygon = polygon(polygonX, polygonY, width / 3, verts);
   springs = new Spring[(polygon.length / 2) * springsPerSide];
 
   Spring s;
@@ -70,7 +67,18 @@ void setup() {
 
     for (int i = 0; i < springsPerSide; i ++) {
       s = new Spring();
-      s.rotation = getRelativeRotationOfPoint(midX, midY, polygonX, polygonY);
+      if (i == 0) {
+        s.rotation = getRelativeRotationOfPoint(px1, py1, polygonX, polygonY);
+      } else {
+        s.rotation = getRelativeRotationOfPoint(midX, midY, polygonX, polygonY);
+      }
+
+      float rot = getRelativeRotationOfPoint(px1, py1, px2, py2);
+      PVector point = PVector.fromAngle(radians(rot));
+
+      point.setMag( ((float)i / (float)springsPerSide) * abs(distance));
+      s.x = point.x + px1;
+      s.y = point.y + py1;
       springs[springIndex] = s;
       springIndex ++;
     }
@@ -84,70 +92,55 @@ void draw() {
 
   noStroke();
   fill(DRAW_COLOR);
-  //updateSimulation();
+  updateSimulation();
 
   stroke(DRAW_COLOR);
-  strokeWeight(1);
-  int length = polygon.length;
-  float lastX = polygon[length - 2];
-  float lastY = polygon[length - 1];
-  for (int i = 0; i < polygon.length; i+= 2) {
-    line(lastX, lastY, polygon[i], polygon[i + 1]);
-    lastX = polygon[i];
-    lastY = polygon[i + 1];
+  strokeWeight(10);
+  int length = springs.length;
+  float lastX = springs[length - 1].oX;
+  float lastY = springs[length - 2].oY;
+  
+  for (int i = 0; i < springs.length; i+= 1) {
+    Spring sp = springs[i];
+    float x = sp.oX;
+    float y = sp.oY;
+    line(lastX, lastY, x, y);
+    lastX = x;
+    lastY = y; 
   }
 
   for (int i = 0; i < springs.length; i ++) {
     float alpha = (float) i / (float)springs.length;
     Spring col = springs[i];
-    //col.render();
-  }
-
-  for (int i = 0; i < springs.length; i++) {
-    int currentVert = i / springsPerSide;
-    float px1 = polygon[currentVert * 2];
-    float py1 = polygon[currentVert * 2 + 1];
-
-    currentVert ++;
-    if (currentVert > verts - 1) {
-      currentVert = 0;
-    }
-
-    float px2 = polygon[currentVert * 2];
-    float py2 = polygon[currentVert * 2 + 1];
-
-    float midX = (px1 + px2) / 2;
-    float midY = (py1 + py2) / 2;
-    stroke(DEBUG_COLOR);
-    noFill();
-    ellipse(px1, py1, 10, 10);
-    ellipse(px2, py2, 10, 10);
-    ellipse(midX, midY, 15, 15);
-    stroke(128, 0, 0);
-    line(px1, py1, px2, py2);
+    col.render();
   }
 }
 
 void keyPressed() {
+  int index = 0;
   if (key == '1') {
-    splash(0, 50);
+    index = 1;
   }
 
   if (key == '2') {
-    splash(32, 50);
+    index = 2;
   }
 
   if (key == '3') {
-    splash(64, 50);
+    index = 3;
   }
 
   if (key == '4') {
-    splash(96, 50);
+    index = 4;
   }
 
   if (key == '5') {
-    splash(128, 50);
+    index = 5;
   }
+
+  if (index == 0) return;
+  float indexFloat = ((verts * springsPerSide) / 5) * index - 1;
+  splash((int)indexFloat, 50);
 }
 
 float alphaSmooth(float alpha) {
@@ -193,8 +186,7 @@ void updateSimulation() {
 }
 
 void splash(int index, float speed) { 
-  for (int i = max(0, index - 0); i < min(springs.length - 1, index + 1); i++)
-    springs[index].speed = speed;
+  springs[index].speed = speed;
 }
 
 
@@ -203,9 +195,9 @@ float[] polygon(float x, float y, float radius, int npoints) {
   float angle = TWO_PI / npoints;
   beginShape();
   int i = 0;
-  for (float a = 0; a < TWO_PI; a += angle) {
-    float sx = x + cos(a) * radius;
-    float sy = y + sin(a) * radius;
+  for (int pt = 0; pt < npoints; pt++) {
+    float sx = x + cos(pt * angle) * radius;
+    float sy = y + sin(pt * angle) * radius;
     polygon[i] = sx;
     polygon[i + 1] = sy;
     i+= 2;
@@ -222,17 +214,22 @@ public float getRelativeRotationOfPoint(float originX, float originY, float ptX,
 }
 
 class Spring {
-  float length = 20;
-  float currentLength = 2;
+  float length = 40;
+  float currentLength = 40;
   float x;
   float y;
   float rotation = 180;
   float speed;
+  float oX;
+  float oY;
 
   void update(float dampening, float tension) {
     float diff = length - currentLength;
     speed += tension * diff - speed * dampening;
     currentLength += speed;
+    
+    oX = cos(radians(rotation)) * currentLength + x;
+    oY = sin(radians(rotation)) * currentLength + y;
   }
 
   void render() {
@@ -240,8 +237,7 @@ class Spring {
     stroke(DRAW_COLOR);
     ellipse(x, y, 15, 15);
     stroke(DEBUG_COLOR);
-    float oX = cos(radians(rotation)) * length + x;
-    float oY = sin(radians(rotation)) * length + y;
     ellipse(oX, oY, 15, 15);
+    line(oX, oY, x, y);
   }
 }
