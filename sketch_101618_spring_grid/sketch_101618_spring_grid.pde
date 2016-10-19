@@ -28,12 +28,12 @@ float canvasOffsetY;
 float canvasWidth;
 float canvasHeight;
 
-float attractRadius = 80;
+float attractRadius = 160;
 
 void setup() {
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
-  size(600, 600); 
+  size(1000, 1000); 
   // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT   
   canvasOffsetX = width * padding;
   canvasOffsetY = height * padding;
