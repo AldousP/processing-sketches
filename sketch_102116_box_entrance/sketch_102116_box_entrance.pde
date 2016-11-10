@@ -3,7 +3,7 @@ int MIDY = height / 2;
 int FRAME_RATE = 60;
 int STROKE_WEIGHT = 1;
 
-boolean DEBUG = true;
+boolean DEBUG = false;
 
 color DEBUG_COLOR;
 color BACKGROUND_COLOR;
@@ -13,13 +13,20 @@ int lastFrame;
 float delta;
 
 PVector[][] boxes;
-int gridX = 3;
-int gridY = 3;
+int gridX = 16;
+int gridY = 16;
 float gridXDivision; 
 float gridYDivision;
 
 float slideTimer;
-float slideLength = 5;
+float slideLength = 10;
+float pauseLength = 4;
+
+float startX;
+float endX;
+
+boolean exiting;
+
 
 void setup()
 {
@@ -29,10 +36,13 @@ void setup()
   // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT 
   gridXDivision = width / gridX;
   gridYDivision = height / gridY;
-  DEBUG_COLOR = color(#4286f4);
-  BACKGROUND_COLOR = color(#467796);
-  DRAW_COLOR = color(#FFFFFF); 
   
+  startX = -width;
+  endX = gridXDivision / 2;
+  DEBUG_COLOR = color(#4286f4);
+  BACKGROUND_COLOR = color(#22497f);
+  DRAW_COLOR = color(#FFFFFF); 
+
   boxes = new PVector[gridX][gridY];
   for (int i = 0; i < gridX; i ++) {
     for (int j = 0; j < gridY; j ++) {
@@ -42,10 +52,17 @@ void setup()
 }
 
 void draw() {
+  
   delta = (millis() - lastFrame) / 1000f;
   lastFrame = millis();
   slideTimer += delta;
   
+  if (!exiting && slideTimer > slideLength + pauseLength) {
+    exiting = true;
+    startX += width;
+    endX += width;
+    slideTimer -= slideLength + pauseLength;
+  }
   background(BACKGROUND_COLOR);
   if (DEBUG) {
     noFill();
@@ -53,10 +70,9 @@ void draw() {
     line(-1, height / 2, height + 1, height / 2);
     line(width / 2, -1, width / 2, height + 1);
   }
-  
+
   fill(DRAW_COLOR);
   stroke(DEBUG_COLOR);
-  
   float slideAlpha = slideTimer / slideLength;
   if (slideAlpha > 1)
     slideAlpha = 1;
@@ -66,11 +82,12 @@ void draw() {
     for (int j = 0; j < gridY; j ++) {
       PVector pos = boxes[i][j];
       rect(pos.x, pos.y, gridXDivision * 0.45, gridYDivision * 0.45);
-      float modAlpha = pow(slideAlpha, index + 1);
+      float modAlpha = pow(slideAlpha, gridX * gridY - index + 1);
       if (modAlpha < 0) {
         modAlpha = 0;
       }      
-      pos.x = lerp(gridXDivision / 2 + (gridXDivision * i) - width, (gridXDivision / 2) + gridXDivision * i, alphaSmooth(modAlpha));
+      
+      pos.x = lerp(gridXDivision / 2 + (gridXDivision * i) + startX, gridXDivision * i + endX, alphaSmooth(modAlpha));          
       index ++;
     }
   }
