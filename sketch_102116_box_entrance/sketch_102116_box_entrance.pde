@@ -66,12 +66,10 @@ void draw() {
     for (int j = 0; j < gridY; j ++) {
       PVector pos = boxes[i][j];
       rect(pos.x, pos.y, gridXDivision * 0.45, gridYDivision * 0.45);
-      float modAlpha = pow(slideAlpha, i + 1);
+      float modAlpha = pow(slideAlpha, index + 1);
       if (modAlpha < 0) {
         modAlpha = 0;
-      }
-      
-      modAlpha = slideAlpha;
+      }      
       pos.x = lerp(gridXDivision / 2 + (gridXDivision * i) - width, (gridXDivision / 2) + gridXDivision * i, alphaSmooth(modAlpha));
       index ++;
     }
