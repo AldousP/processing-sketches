@@ -19,7 +19,7 @@ float gridXDivision;
 float gridYDivision;
 
 float slideTimer;
-float slideLength = 3;
+float slideLength = 5;
 
 void setup()
 {
@@ -36,7 +36,7 @@ void setup()
   boxes = new PVector[gridX][gridY];
   for (int i = 0; i < gridX; i ++) {
     for (int j = 0; j < gridY; j ++) {
-      boxes[i][j] = new PVector(gridXDivision * i, gridYDivision * j);
+      boxes[i][j] = new PVector(gridXDivision * (i), gridYDivision * (j) + gridYDivision / 2);
     }
   }
 }
@@ -72,7 +72,7 @@ void draw() {
       }
       
       modAlpha = slideAlpha;
-      pos.x = lerp(gridXDivision * i, width + gridXDivision * i, alphaSmooth(modAlpha));
+      pos.x = lerp(gridXDivision / 2 + (gridXDivision * i) - width, (gridXDivision / 2) + gridXDivision * i, alphaSmooth(modAlpha));
       index ++;
     }
   }
