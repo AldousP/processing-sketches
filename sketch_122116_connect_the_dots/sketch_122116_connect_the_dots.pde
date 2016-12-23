@@ -1,7 +1,10 @@
+import ddf.minim.*;
+import ddf.minim.ugens.*;
+
 int MIDX = width / 2;
 int MIDY = height / 2;
 int FRAME_RATE = 60;
-float STROKE_WEIGHT = .1;
+float STROKE_WEIGHT = .25;
 
 boolean DEBUG = false;
 
@@ -25,7 +28,7 @@ float SPAWN_REGION_Y;
 float SPAWN_REGION_WIDTH;
 float SPAWN_REGION_HEIGHT;
 
-int NODE_COUNT = 16;
+int NODE_COUNT = 18;
 float NODE_MIN_DIAMETER = 1;
 float NODE_MAX_DIAMETER = 5;
 float NODE_MIN_SPEED = 50;
@@ -33,13 +36,17 @@ float NODE_MAX_SPEED = 200;
 
 float NODE_GOAL_RADIUS = 5;
 float NODE_DECCELLERATION_RADIUS = 200;
+float soundLevel = 0;
+
+Minim minim;
+AudioInput in;
 
 Node[] nodes;
 
 void setup() {
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
-  size(600, 600); 
+  size(400, 400); 
   // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT 
   DEBUG_COLOR = color(#FFFFFF);
   BACKGROUND_COLOR = color(#FFFFFF);
@@ -54,11 +61,18 @@ void setup() {
   SPAWN_REGION_Y = CANVAS_Y + CANVAS_HEIGHT * (1 - SPAWN_REGION_PERCENTAGE) / 2;
 
   nodes = generateNodes();
+  
+  
+  // Create the Input stream
+  minim = new Minim(this);
+  //minim.debugOn();
+  in = minim.getLineIn(Minim.STEREO, 512);
 }
 
 void draw() {
   delta = (millis() - lastFrame) / 1000f;
   lastFrame = millis();
+  soundLevel = in.mix.level();
   background(BACKGROUND_COLOR);
   if (DEBUG) {
     noFill();
@@ -70,8 +84,12 @@ void draw() {
     n.update(delta);
     fill(255, 255, 255);  
     fill(255, 0, 255);
+    int i = 0;
     for (Node neighbor : n.neighbors) {
-      line(n.x, n.y, neighbor.x, neighbor.y);
+      i++;
+      if (i % 2 == 0) {
+        line(n.x, n.y, neighbor.x, neighbor.y);
+      }
     }
   }
   noFill();
@@ -141,7 +159,7 @@ class Node {
     float angle = atan2(dy, dx);
     float distanceFromGoal = sqrt(pow(goalX - x, 2) + pow(goalY - y, 2));
 
-    float currentSpeed = movementSpeed;
+    float currentSpeed = NODE_MIN_SPEED + (movementSpeed * (100 * soundLevel));
     if (distanceFromGoal < NODE_DECCELLERATION_RADIUS) {
       float alpha = distanceFromGoal / NODE_DECCELLERATION_RADIUS;
       currentSpeed = currentSpeed * alpha;
@@ -157,4 +175,8 @@ class Node {
       setNewGoal();
     }
   }
+}
+
+float alphaSmooth(float alpha) {
+  return alpha * alpha * alpha * (alpha * (alpha * 6 - 15) + 10);
 }
