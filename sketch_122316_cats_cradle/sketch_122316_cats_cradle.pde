@@ -15,7 +15,7 @@ color DRAW_COLOR;
 int lastFrame;
 float delta;
 
-float CANVAS_PERCENTAGE = .95;
+float CANVAS_PERCENTAGE = .6;
 float CANVAS_X;
 float CANVAS_Y;
 float CANVAS_WIDTH;
@@ -28,9 +28,9 @@ float SPAWN_REGION_Y;
 float SPAWN_REGION_WIDTH;
 float SPAWN_REGION_HEIGHT;
 
-int NODE_COUNT = 9;
+int NODE_COUNT = 12;
 float NODE_MIN_DIAMETER = 1;
-float NODE_MAX_DIAMETER = 5.5;
+float NODE_MAX_DIAMETER = 4;
 float NODE_MIN_SPEED = 50;
 float NODE_MAX_SPEED = 150;
 
@@ -85,24 +85,28 @@ void draw() {
     line(-1, height / 2, height + 1, height / 2);
     line(width / 2, -1, width / 2, height + 1);
   }
-  
+
   // Draw Fills
   color from = color(255, 255, 255, 10);
   color to = color(200, 200, 200, 10);
   color lerped;
   for (int i = 0; i < nodes.length; i++) { 
-     float x1, y1, x2, y2, x3, y3;
-     int len = nodes.length;
-     x1 = nodes[i].x;
-     y1 = nodes[i].y;
-     x2 = nodes[wrapIndex(i + 2, len)].x;
-     y2 = nodes[wrapIndex(i + 2, len)].y;
-     x3 = nodes[wrapIndex(i + 4, len)].x;
-     y3 = nodes[wrapIndex(i + 4, len)].y;
+    float x1, y1, x2, y2, x3, y3;
+    int len = nodes.length;
+    x1 = nodes[i].x;
+    y1 = nodes[i].y;
+    x2 = nodes[wrapIndex(i + 2, len)].x;
+    y2 = nodes[wrapIndex(i + 2, len)].y;
+    x3 = nodes[wrapIndex(i + 4, len)].x;
+    y3 = nodes[wrapIndex(i + 4, len)].y;
 
-     lerped = lerpColor(from, to, (float)i / len);
-     fill(lerped);
-     triangle(x1, y1, x2, y2, x3, y3);
+    lerped = lerpColor(from, to, (float)i / len);
+    fill(lerped);
+    triangle(x1, y1, x2, y2, x3, y3);
+  }
+
+  for (Node n : nodes) {
+    n.renderParticles(delta);
   }
 
   // Draw connectors
@@ -130,9 +134,12 @@ void draw() {
           ellipse(x2, y2, 3, 3);
           line(x1, y1, x2, y2);
         }
-        ellipse(n.x, n.y, n.currentDiameter, n.currentDiameter);
         triangle(x1, y1, x2, y2, neighbor.x, neighbor.y);
       }
+    }
+
+    if (DEBUG) {
+      ellipse(n.x, n.y, n.currentDiameter, n.currentDiameter);
     }
   }
 
@@ -143,32 +150,16 @@ void draw() {
   }
 }
 
-Node[] generateNodes() {
-  Node[] newNodes = new Node[NODE_COUNT];
-  float nodeX;
-  float nodeY;  
-  float nodeSpeed;
-  Node newNode;
-
-  for (int i = 0; i < newNodes.length; i++) {
-    nodeX = random(SPAWN_REGION_X, SPAWN_REGION_X + SPAWN_REGION_WIDTH);
-    nodeY = random(SPAWN_REGION_Y, SPAWN_REGION_Y + SPAWN_REGION_HEIGHT);
-    nodeSpeed = random(NODE_MIN_SPEED, NODE_MAX_SPEED);
-    newNode = new Node(nodeX, nodeY, nodeSpeed);
-    newNode.setNeighbors(newNodes);
-    newNodes[i] = newNode;
-  }
-  return newNodes;
-}
-
+// Classes
 class Node {
+  Node[] neighbors;
+  Emitter emitter;
   float x;
   float y;
   // Points at the end of the line perpindicular to the diameter
   float currentDiameter;
   float nextDiameter;
   float lastDiameter;
-  Node[] neighbors;
   float goalX;
   float goalY;
   float movementSpeed;
@@ -178,15 +169,19 @@ class Node {
   float currentPathLength;
   float angleOfMovement;
 
+  float emitInterval = 3;
+  float emitIntervalCounter = 0;
+
   Node(float x, float y, float speed) {
     this.x = x;
     this.y = y;
     this.movementSpeed = speed;
+    emitter = new Emitter();
     setNewGoal();
   }
 
   void setNeighbors(Node[] neighbors) {
-    this.neighbors = neighbors; //<>//
+    this.neighbors = neighbors;
   }
 
   void setNewGoal() {
@@ -206,20 +201,26 @@ class Node {
   }
 
   void update(float delta) {
+    emitIntervalCounter += delta;
+
+    //println(emitIntervalCounter);
+    if (emitIntervalCounter > emitInterval) {
+      emitter.emit((int)random(3, 20), random(1, 20));
+      emitIntervalCounter -= emitInterval;
+      println("emit!");
+    }
+
     float dx = goalX - x;
     float dy = goalY - y;
     angleOfMovement = atan2(dy, dx);
     float distanceFromGoal = sqrt(pow(goalX - x, 2) + pow(goalY - y, 2));
-
     float currentSpeed = NODE_MIN_SPEED + (movementSpeed * (100 * normSoundLevel));
     if (distanceFromGoal < NODE_DECCELLERATION_RADIUS) {
       float alpha = distanceFromGoal / NODE_DECCELLERATION_RADIUS;
       currentSpeed = currentSpeed * alpha;
     }
-
     float xIncrement = currentSpeed * cos(angleOfMovement);
     float yIncrement = currentSpeed * sin(angleOfMovement);
-
     moveBy(xIncrement * delta, yIncrement * delta);
     distanceFromGoal = sqrt(pow(goalX - x, 2) + pow(goalY - y, 2));
     currentDiameter = lerp(lastDiameter, nextDiameter, (currentPathLength - distanceFromGoal) / currentPathLength);   
@@ -227,8 +228,70 @@ class Node {
       setNewGoal();
     }
   }
+
+  // There is no global particle system. 
+  // Each node manages an Emitter which manages its own particle system. Inefficient, but, whatever. 
+  void renderParticles(float deltaTime) {
+    emitter.update(deltaTime, x, y);
+    emitter.draw();
+  }
 }
 
+class Emitter {
+  ArrayList<Particle> particles;
+  float x, y;
+
+  Emitter() {
+    particles = new ArrayList<Particle>();
+  }
+
+  void update(float delta, float x, float y) {
+    this.x = x;
+    this.y = y;
+    for (Particle p : particles) {
+      p.update(delta);
+    }
+  }
+
+  void draw() {
+    for (Particle p : particles) {
+      fill(p.fill);
+      rect(x + p.x, y + p.y, p.diameter, p.diameter);
+    }
+  }
+
+  void emit(int particleCount, float particleSpeed) {
+    Particle newPart;
+    float particleDegreeInc = 360.0 / (float) particleCount;
+    for (int i = 0; i < particleCount; i++) {
+      newPart = new Particle(i * particleDegreeInc, particleSpeed);
+      particles.add(newPart);
+    }
+  }
+
+  class Particle {
+    float x; 
+    float y; 
+    float diameter = 5;
+    float speed;
+    float timeAlive;
+    float lifeSpan;
+    color fill = color(200, 200, 200, random(100, 255));
+    float rotation;
+
+    Particle(float rotation, float speed) {
+      this.rotation = rotation;
+      this.speed = speed;
+    }
+
+    void update(float delta) {
+      x += cos(radians(rotation)) + speed * delta;
+      y += sin(radians(rotation)) + speed * delta;
+    }
+  }
+}
+
+// Utils
 float alphaSmooth(float alpha) {
   return alpha * alpha * alpha * (alpha * (alpha * 6 - 15) + 10);
 }
@@ -239,3 +302,21 @@ int wrapIndex(int index, int length) {
   } 
   return index;
 };
+
+Node[] generateNodes() {
+  Node[] newNodes = new Node[NODE_COUNT];
+  float nodeX;
+  float nodeY;  
+  float nodeSpeed;
+  Node newNode;
+
+  for (int i = 0; i < newNodes.length; i++) {
+    nodeX = random(SPAWN_REGION_X, SPAWN_REGION_X + SPAWN_REGION_WIDTH);
+    nodeY = random(SPAWN_REGION_Y, SPAWN_REGION_Y + SPAWN_REGION_HEIGHT);
+    nodeSpeed = random(NODE_MIN_SPEED, NODE_MAX_SPEED);
+    newNode = new Node(nodeX, nodeY, nodeSpeed);
+    newNode.setNeighbors(newNodes);
+    newNodes[i] = newNode;
+  }
+  return newNodes;
+}
