@@ -19,14 +19,16 @@ int lastFrame = 0;
 float delta = 0;
 
 boolean graph[][];
+boolean solutionGraph[][];
 
+boolean buildingGraph = true;
 float TRAVEL_TIME = .08;
 float travelDelta = 0;
 
-int brushGraphX = 4;
-int brushGraphY = 4;
-int brushGoalX = 4;
-int brushGoalY = 5;
+int brushGraphX = 2;
+int brushGraphY = 2;
+int brushGoalX = 2;
+int brushGoalY = 3;
 float BRUSH_WIDTH;
 
 float subDivisionX;
@@ -45,7 +47,7 @@ void setup()
   BACKGROUND_COLOR = color(#FFFFFF);
   DRAW_COLOR = color(99, 173, 216);
 
-  graph = new boolean[16][16];
+  graph = new boolean[8][8];
   background(BACKGROUND_COLOR); 
   CANVAS_WIDTH = (float)width * (float)CANVAS_PERCENTAGE;
   CANVAS_HEIGHT = height * CANVAS_PERCENTAGE;
@@ -77,7 +79,6 @@ void draw() {
   }
 
   if (staleMate) {
-    //println("STALE AF");
     return;
   }
 
@@ -90,82 +91,117 @@ void draw() {
   }
   noFill();
 
-  travelDelta += delta;
-  float travelAlpha = clamp(travelDelta / TRAVEL_TIME, 0, 1);
-  float brushX = CANVAS_X + subDivisionX * (brushGraphX + .5f);
-  float brushY = CANVAS_Y + subDivisionY * (brushGraphY + .5f);
-  float goalX = CANVAS_X + subDivisionX * (brushGoalX + .5f);
-  float goalY = CANVAS_Y + subDivisionY * (brushGoalY + .5f);
-  float newX = lerp(brushX, goalX, travelAlpha);
-  float newY = lerp(brushY, goalY, travelAlpha);
+  if (buildingGraph) {
+    travelDelta += delta;
+    float travelAlpha = clamp(travelDelta / TRAVEL_TIME, 0, 1);
+    float brushX = CANVAS_X + subDivisionX * (brushGraphX + .5f);
+    float brushY = CANVAS_Y + subDivisionY * (brushGraphY + .5f);
+    float goalX = CANVAS_X + subDivisionX * (brushGoalX + .5f);
+    float goalY = CANVAS_Y + subDivisionY * (brushGoalY + .5f);
+    float newX = lerp(brushX, goalX, travelAlpha);
+    float newY = lerp(brushY, goalY, travelAlpha);
 
-  noStroke();
-  fill(red(DRAW_COLOR), green(DRAW_COLOR), blue(DRAW_COLOR), random(50, 180));
-  float brushSize = random(BRUSH_WIDTH / 4, BRUSH_WIDTH / 2);
-  ellipse(newX, newY, brushSize, brushSize);
-
-  //println("GOALX: " + brushGoalX + " | GOALY: " + brushGoalY);
-  if (travelAlpha >= 1) {
-    brushGraphX = brushGoalX;
-    brushGraphY = brushGoalY;    
-    graph[brushGraphX][brushGraphY] = true;
-    travelDelta = 0;
-
-    // Determine if there are any valid moves 
-    boolean validMove = false;
-    boolean validMoves[] = new boolean[4];
-
-    // 0. (-1, 0) 
-    if (brushGraphX != 0 && !graph[brushGraphX - 1][brushGraphY]) {  
-      validMoves[0] = true;
-      validMove = true;
-    }
-
-    // 1. (+1, 0)
-    if (brushGraphX != graph.length - 1 && !graph[brushGraphX + 1][brushGraphY]) { 
-      validMoves[1] = true;
-      validMove = true;
-    }
-
-    // 2. (0, +1)
-    if (brushGraphY != 0 && !graph[brushGraphX][brushGraphY - 1]) {    
-      validMoves[2] = true;
-      validMove = true;
-    }
-
-    // 3. (0, -1)
-    if (brushGraphY != graph[0].length - 1 && !graph[brushGraphX][brushGraphY + 1]) { 
-      validMoves[3] = true;
-      validMove = true;
-    }
-
-    if (!validMove) {
-      //staleMate = true;
+    noStroke();
+    fill(red(DRAW_COLOR), green(DRAW_COLOR), blue(DRAW_COLOR), random(50, 180));
+    float brushSize = random(BRUSH_WIDTH / 4, BRUSH_WIDTH / 2);
+    ellipse(newX, newY, brushSize, brushSize);
+    if (travelAlpha >= 1) {
+      brushGraphX = brushGoalX;
+      brushGraphY = brushGoalY;    
       graph[brushGraphX][brushGraphY] = true;
-      while (graph[brushGraphX][brushGraphY]) {
-        brushGraphX = int(random(0, graph.length - 1));
-        brushGraphY = int(random(0, graph[0].length - 1));
-        if (brushGraphX != 0) {
-          brushGoalX = brushGraphX - 1;
-        } else {
-          brushGoalX = brushGraphX + 1;
-        }
-        brushGoalY = brushGraphY;
-      } 
-    } else {
-      int randInt = int(random(0, 4));
-      while (!validMoves[randInt]) {
-        randInt = int(random(0, 4));
-      } 
-      if (randInt == 0) {
-        brushGoalX = brushGraphX - 1;
-      } else if (randInt == 1) {
-        brushGoalX = brushGraphX + 1;
-      } else if (randInt == 2) {
-        brushGoalY = brushGraphY - 1;
-      } else if (randInt == 3) {
-        brushGoalY = brushGraphY + 1;
+      travelDelta = 0;
+
+      // Determine if there are any valid moves 
+      boolean validMove = false;
+      boolean validMoves[] = new boolean[4];
+
+      // 0. (-1, 0) 
+      if (brushGraphX != 0 && !graph[brushGraphX - 1][brushGraphY]) {  
+        validMoves[0] = true;
+        validMove = true;
       }
+
+      // 1. (+1, 0)
+      if (brushGraphX != graph.length - 1 && !graph[brushGraphX + 1][brushGraphY]) { 
+        validMoves[1] = true;
+        validMove = true;
+      }
+
+      // 2. (0, +1)
+      if (brushGraphY != 0 && !graph[brushGraphX][brushGraphY - 1]) {    
+        validMoves[2] = true;
+        validMove = true;
+      }
+
+      // 3. (0, -1)
+      if (brushGraphY != graph[0].length - 1 && !graph[brushGraphX][brushGraphY + 1]) { 
+        validMoves[3] = true;
+        validMove = true;
+      }
+
+      if (!validMove) {
+        //staleMate = true;
+        graph[brushGraphX][brushGraphY] = true;
+        int iterations = 0;
+      graphLoop:
+        while (graph[brushGraphX][brushGraphY]) {
+          iterations ++;
+          brushGraphX = int(random(0, graph.length - 1));
+          brushGraphY = int(random(0, graph[0].length - 1));
+          if (brushGraphX != 0) {
+            brushGoalX = brushGraphX - 1;
+          } else {
+            brushGoalX = brushGraphX + 1;
+          }
+          brushGoalY = brushGraphY;
+          if (iterations > graph.length * graph[0].length) {
+            buildingGraph = false;
+            createSolutionGraph();
+            break graphLoop;
+          }
+        }
+      } else {
+        int randInt = int(random(0, 4));
+        while (!validMoves[randInt]) {
+          randInt = int(random(0, 4));
+        } 
+        if (randInt == 0) {
+          brushGoalX = brushGraphX - 1;
+        } else if (randInt == 1) {
+          brushGoalX = brushGraphX + 1;
+        } else if (randInt == 2) {
+          brushGoalY = brushGraphY - 1;
+        } else if (randInt == 3) {
+          brushGoalY = brushGraphY + 1;
+        }
+      }
+    }
+  } else {
+
+    subDivisionX = (CANVAS_WIDTH * 0.95) / (float)(solutionGraph.length);
+    subDivisionY = (CANVAS_HEIGHT * 0.95) / (float) solutionGraph[0].length;
+
+    fill(255, 0, 0, 128);
+    float nodeWidth = subDivisionX / 4; 
+    for (int i = 0; i < solutionGraph.length; i ++) {
+      for (int j = 0; j < solutionGraph[i].length; j ++) {
+        if (!solutionGraph[i][j]) {
+          ellipse(+ CANVAS_X + subDivisionX / 2 + subDivisionX * i, + CANVAS_Y + subDivisionY / 2 + subDivisionY * j, nodeWidth, nodeWidth);
+        } 
+      }
+    }
+  }
+}
+
+void createSolutionGraph() {
+  println("Creating solution graph...");
+  solutionGraph = new boolean[graph.length + 2][graph[0].length + 2];
+  for (int i = 0; i < graph.length; i ++) {
+    for (int j = 0; j < graph[0].length; j ++) {
+      //solutionGraph[i * 2][j * 2] = graph[i][j];
+      //solutionGraph[i * 2 + 1][j * 2] = graph[i][j];
+      //solutionGraph[i * 2 + 1][j * 2 + 1] = graph[i][j];
+      //solutionGraph[i * 2][j * 2 + 1] = graph[i][j];
     }
   }
 }
