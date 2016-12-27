@@ -3,7 +3,7 @@ int MIDY = height / 2;
 int FRAME_RATE = 60;
 int STROKE_WEIGHT = 1;
 
-boolean DEBUG = false;
+boolean DEBUG = true;
 
 color DEBUG_COLOR;
 color BACKGROUND_COLOR;
@@ -115,55 +115,48 @@ void resetSpiralPosition() {
   // Add current spiral to history
   spirals.add(new Circle(brushX, brushY, maxSpiralRadius));
 
-  float prospectiveMidX =  -999;
-  float prospectiveMidY = - 999;
-  float prospectiveRadius = 1;
-  Circle prospect = new Circle(0, 0, 0);
-
   println("Finding new point...");
-  while (!pointInCanvas(prospectiveMidX, prospectiveMidY)) {
-    float angle = random(0, 360);
-    PVector base = pointOnCircumference(brushCurrentRadius, angle);
-    float baseX = base.x + brushX;
-    float baseY = base.y + brushY;
 
-    prospectiveRadius = maxSpiralDisplacementRadius;
-    prospectiveMidX = baseX + cos(radians(angle)) * (prospectiveRadius + 10); 
-    prospectiveMidY = baseY + sin(radians(angle)) * (prospectiveRadius + 10);
+  // Get a random point on the circumference of the current spiral;
+  float activeSpiralRadius = brushCurrentRadius;
+  float degree = random(0, 360);
+  PVector edgePointDiff = getPointOnCircumference(activeSpiralRadius, degree);
+  float edgeX = edgePointDiff.x + brushX;
+  float edgeY = edgePointDiff.y + brushY;
+  float prospectiveRadius = activeSpiralRadius;
 
-    println("Finding new shape...");
-    if (pointInCanvas(prospectiveMidX, prospectiveMidY)) {
-      prospect = new Circle(prospectiveMidX, prospectiveMidY, prospectiveRadius);
-      println("Checking for overlaps...");
-    overlapCheck:
-      while (checkIfOverlaps(prospect, spirals)) {
-        prospect.radius -= .1f;
-        println("Overlap found... Decreasing radius to " + prospect.radius);
-        if (prospect.radius < minSpiralRadius) {
-          println("No valid shape found. Starting over...");
-          prospectiveMidX =  -999;
-          prospectiveMidY = - 999;
-          break overlapCheck;
-        } // radius threshold check
-      } // shape overlap check
-    } 
-  } // canvas location check
-
-  println("Valid shape found!");
-  // Set new position
-  brushX = prospect.midX;
-  brushY = prospect.midY;
-  maxSpiralRadius = prospect.radius;
-
-  brushCurrentRadius = 0;
-  brushCurrentRotation = random(0, 360);
-  //rotateClockwise = !rotateClockwise;
-  rotationSpeed = BASE_ROTATION_SPEED;
+  float goalX = edgeX + cos(radians(degree)) * prospectiveRadius;
+  float goalY = edgeY + sin(radians(degree)) * prospectiveRadius;
+  
+  // Keep shrinking the radius and rechecking
+  while(pointInSpiral(goalX, goalY) || pointInCanvas(goalX, goalY)) {
+    goalX = edgeX + cos(radians(degree)) * prospectiveRadius;
+    goalY = edgeY + sin(radians(degree)) * prospectiveRadius;
+    strokeWeight(0.45);
+    fill(0, 255, 0); 
+    line(goalX, goalY, edgeX, edgeY);
+    noStroke();
+    fill(255, 0, 0);
+    ellipse(goalX, goalY, 5, 5);
+    fill(255, 0, 0);
+    ellipse(edgeX, edgeY, 5, 5);
+    
+    // Try a new random point;
+    if (prospectiveRadius < 3) {
+      prospectiveRadius = activeSpiralRadius;
+      degree = random(0, 360);
+    }
+    
+    println(prospectiveRadius);
+    prospectiveRadius -= 1;
+  }  
+  
+  
   println("New pos: " + brushX + ", " + brushY);
 }
 
 
-PVector pointOnCircumference(float radius, float angle) {
+PVector getPointOnCircumference(float radius, float angle) {
   return new PVector(cos(radians(angle)) * radius, sin(radians(angle)) * radius);
 }
 
@@ -180,6 +173,15 @@ boolean checkIfOverlaps(Circle a, ArrayList<Circle> b) {
 
 boolean pointInCanvas(float x, float y) {
   return ( (x > CANVAS_X && x < CANVAS_X + CANVAS_WIDTH) && ( y > CANVAS_Y && y < CANVAS_Y + CANVAS_HEIGHT));
+}
+
+boolean pointInSpiral(float x, float y) {
+  boolean pointInSpiral = false;
+  for (Circle c : spirals) {
+    float dst = sqrt(pow(x - c.midX, 2) + pow(y - c.midY, 2));
+    pointInSpiral =  dst < c.radius;
+  }
+  return pointInSpiral;
 }
 
 float clamp(float input, float low, float high) {
