@@ -3,7 +3,7 @@ int MIDY = height / 2;
 int FRAME_RATE = 60;
 int STROKE_WEIGHT = 1;
 
-boolean DEBUG = true;
+boolean DEBUG = false;
 
 color DEBUG_COLOR;
 color BACKGROUND_COLOR;
@@ -22,17 +22,18 @@ float brushY;
 float brushWidth = 1;
 float maxSpiralRadius;
 float maxSpiralDisplacementRadius = 72;
-float minSpiralRadius = 5;
+float minSpiralRadius = 3;
 float spiralRadiusPerSecond = 15;
 float acceleration = 150;
-float BASE_ROTATION_SPEED = 0;
-float MAX_ROTATION_SPEED = 700;
+float BASE_ROTATION_SPEED = 100;
+float MAX_ROTATION_SPEED = 720;
 
 // Degrees per second
 float rotationSpeed = BASE_ROTATION_SPEED;
 boolean rotateClockwise = false;
 float brushCurrentRadius = 0;
 float brushCurrentRotation = 0;
+boolean drawing = true;
 
 ArrayList<Circle> spirals;
 
@@ -51,7 +52,7 @@ void setup()
   CANVAS_Y = (height - CANVAS_HEIGHT) / 2;
   brushX = CANVAS_X + CANVAS_WIDTH / 2;
   brushY = CANVAS_Y + CANVAS_HEIGHT / 2;
-  maxSpiralRadius = 72;
+  maxSpiralRadius = 36;
   background(BACKGROUND_COLOR);
   spirals = new ArrayList<Circle>();
 }
@@ -72,6 +73,9 @@ void draw() {
     noStroke();
   }
 
+  // Drawing is ended when there are no more valid locations to paint.
+  if (!drawing) return; 
+
   fill(DRAW_COLOR);
   float brushPosX = brushX + cos(radians(brushCurrentRotation)) * brushCurrentRadius;
   float brushPosY = brushY + sin(radians(brushCurrentRotation)) * brushCurrentRadius;
@@ -85,7 +89,7 @@ void draw() {
   rotationSpeed = clamp(rotationSpeed, BASE_ROTATION_SPEED, MAX_ROTATION_SPEED);
 
   if (DEBUG) {
-    strokeWeight(CANVAS_WIDTH / 256);
+    strokeWeight(CANVAS_WIDTH / 512);
     noFill();
     stroke(0, 255, 0);
     float debugWidth = CANVAS_WIDTH / 32;
@@ -98,11 +102,13 @@ void draw() {
     fill(255, 0, 0);
     ellipse(CANVAS_X, CANVAS_Y, 15, 15);
     ellipse(CANVAS_X + CANVAS_WIDTH, CANVAS_Y + CANVAS_HEIGHT, 15, 15);
+    int index = 0;
     for (Circle c : spirals) {
-      noFill();
-      strokeWeight(1);
+      noFill();     
       stroke(0, 255, 0);
       ellipse(c.midX, c.midY, c.radius * 2, c.radius * 2);
+      text(index, c.midX, c.midY);
+      index ++;
     }
   }
 
@@ -114,50 +120,118 @@ void draw() {
 void resetSpiralPosition() {
   // Add current spiral to history
   spirals.add(new Circle(brushX, brushY, maxSpiralRadius));
-
-  println("Finding new point...");
-
-  // Get a random point on the circumference of the current spiral;
-  float activeSpiralRadius = brushCurrentRadius;
   float degree = random(0, 360);
-  PVector edgePointDiff = getPointOnCircumference(activeSpiralRadius, degree);
-  float edgeX = edgePointDiff.x + brushX;
-  float edgeY = edgePointDiff.y + brushY;
-  float prospectiveRadius = activeSpiralRadius;
+  float prospectiveRadius = maxSpiralDisplacementRadius;
+  PVector tmpPoint = getPointOnCircumference(maxSpiralRadius, degree);
+  float edgePointX = brushX + tmpPoint.x;
+  float edgePointY = brushY + tmpPoint.y;
+  Circle prospect = new Circle(brushX + tmpPoint.x, brushY + tmpPoint.y, prospectiveRadius);
 
-  float goalX = edgeX + cos(radians(degree)) * prospectiveRadius;
-  float goalY = edgeY + sin(radians(degree)) * prospectiveRadius;
-  
-  // Keep shrinking the radius and rechecking
-  while(pointInSpiral(goalX, goalY) || pointInCanvas(goalX, goalY)) {
-    goalX = edgeX + cos(radians(degree)) * prospectiveRadius;
-    goalY = edgeY + sin(radians(degree)) * prospectiveRadius;
-    strokeWeight(0.45);
-    fill(0, 255, 0); 
-    line(goalX, goalY, edgeX, edgeY);
-    noStroke();
-    fill(255, 0, 0);
-    ellipse(goalX, goalY, 5, 5);
-    fill(255, 0, 0);
-    ellipse(edgeX, edgeY, 5, 5);
-    
-    // Try a new random point;
-    if (prospectiveRadius < 3) {
-      prospectiveRadius = activeSpiralRadius;
-      degree = random(0, 360);
+  // Start at degree 0
+  //  - Check to see if a circle that is created with the same radius as the current circle is...
+  //    - Completely within the canvas
+  //    - Not overlapping with any past circles
+  //  - Reduce radius if it is too wide and try again.
+  //  - If the radius is below the MIN_RADIUS then increment the degree count and try again...
+  //  - If the degree count is >= 359 then we've checked all that we can check and the simulation is over.
+
+  int attempts = 0;
+  degree = random(0, 360);
+degreeSearch: 
+  for (int i = 0; i < 360; i ++) {
+    degree ++;
+    prospectiveRadius = maxSpiralDisplacementRadius;
+    while (prospectiveRadius > minSpiralRadius) {
+      attempts ++;
+      println("ATTEMPTS: " + attempts + " DEGREE: " + degree + " RADIUS: " + prospectiveRadius);
+      prospectiveRadius -= 1;
+
+      tmpPoint = getPointOnCircumference(maxSpiralRadius, degree);
+      edgePointX = brushX + tmpPoint.x;
+      edgePointY = brushY + tmpPoint.y;
+
+      prospect.midX = edgePointX + (cos(radians(degree)) * prospectiveRadius);
+      prospect.midY = edgePointY + (sin(radians(degree)) * prospectiveRadius); 
+      prospect.radius = prospectiveRadius;      
+      // Check for a valid option every increment.
+      if (circleInCanvas(prospect) && !checkIfOverlaps(prospect, spirals) || attempts > 200000) {
+        //ellipse(prospect.midX, prospect.midY, prospect.radius * 2, prospect.radius * 2);
+        break degreeSearch;
+      }
     }
-    
-    println(prospectiveRadius);
-    prospectiveRadius -= 1;
-  }  
-  
-  
-  println("New pos: " + brushX + ", " + brushY);
+  }
+
+  // If there isn't a valid option, then the drawing is over.
+  if (!circleInCanvas(prospect) || checkIfOverlaps(prospect, spirals)) {
+    moveBrushToRandomPoint();
+  } else {
+    brushCurrentRadius = 0;
+    brushCurrentRotation = degree;
+    brushX = prospect.midX;
+    brushY = prospect.midY;
+    maxSpiralRadius = prospect.radius;
+  }
 }
 
+void moveBrushToRandomPoint() {
+  PVector tmp;
+  int attempts = 0;
+  int attemptCap = width * height;
+  do {
+    attempts ++;
+    println("Repositioning. attempt: " + attempts);
+    tmp = getPointInCanvas();
+  } while (pointInSpiral(tmp.x, tmp.y) && attempts < attemptCap);
+  
+  if (attempts < attemptCap) {
+    brushX = tmp.x;
+    brushY = tmp.y;
+    resetSpiralPosition();
+  }
+}
+
+void drawingOver() {
+  drawing = false;
+}
+
+void keyPressed() {
+  if (key == ENTER) {
+    DEBUG = !DEBUG;
+  }
+}
+
+PVector getPointInCanvas() {
+  return new PVector(
+    random(CANVAS_X, CANVAS_X + CANVAS_WIDTH), 
+    random(CANVAS_Y, CANVAS_Y + CANVAS_HEIGHT)
+    );
+}
 
 PVector getPointOnCircumference(float radius, float angle) {
   return new PVector(cos(radians(angle)) * radius, sin(radians(angle)) * radius);
+}
+
+boolean circleInCanvas(Circle c) {
+  boolean inCanvas = true;
+  if (!pointInCanvas(c.midX, c.midY)) {
+    return false;
+  }
+  float x = c.midX;
+  float y = c.midY;
+
+  float xDst = abs(x - CANVAS_X);
+  float yDst = abs(y - CANVAS_Y);
+  if (xDst < c.radius || yDst < c.radius) {
+    inCanvas = false;
+  }
+  // Check the other sides of the canvas
+  xDst = abs(x - (CANVAS_X + CANVAS_WIDTH));
+  yDst = abs(x - (CANVAS_Y + CANVAS_HEIGHT));
+  if (xDst < c.radius || yDst < c.radius) {
+    inCanvas = false;
+  }
+
+  return inCanvas;
 }
 
 boolean checkIfOverlaps(Circle a, ArrayList<Circle> b) {
