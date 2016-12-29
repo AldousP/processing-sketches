@@ -21,22 +21,22 @@ float CANVAS_Y;
 float CANVAS_WIDTH;
 float CANVAS_HEIGHT;
 
-int MAX_ATTEMPT_THRESHOLD = 100;                   // The amount of overall cycles the algorithm will attempt to perform before determining that no more moves can be made.
+int MAX_ATTEMPT_THRESHOLD = 10;                   // The amount of overall cycles the algorithm will attempt to perform before determining that no more moves can be made.
 int globalAttempts = 0;
 float spiralX;                                     // Current position of the spiral apparatus.
 float spiralY;
 float spiralRadius = 0;                            // Current radius of the spiral apparatus. 
-float MIN_SPIRAL_RADIUS = 15;                      // Smallest a spiral can be...
-float MAX_SPIRAL_RADIUS = 90;                      // ...and vice versa
-float MIN_EXPANSION_PERCENTAGE = .2;               // Used to clamp the expansion percentage for new spirals.
-float MAX_EXPANSION_PERCENTAGE = 1;
+float MIN_SPIRAL_RADIUS = 19;                      // Smallest a spiral can be...
+float MAX_SPIRAL_RADIUS = 20;                      // ...and vice versa
+float MIN_EXPANSION_PERCENTAGE = 1;               // Used to clamp the expansion percentage for new spirals.
+float MAX_EXPANSION_PERCENTAGE = .25;
 float currentGoalRadius = MAX_SPIRAL_RADIUS;       // First spiral is middle size.
 float currentExpansionPercentage = .5;             // The percent of the goalRadius that the spiral will expand to (EX: Goal Radius of 10, with expansion of .9 will stop at a radius of 9) (Alpha is unaffected by this parameter.)
 float INITIAL_RADIUS = currentGoalRadius;          // Used to compare the relative scale of all subsequent spirals for scaling.
 float spiralStartingPosition = 90;                 // Where the spiral starts to spin on the circumference of the spiral.
 float spiralRotation = 90; 
 
-float spiralRadiusPerSecond = 50;                   // The rate of expansion outward by the spiral algorithm.
+float spiralRadiusPerSecond = 4;                   // The rate of expansion outward by the spiral algorithm.
 float acceleration = 50;                           // Constant used to accelerate and then decelerate after the spiral is beyond the...
 float decelerationThreshold = .75;                 // Deceleration Threshold in percentage through spiral completion. Spiral starts decelerating when this is passed.
 float MIN_ROTATION_SPEED = 100;                    // The slowest the spiral can get...
@@ -67,9 +67,8 @@ void setup() {
   CANVAS_HEIGHT = height * CANVAS_PERCENTAGE;
   CANVAS_X = (width - CANVAS_WIDTH) / 2;
   CANVAS_Y = (height - CANVAS_HEIGHT) / 2;
-  PVector temp = getPointInCanvas();
-  spiralX = temp.x;
-  spiralY = temp.y;
+  spiralX = width / 2;
+  spiralY = height / 2;
   background(BACKGROUND_COLOR);
   spirals = new ArrayList<Circle>();
 }
@@ -98,6 +97,7 @@ void draw() {
 
   // Update spiral data
   spiralRadius += spiralRadiusPerSecond * scaleDiff * delta;
+  spiralRadius = clamp(spiralRadius, MIN_SPIRAL_RADIUS * scaleDiff, MAX_SPIRAL_RADIUS * scaleDiff);
   spiralRotation += (rotateClockwise ? 1 : -1) * (rotationSpeed * delta);
   float alpha = spiralRadius / currentGoalRadius;
   float diff = acceleration * delta;
@@ -142,13 +142,17 @@ void draw() {
     textAlign(CENTER, CENTER);
     int index = 0;
     for (Circle c : spirals) {
+      if (!circleInCanvas(c) || checkIfOverlaps(c, spirals)) {
+        stroke(255, 0, 0);        
+      } else {
+        stroke(0, 255, 0);
+      }
       ellipse(c.midX, c.midY, c.radius * 2, c.radius * 2);
+
       text(index, c.midX, c.midY);
       index ++;
     }
-
     // Render shape of current spiral
-    ellipse(spiralX, spiralY, debugWidth, debugWidth);
     ellipse(brushPosX, brushPosY, debugWidth, debugWidth);
     ellipse(spiralX, spiralY, currentGoalRadius * 2, currentGoalRadius * 2);
     line(spiralX, spiralY, brushPosX, brushPosY);
@@ -159,7 +163,6 @@ void draw() {
     PVector lastRotationPt = getPointOnCircumference(currentGoalRadius, spiralStartingPosition);
     stroke(0, 0, 255);
     ellipse(lastRotationPt.x + spiralX, lastRotationPt.y + spiralY, 5 * scaleDiff, 5 * scaleDiff);
-
 
     // Render spiral data over current spiral
     textSize(textSize * scaleDiff);
@@ -184,11 +187,13 @@ boolean toggleRotationDirection() {
 }
 
 void resetSpiralPosition() {
-  globalAttempts ++;
-  if (globalAttempts > MAX_ATTEMPT_THRESHOLD) {
-    drawingOver();
-    return;
-  }
+    if (globalAttempts > MAX_ATTEMPT_THRESHOLD) {
+      drawingOver();
+      return;
+    }
+    globalAttempts ++;
+    
+  
   // Add current spiral to history
   spirals.add(new Circle(spiralX, spiralY, currentGoalRadius));
   float degree = spiralStartingPosition;
@@ -206,13 +211,11 @@ void resetSpiralPosition() {
   //  - If the radius is below the MIN_RADIUS then increment the degree count and try again...
   //  - If the degree count is >= 359 then we've checked all that we can check and the simulation is over.
   degree = random(0, 360);  // Start with a random origin point along the edge of the current spiral.
-  int attempts = 0;
 degreeSearch: 
   for (int i = 0; i < 360; i ++) {
     degree ++;
     prospectiveRadius = MAX_SPIRAL_RADIUS;
     while (prospectiveRadius > MIN_SPIRAL_RADIUS) {
-      attempts ++;
       prospectiveRadius -= 0.1f; // Shrink the potential radius a bit. See if that helps the new circle fit
 
       tmpPoint = getPointOnCircumference(currentGoalRadius, degree);
@@ -223,13 +226,13 @@ degreeSearch:
       prospect.midY = edgePointY + (sin(radians(degree)) * prospectiveRadius); 
       prospect.radius = prospectiveRadius;      
       // Check for a valid option every increment.
-      if (circleInCanvas(prospect) && !checkIfOverlaps(prospect, spirals) || attempts > 200000) {
+      if (circleInCanvas(prospect) && !checkIfOverlaps(prospect, spirals)) {
         break degreeSearch;
       }
     }
   }
 
-  // If there isn't a valid option, then the drawing is over.
+  // If there isn't a valid option, then try to find a random point.
   if (!circleInCanvas(prospect) || checkIfOverlaps(prospect, spirals)) {
     moveBrushToRandomPoint();
   } else {
@@ -239,33 +242,39 @@ degreeSearch:
     spiralY = prospect.midY;
     spiralRotation = spiralStartingPosition;
     currentGoalRadius  = prospect.radius;
-    attempts = 0;
     toggleRotationDirection();
+    globalAttempts = 0;
     currentExpansionPercentage = random(MIN_EXPANSION_PERCENTAGE, MAX_EXPANSION_PERCENTAGE);
-    println("[" + hour() + ":" + minute() + ":" + second() +   "] New brush location: " + spiralX + ", " + spiralY + " | Starting Spiral Rotation: " + spiralRotation + " | Goal Radius: " + currentGoalRadius + "| Expansion Percentage: " + currentExpansionPercentage);
+    println("[" + hour() + ":" + minute() + ":" + second() + ":" + millis() +  "] New brush location (" + spirals.size()  + "): " + spiralX + ", " + spiralY 
+      + " | Starting Spiral Rotation: " + spiralRotation 
+      + " | Goal Radius: " + currentGoalRadius 
+      + " | Overlaps?: " + checkIfOverlaps(prospect, spirals) 
+      + " | Expansion Percentage: " + currentExpansionPercentage);
   }
 }
 
 // Used as a fallback if the alg can't find a point along the previous circle.
 void moveBrushToRandomPoint() {
   PVector tmp;
+  int attemptCap = 10;
   int attempts = 0;
-  int attemptCap = width;
   do {
     attempts ++;
     tmp = getPointInCanvas();
   } while (pointInSpiral(tmp.x, tmp.y) && attempts < attemptCap);
+  
+  // Implying we exited because we didn't reach our max attempt threshold
   if (attempts < attemptCap) {
-    spiralX = tmp.x;
-    spiralY = tmp.y;
-    resetSpiralPosition();
+    //spiralX = tmp.x;
+    //spiralY = tmp.y;
   }
+  resetSpiralPosition();
 }
 
 // Called to end the drawing
 void drawingOver() {
   drawing = false;
-  println("drawing complete.");
+      println("[" + hour() + ":" + minute() + ":" + second() + ":" + millis() +  "] drawing complete.");
 }
 
 void keyPressed() {
@@ -303,7 +312,7 @@ boolean circleInCanvas(Circle c) {
   }
   // Check the other sides of the canvas
   xDst = abs(x - (CANVAS_X + CANVAS_WIDTH));
-  yDst = abs(x - (CANVAS_Y + CANVAS_HEIGHT));
+  yDst = abs(y - (CANVAS_Y + CANVAS_HEIGHT));
   if (xDst < c.radius || yDst < c.radius) {
     inCanvas = false;
   }
@@ -315,7 +324,7 @@ boolean checkIfOverlaps(Circle a, ArrayList<Circle> b) {
   //println("Checking if point overlaps....");
   boolean overlaps = false;
   for (Circle c : b) {
-    if (a.overlaps(c)) {
+    if (a != c && a.overlaps(c)) {
       overlaps = true;
     }
   }
