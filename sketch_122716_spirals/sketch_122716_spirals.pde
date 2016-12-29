@@ -1,4 +1,4 @@
-int MIDX = width / 2;
+int MIDX = width / 2; //<>//
 int MIDY = height / 2;
 int FRAME_RATE = 60;
 int STROKE_WEIGHT = 1;
@@ -6,53 +6,65 @@ int STROKE_WEIGHT = 1;
 boolean DEBUG = false;
 
 color DEBUG_COLOR;
-color BACKGROUND_COLOR;
-color DRAW_COLOR;
+color BACKGROUND_COLOR; 
+color STROKE_COLOR_1;
+color STROKE_COLOR_2;
+color tmpColor;
 
 int lastFrame;
 float delta;
 
-float CANVAS_PERCENTAGE = 0.8f;
+float CANVAS_PERCENTAGE = 0.9f;
 float CANVAS_X;
 float CANVAS_Y;
 float CANVAS_WIDTH;
 float CANVAS_HEIGHT;
-float brushX;
-float brushY;
-float brushWidth = 1;
-float maxSpiralRadius;
-float maxSpiralDisplacementRadius = 72;
-float minSpiralRadius = 3;
-float spiralRadiusPerSecond = 15;
-float acceleration = 150;
-float BASE_ROTATION_SPEED = 100;
-float MAX_ROTATION_SPEED = 720;
 
-// Degrees per second
-float rotationSpeed = BASE_ROTATION_SPEED;
-boolean rotateClockwise = false;
-float brushCurrentRadius = 0;
-float brushCurrentRotation = 0;
-boolean drawing = true;
+int MAX_ATTEMPT_THRESHOLD = 100;
+int globalAttempts = 0;
+float spiralX;                                     // Current position of the spiral apparatus
+float spiralY;
+float spiralRadius = 0;                            // Current radius of the spiral apparatus 
+float MIN_SPIRAL_RADIUS = 45;                                 // Smallest a spiral can be...
+float MAX_SPIRAL_RADIUS = 90;                      // ...and vice versa
+float currentGoalRadius = MAX_SPIRAL_RADIUS;       // First spiral is middle size
+float INITIAL_RADIUS = currentGoalRadius;          // Used to compare the relative scale of all subsequent spirals for scaling
+float spiralRotation = random(0, 360);
+float lastRotation = 0;
 
-ArrayList<Circle> spirals;
+float spiralRadiusPerSecond = 60;                  // The rate of expansion outward by the spiral algorithm
+float acceleration = 1400;                          // Constant used to accelerate and then decelerate after the spiral is beyond the...
+float decelerationThreshold = 1;                   // Deceleration Threshold. Which begins slowing down the spiral 
+float MIN_ROTATION_SPEED = 200;                    // The slowest the spiral can get...
+float MAX_ROTATION_SPEED = 2500;                    // and the fastest.
+float rotationSpeed = MIN_ROTATION_SPEED;
 
-void setup()
-{
+boolean rotateClockwise = true;                    // Alternates on every new spiral location
+float MIN_BRUSH_SIZE = 0.75;                       // The smallest a brush stroke can get...
+float MAX_BRUSH_SIZE = 4.75;                       // and the largest.
+float strokeLength = 64;                            // The length of the stroke extending behind the head of the stroke
+
+float scaleDiff = 1;                               // Tracks of the scale of the current spiral relative to the first one. Used to scale speeds and stroke sizes.
+
+boolean drawing = true;                            // True as long as there is a valid move in the spiral algorithm.
+ArrayList<Circle> spirals;                         // Collection of all spirals that have been drawn
+
+void setup() {
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
-  size(600, 600); 
+  size(800, 800); 
   // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT 
   DEBUG_COLOR = color(#000000);
-  BACKGROUND_COLOR = color(#F9F9F9);
-  DRAW_COLOR = color(#000000); 
-  CANVAS_WIDTH = (float)width * (float)CANVAS_PERCENTAGE;
+  BACKGROUND_COLOR = color(#f4f4f4);
+  STROKE_COLOR_1 =  color(#f47142);
+  STROKE_COLOR_2 = color(#429bce); 
+  CANVAS_WIDTH = (float)width * (float) CANVAS_PERCENTAGE;
   CANVAS_HEIGHT = height * CANVAS_PERCENTAGE;
   CANVAS_X = (width - CANVAS_WIDTH) / 2;
   CANVAS_Y = (height - CANVAS_HEIGHT) / 2;
-  brushX = CANVAS_X + CANVAS_WIDTH / 2;
-  brushY = CANVAS_Y + CANVAS_HEIGHT / 2;
-  maxSpiralRadius = 36;
+  PVector temp = getPointInCanvas();
+  spiralX = temp.x;
+  spiralY = temp.y;
   background(BACKGROUND_COLOR);
   spirals = new ArrayList<Circle>();
 }
@@ -60,7 +72,6 @@ void setup()
 void draw() {
   //background(BACKGROUND_COLOR);
   noFill();
-
   delta = (millis() - lastFrame) / 1000f;
   lastFrame = millis();
   if (DEBUG) {
@@ -74,31 +85,59 @@ void draw() {
   }
 
   // Drawing is ended when there are no more valid locations to paint.
-  if (!drawing) return; 
+  if (!drawing) return;
+  scaleDiff = currentGoalRadius / INITIAL_RADIUS;
 
-  fill(DRAW_COLOR);
-  float brushPosX = brushX + cos(radians(brushCurrentRotation)) * brushCurrentRadius;
-  float brushPosY = brushY + sin(radians(brushCurrentRotation)) * brushCurrentRadius;
-  float widthMod = random(.5, 1.5);
-  ellipse(brushPosX, brushPosY, brushCurrentRadius / 16 * widthMod, brushCurrentRadius / 16 * widthMod);
+  if (spiralRadius == 0) {
+    println("setting last rotation to: " + spiralRotation );
+    lastRotation = spiralRotation;
+  }
+  
+  // Update spiral acceleration and rotations.
+  spiralRadius += spiralRadiusPerSecond * delta;
+  spiralRotation += (rotateClockwise ? 1 : -1) * (rotationSpeed * delta);
+  float alpha = spiralRadius / currentGoalRadius;
+  
+  float diff = acceleration * delta;
+  if (alpha > decelerationThreshold) {
+    rotationSpeed -= diff;
+  } else {
+    rotationSpeed += diff;
+  }
+  rotationSpeed = clamp(rotationSpeed, MIN_ROTATION_SPEED, MAX_ROTATION_SPEED);
 
-  brushCurrentRadius += spiralRadiusPerSecond * delta;
-  brushCurrentRotation += (rotateClockwise ? 1 : -1) * rotationSpeed * delta;
-  float alpha = brushCurrentRadius / maxSpiralRadius;
-  rotationSpeed += ((alpha > .5 ? -1 : 1) * (acceleration * delta));
-  rotationSpeed = clamp(rotationSpeed, BASE_ROTATION_SPEED, MAX_ROTATION_SPEED);
+  // Then draw them
+  noStroke();
+  float invertRadius = currentGoalRadius - spiralRadius;
+  float brushPosX = spiralY + cos(radians(spiralRotation)) * invertRadius;
+  float brushPosY = spiralX + sin(radians(spiralRotation)) * invertRadius;
+  float widthMod = random(.8, 1.2);
+  float radius = (1 - alpha) * (MAX_BRUSH_SIZE  - MIN_BRUSH_SIZE);
 
+  for (int i = 0; i < (strokeLength * alpha); i++) {
+    brushPosX = spiralX + cos(radians(spiralRotation + i)) * invertRadius;
+    brushPosY = spiralY + sin(radians(spiralRotation + i)) * invertRadius;
+    tmpColor = color(STROKE_COLOR_1);
+    tmpColor = lerpColor(tmpColor, STROKE_COLOR_2, alpha);
+    fill (tmpColor);   
+    ellipse(brushPosX, brushPosY, radius, radius);
+  }
+
+  // Render debug information
   if (DEBUG) {
-    strokeWeight(CANVAS_WIDTH / 512);
+    strokeWeight(1.8);
     noFill();
     stroke(0, 255, 0);
-    float debugWidth = CANVAS_WIDTH / 32;
-    ellipse(brushX, brushY, debugWidth, debugWidth);
+    float debugWidth = 16;
+    ellipse(spiralX, spiralY, debugWidth, debugWidth);
     ellipse(brushPosX, brushPosY, debugWidth, debugWidth);
-    ellipse(brushX, brushY, maxSpiralRadius * 2, maxSpiralRadius * 2);
-    line(brushX, brushY, brushPosX, brushPosY);
-    stroke(0, 128, 255);
-    line(brushX, brushY, brushX + maxSpiralRadius, brushY);
+    ellipse(spiralX, spiralY, currentGoalRadius * 2, currentGoalRadius * 2);
+    line(spiralX, spiralY, brushPosX, brushPosY);
+    stroke(0, 0, 255);
+    line(spiralX, spiralY, spiralX + currentGoalRadius, spiralY);
+    PVector lastRotationPt = getPointOnCircumference(currentGoalRadius, lastRotation);
+    fill(0, 0, 255);
+    ellipse(lastRotationPt.x + spiralX, lastRotationPt.y + spiralY, 17, 17);
     fill(255, 0, 0);
     ellipse(CANVAS_X, CANVAS_Y, 15, 15);
     ellipse(CANVAS_X + CANVAS_WIDTH, CANVAS_Y + CANVAS_HEIGHT, 15, 15);
@@ -112,43 +151,49 @@ void draw() {
     }
   }
 
-  if (brushCurrentRadius > maxSpiralRadius) {
+  // Pick a new position that is connected to the current spiral. If none are found, try a random point, if none can be found. Give up.
+  if (alpha >= 1) {
+    globalAttempts = 0;
     resetSpiralPosition();
   }
 };
 
 void resetSpiralPosition() {
+  globalAttempts ++;
+
+  if (globalAttempts > MAX_ATTEMPT_THRESHOLD) {
+    drawingOver();
+    return;
+  }
   // Add current spiral to history
-  spirals.add(new Circle(brushX, brushY, maxSpiralRadius));
+  spirals.add(new Circle(spiralX, spiralY, currentGoalRadius));
   float degree = random(0, 360);
-  float prospectiveRadius = maxSpiralDisplacementRadius;
-  PVector tmpPoint = getPointOnCircumference(maxSpiralRadius, degree);
-  float edgePointX = brushX + tmpPoint.x;
-  float edgePointY = brushY + tmpPoint.y;
-  Circle prospect = new Circle(brushX + tmpPoint.x, brushY + tmpPoint.y, prospectiveRadius);
+  float prospectiveRadius = MAX_SPIRAL_RADIUS;
+  PVector tmpPoint = getPointOnCircumference(currentGoalRadius, degree);
+  float edgePointX = spiralX + tmpPoint.x;
+  float edgePointY = spiralY + tmpPoint.y;
+  Circle prospect = new Circle(spiralX + tmpPoint.x, spiralY + tmpPoint.y, prospectiveRadius);
 
   // Start at degree 0
   //  - Check to see if a circle that is created with the same radius as the current circle is...
   //    - Completely within the canvas
-  //    - Not overlapping with any past circles
+  //    - Not overlapping with any past circles    
   //  - Reduce radius if it is too wide and try again.
   //  - If the radius is below the MIN_RADIUS then increment the degree count and try again...
   //  - If the degree count is >= 359 then we've checked all that we can check and the simulation is over.
-
   int attempts = 0;
   degree = random(0, 360);
 degreeSearch: 
   for (int i = 0; i < 360; i ++) {
     degree ++;
-    prospectiveRadius = maxSpiralDisplacementRadius;
-    while (prospectiveRadius > minSpiralRadius) {
+    prospectiveRadius = MAX_SPIRAL_RADIUS;
+    while (prospectiveRadius > MIN_SPIRAL_RADIUS) {
       attempts ++;
-      println("ATTEMPTS: " + attempts + " DEGREE: " + degree + " RADIUS: " + prospectiveRadius);
       prospectiveRadius -= 1;
 
-      tmpPoint = getPointOnCircumference(maxSpiralRadius, degree);
-      edgePointX = brushX + tmpPoint.x;
-      edgePointY = brushY + tmpPoint.y;
+      tmpPoint = getPointOnCircumference(currentGoalRadius, degree);
+      edgePointX = spiralX + tmpPoint.x;
+      edgePointY = spiralY + tmpPoint.y;
 
       prospect.midX = edgePointX + (cos(radians(degree)) * prospectiveRadius);
       prospect.midY = edgePointY + (sin(radians(degree)) * prospectiveRadius); 
@@ -165,33 +210,38 @@ degreeSearch:
   if (!circleInCanvas(prospect) || checkIfOverlaps(prospect, spirals)) {
     moveBrushToRandomPoint();
   } else {
-    brushCurrentRadius = 0;
-    brushCurrentRotation = degree;
-    brushX = prospect.midX;
-    brushY = prospect.midY;
-    maxSpiralRadius = prospect.radius;
+    spiralRadius = 0;
+    rotationSpeed = 0;
+    spiralRotation = lastRotation;
+    spiralX = prospect.midX;
+    spiralY = prospect.midY;
+    currentGoalRadius  = prospect.radius;
+    println("[" + hour() + ":" + minute() + ":" + second() +   "] Moving brush to a new point ");
   }
+  attempts = 0;
+  rotateClockwise = !rotateClockwise;
 }
 
+// Used as a fallback if the alg can't find a point along the previous circle.
 void moveBrushToRandomPoint() {
   PVector tmp;
   int attempts = 0;
-  int attemptCap = width * height;
+  int attemptCap = width;
   do {
     attempts ++;
-    println("Repositioning. attempt: " + attempts);
     tmp = getPointInCanvas();
   } while (pointInSpiral(tmp.x, tmp.y) && attempts < attemptCap);
-  
   if (attempts < attemptCap) {
-    brushX = tmp.x;
-    brushY = tmp.y;
+    spiralX = tmp.x;
+    spiralY = tmp.y;
     resetSpiralPosition();
   }
 }
 
+// Called to end the drawing
 void drawingOver() {
   drawing = false;
+  println("drawing complete.");
 }
 
 void keyPressed() {
@@ -211,6 +261,7 @@ PVector getPointOnCircumference(float radius, float angle) {
   return new PVector(cos(radians(angle)) * radius, sin(radians(angle)) * radius);
 }
 
+// Returns whether the entirety of the provided circle is within the canvas 
 boolean circleInCanvas(Circle c) {
   boolean inCanvas = true;
   if (!pointInCanvas(c.midX, c.midY)) {
