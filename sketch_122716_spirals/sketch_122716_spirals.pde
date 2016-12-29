@@ -21,14 +21,14 @@ float CANVAS_Y;
 float CANVAS_WIDTH;
 float CANVAS_HEIGHT;
 
-int MAX_ATTEMPT_THRESHOLD = 10;                   // The amount of overall cycles the algorithm will attempt to perform before determining that no more moves can be made.
+int MAX_ATTEMPT_THRESHOLD = 10;                    // The amount of overall cycles the algorithm will attempt to perform before determining that no more moves can be made.
 int globalAttempts = 0;
 float spiralX;                                     // Current position of the spiral apparatus.
 float spiralY;
 float spiralRadius = 0;                            // Current radius of the spiral apparatus. 
-float MIN_SPIRAL_RADIUS = 19;                      // Smallest a spiral can be...
-float MAX_SPIRAL_RADIUS = 20;                      // ...and vice versa
-float MIN_EXPANSION_PERCENTAGE = 1;               // Used to clamp the expansion percentage for new spirals.
+float MIN_SPIRAL_RADIUS = 4;                      // Smallest a spiral can be...
+float MAX_SPIRAL_RADIUS = 5;                      // ...and vice versa
+float MIN_EXPANSION_PERCENTAGE = 1;                // Used to clamp the expansion percentage for new spirals.
 float MAX_EXPANSION_PERCENTAGE = .25;
 float currentGoalRadius = MAX_SPIRAL_RADIUS;       // First spiral is middle size.
 float currentExpansionPercentage = .5;             // The percent of the goalRadius that the spiral will expand to (EX: Goal Radius of 10, with expansion of .9 will stop at a radius of 9) (Alpha is unaffected by this parameter.)
@@ -36,7 +36,7 @@ float INITIAL_RADIUS = currentGoalRadius;          // Used to compare the relati
 float spiralStartingPosition = 90;                 // Where the spiral starts to spin on the circumference of the spiral.
 float spiralRotation = 90; 
 
-float spiralRadiusPerSecond = 4;                   // The rate of expansion outward by the spiral algorithm.
+float spiralRadiusPerSecond = 100;                   // The rate of expansion outward by the spiral algorithm.
 float acceleration = 50;                           // Constant used to accelerate and then decelerate after the spiral is beyond the...
 float decelerationThreshold = .75;                 // Deceleration Threshold in percentage through spiral completion. Spiral starts decelerating when this is passed.
 float MIN_ROTATION_SPEED = 100;                    // The slowest the spiral can get...
@@ -149,30 +149,30 @@ void draw() {
       }
       ellipse(c.midX, c.midY, c.radius * 2, c.radius * 2);
 
-      text(index, c.midX, c.midY);
+      //text(index, c.midX, c.midY);
       index ++;
     }
     // Render shape of current spiral
-    ellipse(brushPosX, brushPosY, debugWidth, debugWidth);
-    ellipse(spiralX, spiralY, currentGoalRadius * 2, currentGoalRadius * 2);
-    line(spiralX, spiralY, brushPosX, brushPosY);
-    stroke(0, 0, 255, 40);
-    line(spiralX, spiralY, spiralX + currentGoalRadius, spiralY);
-    stroke(100, 0, 255, 255);
-    line(spiralX, spiralY, spiralX + currentGoalRadius * currentExpansionPercentage, spiralY);
-    PVector lastRotationPt = getPointOnCircumference(currentGoalRadius, spiralStartingPosition);
-    stroke(0, 0, 255);
-    ellipse(lastRotationPt.x + spiralX, lastRotationPt.y + spiralY, 5 * scaleDiff, 5 * scaleDiff);
+    //ellipse(brushPosX, brushPosY, debugWidth, debugWidth);
+    //ellipse(spiralX, spiralY, currentGoalRadius * 2, currentGoalRadius * 2);
+    //line(spiralX, spiralY, brushPosX, brushPosY);
+    //stroke(0, 0, 255, 40);
+    //line(spiralX, spiralY, spiralX + currentGoalRadius, spiralY);
+    //stroke(100, 0, 255, 255);
+    //line(spiralX, spiralY, spiralX + currentGoalRadius * currentExpansionPercentage, spiralY);
+    //PVector lastRotationPt = getPointOnCircumference(currentGoalRadius, spiralStartingPosition);
+    //stroke(0, 0, 255);
+    //ellipse(lastRotationPt.x + spiralX, lastRotationPt.y + spiralY, 5 * scaleDiff, 5 * scaleDiff);
 
     // Render spiral data over current spiral
-    textSize(textSize * scaleDiff);
-    fill(tmpColor);
-    text(spiralRadius / (currentGoalRadius * currentExpansionPercentage), spiralX, spiralY);
-    fill(0, 255, 0, 255);
-    float speedAlpha = (rotationSpeed - MIN_ROTATION_SPEED * scaleDiff) / (MAX_ROTATION_SPEED * scaleDiff - MIN_ROTATION_SPEED * scaleDiff);
-    tmpColor = lerpColor(color(0, 255, 0), color(255, 0, 0), speedAlpha);
-    fill(tmpColor);
-    text(rotationSpeed, spiralX, spiralY - textSize);
+    //textSize(textSize * scaleDiff);
+    //fill(tmpColor);
+    //text(spiralRadius / (currentGoalRadius * currentExpansionPercentage), spiralX, spiralY);
+    //fill(0, 255, 0, 255);
+    //float speedAlpha = (rotationSpeed - MIN_ROTATION_SPEED * scaleDiff) / (MAX_ROTATION_SPEED * scaleDiff - MIN_ROTATION_SPEED * scaleDiff);
+    //tmpColor = lerpColor(color(0, 255, 0), color(255, 0, 0), speedAlpha);
+    //fill(tmpColor);
+    //text(rotationSpeed, spiralX, spiralY - textSize);
   }
 
   // Construct a new spiral that shares an edge with the current spiral. If none are found, try a random point, if none can be found. Give up.
