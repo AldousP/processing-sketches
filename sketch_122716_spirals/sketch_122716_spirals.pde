@@ -3,7 +3,7 @@ int MIDY = height / 2;
 int FRAME_RATE = 60;
 
 boolean DEBUG = true;
-boolean CLEAR_CANVAS = true;
+boolean CLEAR_CANVAS = DEBUG;
 
 color DEBUG_COLOR;
 color BACKGROUND_COLOR; 
@@ -26,7 +26,7 @@ int globalAttempts = 0;
 float spiralX;                                     // Current position of the spiral apparatus.
 float spiralY;
 float spiralRadius = 0;                            // Current radius of the spiral apparatus. 
-float MIN_SPIRAL_RADIUS = 30;                      // Smallest a spiral can be...
+float MIN_SPIRAL_RADIUS = 15;                      // Smallest a spiral can be...
 float MAX_SPIRAL_RADIUS = 90;                      // ...and vice versa
 float MIN_EXPANSION_PERCENTAGE = .2;               // Used to clamp the expansion percentage for new spirals.
 float MAX_EXPANSION_PERCENTAGE = 1;
@@ -36,7 +36,7 @@ float INITIAL_RADIUS = currentGoalRadius;          // Used to compare the relati
 float spiralStartingPosition = 90;                 // Where the spiral starts to spin on the circumference of the spiral.
 float spiralRotation = 90; 
 
-float spiralRadiusPerSecond = 5;                   // The rate of expansion outward by the spiral algorithm.
+float spiralRadiusPerSecond = 50;                   // The rate of expansion outward by the spiral algorithm.
 float acceleration = 50;                           // Constant used to accelerate and then decelerate after the spiral is beyond the...
 float decelerationThreshold = .75;                 // Deceleration Threshold in percentage through spiral completion. Spiral starts decelerating when this is passed.
 float MIN_ROTATION_SPEED = 100;                    // The slowest the spiral can get...
@@ -57,7 +57,7 @@ ArrayList<Circle> spirals;                         // Collection of all spirals 
 
 void setup() {
   frameRate(FRAME_RATE);
-  size(800, 800); 
+  size(1280, 720); 
   // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT 
   DEBUG_COLOR = color(#000000);
   BACKGROUND_COLOR = color(#f4f4f4);
@@ -75,7 +75,7 @@ void setup() {
 }
 
 void draw() {
-  if (CLEAR_CANVAS) {
+  if (CLEAR_CANVAS && drawing) {
     background(BACKGROUND_COLOR);
   }
 
@@ -86,8 +86,8 @@ void draw() {
     noFill();
     strokeWeight(0.75);
     stroke(DEBUG_COLOR);
-    line(-1, height / 2, height + 1, height / 2);
-    line(width / 2, -1, width / 2, height + 1);
+    line(CANVAS_X + CANVAS_WIDTH / 2, CANVAS_Y, CANVAS_X + CANVAS_WIDTH / 2, CANVAS_Y + CANVAS_HEIGHT);
+    line(CANVAS_X, CANVAS_Y +CANVAS_HEIGHT / 2, CANVAS_X + CANVAS_WIDTH, CANVAS_Y + CANVAS_HEIGHT / 2);
     rect(CANVAS_X, CANVAS_Y, CANVAS_WIDTH, CANVAS_HEIGHT);
     noFill();
     noStroke();
@@ -138,8 +138,8 @@ void draw() {
     float debugWidth = 16;
 
     // Render index over all past circles
-    textAlign(CENTER);
     textSize(textSize);
+    textAlign(CENTER, CENTER);
     int index = 0;
     for (Circle c : spirals) {
       ellipse(c.midX, c.midY, c.radius * 2, c.radius * 2);
@@ -158,16 +158,18 @@ void draw() {
     line(spiralX, spiralY, spiralX + currentGoalRadius * currentExpansionPercentage, spiralY);
     PVector lastRotationPt = getPointOnCircumference(currentGoalRadius, spiralStartingPosition);
     stroke(0, 0, 255);
-    ellipse(lastRotationPt.x + spiralX, lastRotationPt.y + spiralY, 17, 17);
+    ellipse(lastRotationPt.x + spiralX, lastRotationPt.y + spiralY, 5 * scaleDiff, 5 * scaleDiff);
+
 
     // Render spiral data over current spiral
+    textSize(textSize * scaleDiff);
     fill(tmpColor);
     text(spiralRadius / (currentGoalRadius * currentExpansionPercentage), spiralX, spiralY);
     fill(0, 255, 0, 255);
     float speedAlpha = (rotationSpeed - MIN_ROTATION_SPEED * scaleDiff) / (MAX_ROTATION_SPEED * scaleDiff - MIN_ROTATION_SPEED * scaleDiff);
     tmpColor = lerpColor(color(0, 255, 0), color(255, 0, 0), speedAlpha);
     fill(tmpColor);
-    text(rotationSpeed, spiralX, spiralY - 2 * textSize);
+    text(rotationSpeed, spiralX, spiralY - textSize);
   }
 
   // Construct a new spiral that shares an edge with the current spiral. If none are found, try a random point, if none can be found. Give up.
