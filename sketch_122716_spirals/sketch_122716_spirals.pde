@@ -21,15 +21,15 @@ float CANVAS_Y;
 float CANVAS_WIDTH;
 float CANVAS_HEIGHT;
 
-int MAX_ATTEMPT_THRESHOLD = 10;                    // The amount of overall cycles the algorithm will attempt to perform before determining that no more moves can be made.
+int MAX_ATTEMPT_THRESHOLD = 32;                    // The amount of overall cycles the algorithm will attempt to perform before determining that no more moves can be made.
 int globalAttempts = 0;
 float spiralX;                                     // Current position of the spiral apparatus.
 float spiralY;
 float spiralRadius = 0;                            // Current radius of the spiral apparatus. 
-float MIN_SPIRAL_RADIUS = 4;                      // Smallest a spiral can be...
-float MAX_SPIRAL_RADIUS = 5;                      // ...and vice versa
-float MIN_EXPANSION_PERCENTAGE = 1;                // Used to clamp the expansion percentage for new spirals.
-float MAX_EXPANSION_PERCENTAGE = .25;
+float MIN_SPIRAL_RADIUS = 5;                      // Smallest a spiral can be...
+float MAX_SPIRAL_RADIUS = 26;                      // ...and vice versa
+float MIN_EXPANSION_PERCENTAGE = .25;                // Used to clamp the expansion percentage for new spirals.
+float MAX_EXPANSION_PERCENTAGE = 1;
 float currentGoalRadius = MAX_SPIRAL_RADIUS;       // First spiral is middle size.
 float currentExpansionPercentage = .5;             // The percent of the goalRadius that the spiral will expand to (EX: Goal Radius of 10, with expansion of .9 will stop at a radius of 9) (Alpha is unaffected by this parameter.)
 float INITIAL_RADIUS = currentGoalRadius;          // Used to compare the relative scale of all subsequent spirals for scaling.
@@ -196,7 +196,7 @@ void resetSpiralPosition() {
   
   // Add current spiral to history
   spirals.add(new Circle(spiralX, spiralY, currentGoalRadius));
-  float degree = spiralStartingPosition;
+  float degree = random(0, 360);
   float prospectiveRadius = MAX_SPIRAL_RADIUS;
   PVector tmpPoint = getPointOnCircumference(currentGoalRadius, degree);
   float edgePointX = spiralX + tmpPoint.x;
