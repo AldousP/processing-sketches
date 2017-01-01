@@ -1,5 +1,6 @@
-int MIDX = width / 2;
-int MIDY = height / 2;
+import java.text.DecimalFormat;
+
+float runTime = 0;
 int FRAME_RATE = 60;
 float STROKE_WEIGHT = .01;
 
@@ -15,7 +16,7 @@ color DEBUG_COLOR;
 color BACKGROUND_COLOR;
 color DRAW_COLOR;
 float spinnerRotation = 0;
-int spinnerOrbs = 30;
+int spinnerOrbs = 20;
 boolean spinnerAccelerating = true;
 float spinnerRotationSpeed = 100;
 float spinnerAcceleration = 50;
@@ -29,9 +30,17 @@ float CANVAS_X;
 float CANVAS_Y;
 float CANVAS_WIDTH;
 float CANVAS_HEIGHT;
+float PALETTE_X;
+float PALETTE_Y;
+float PALETTE_HEIGHT;
+float PALETTE_WIDTH;
+float PALETTE_PERCENTAGE = 0.45;                   // Amount of space between bottom of the bottom of the canvas to the bottom of the page that the palette will fill
 
 int lastFrame;
 float delta;
+ArrayList<Integer> palette = new ArrayList();
+DecimalFormat df = new DecimalFormat(".#");
+float colorDelta = 0;
 
 void setup()
 {
@@ -48,15 +57,23 @@ void setup()
   CANVAS_Y = (height - CANVAS_HEIGHT) / 2;
   SPINNER_WIDTH = (width - CANVAS_WIDTH) / 2;
   SPINNER_HEIGHT = (height - CANVAS_HEIGHT) / 2;
+
+  PALETTE_HEIGHT = CANVAS_Y * PALETTE_PERCENTAGE;
+  PALETTE_WIDTH = CANVAS_WIDTH * PALETTE_PERCENTAGE;
+  PALETTE_Y = CANVAS_Y + CANVAS_HEIGHT;
+  PALETTE_X = CANVAS_X;
 }
 
 void draw() {
   delta = (millis() - lastFrame) / 1000f;
+  runTime += delta;
   lastFrame = millis();
   background(BACKGROUND_COLOR);
   drawDebug();
   drawSpinner();
   drawGrid();
+  drawPalette();
+  drawTime();
 }
 
 // Util Methods
@@ -67,6 +84,39 @@ float clamp(float input, float low, float high) {
     return high;
   } else {
     return input;
+  }
+}
+
+void fill(color c, String s) {
+  if (!palette.contains(c)) {
+    palette.add(c);
+  }
+  fill(c);
+}
+
+void stroke(color c, String s) {
+  if (!palette.contains(c)) {
+    palette.add(c);
+  }
+  stroke(c);
+}
+
+void drawDebug() {
+  if (DEBUG) {
+    fill(#FFFFFF);
+    noFill();
+    strokeWeight(STROKE_WEIGHT);
+    stroke(DEBUG_COLOR, "overridden");
+    // Render format
+    rect(CANVAS_X, CANVAS_Y, CANVAS_WIDTH, CANVAS_HEIGHT); 
+    noStroke();
+    float shortest = (SPINNER_HEIGHT < SPINNER_WIDTH ? SPINNER_HEIGHT : SPINNER_WIDTH);
+    // Render sketch info
+    textAlign(RIGHT, CENTER);
+    float textSize = shortest / 4;
+    textSize(textSize);
+    text(date, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize);
+    text(title, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize * 2);
   }
 }
 
@@ -86,7 +136,7 @@ void drawSpinner() {
   float radius = shortest / 6; 
   for (int i = 0; i < spinnerOrbs; i ++) {
     float alpha = i / (float)spinnerOrbs;
-    fill(255, 255, 255, 255 * alpha);
+    fill(color(255, 255, 255, 255 * alpha), "overridden");
     float currentDegree = (360 / spinnerOrbs) * i + spinnerRotation;
     float orbX = SPINNER_WIDTH / 2 + cos(radians(currentDegree)) * radius;
     float orbY = SPINNER_HEIGHT / 2 + sin(radians(currentDegree)) * radius;
@@ -97,7 +147,7 @@ void drawSpinner() {
 void drawGrid() {
   if (CANVAS_GRID) {
     strokeWeight(STROKE_WEIGHT);
-    stroke(#FFFFFF, CANVAS_GRID_OPACITY * 255);
+    stroke(color(255, 255, 255, 255 * CANVAS_GRID_OPACITY), "overridden");
     float cursorX;
     float cursorY;
     for (int i = 0; i < CANVAS_GRID_SUBDIV_X; i ++) {
@@ -113,20 +163,28 @@ void drawGrid() {
   }
 }
 
-void drawDebug() {
-  if (DEBUG) {
-    noFill();
-    strokeWeight(STROKE_WEIGHT);
-    stroke(DEBUG_COLOR);
-    // Render format
-    rect(CANVAS_X, CANVAS_Y, CANVAS_WIDTH, CANVAS_HEIGHT); 
-    noStroke();
-    float shortest = (SPINNER_HEIGHT < SPINNER_WIDTH ? SPINNER_HEIGHT : SPINNER_WIDTH);
-    // Render sketch info
-    textAlign(RIGHT, CENTER);
-    float textSize = shortest / 4;
-    textSize(textSize);
-    text(date, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize);
-    text(title, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize * 2);
+void drawPalette() {
+  noFill();
+  stroke(#FFFFFF, "overridden");
+  strokeWeight(STROKE_WEIGHT);
+  rect(PALETTE_X, PALETTE_Y, PALETTE_WIDTH, PALETTE_HEIGHT);
+  noStroke();
+  float chipWidth = PALETTE_WIDTH / palette.size();
+  float chipHeight = PALETTE_HEIGHT;
+  for (int i = 0; i < palette.size(); i++) {
+    fill(palette.get(i));
+    rect(PALETTE_X + chipWidth * i, PALETTE_Y, chipWidth, chipHeight);
   }
+}
+
+void drawTime() {
+  fill(color(255, 255, 255, 128), "overridden");
+  textAlign(RIGHT, CENTER);
+  textSize(24);  
+  int millis = (int)((runTime - (floor(runTime))) * 1000);
+  int seconds = (int)(runTime - (millis / 1000)) % 60;
+  int minutes = floor(runTime / (60)) % 60;
+  int hours = (floor(runTime / (60)) / 60) % 24;  
+  String timeFormat = String.format("%s:%s:%s:%03dms", hours, minutes, seconds, millis);
+  text(timeFormat, PALETTE_X + CANVAS_WIDTH, PALETTE_Y + 24);
 }
