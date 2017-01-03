@@ -44,9 +44,9 @@ DecimalFormat df = new DecimalFormat(".#");
 
 // Sketch specific variables
 float GRID_LOWER_X = 0;
-float GRID_UPPER_X = 10;
+float GRID_UPPER_X = 1;
 float GRID_LOWER_Y = 0;
-float GRID_UPPER_Y = 100;
+float GRID_UPPER_Y = 1;
 float GRID_SUBDIVISIONS = 1;
 float GRID_PERCENTAGE = 0.75;                     // Percentage of the canvas space that the grid will be drawn on.
 float GRID_X;
@@ -68,21 +68,29 @@ float FUNCTION_HEIGHT;
 
 float FUNCTION_TERM_PADDING = 0;
 float GRAPH_ANIMATION_LENGTH  = 5;
-float GRAPH_ANIMATION_BALL_MIN_RADIUS = 3;
-float GRAPH_ANIMATION_BALL_MAX_RADIUS = 10;
+float GRAPH_ANIMATION_BALL_MIN_RADIUS = 15;
+float GRAPH_ANIMATION_BALL_MAX_RADIUS = 20;
+float CTRL_PT_GRAB_RADIUS = 35;
+color CTRL_PT_COLOR = color(66, 203, 244);
 float graphAnimationDelta;
 int pulseCount = 5;
 boolean animating = true;
-int limitCount = 9;
+int limitCount = 0;
 ArrayList<PVector> limits = new ArrayList<PVector>();
 ArrayList<PVector> ballPositions = new ArrayList<PVector>();
 ArrayList<LimitAnimation> limitAnimations = new ArrayList<LimitAnimation>();
 Polynomial function;
+int controlPointIndex = 0;
+float ctrlA = .25;
+float ctrlB = .75;
+int lastIndex = -1;
+boolean mouseInEitherPoint = false;
+float animationRadius;
 
 void setup() {
   strokeWeight(STROKE_WEIGHT);
   frameRate(FRAME_RATE);
-  size(1280, 720); 
+  size(700, 700); 
   // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT 
   DEBUG_COLOR = color(#FFFFFF);
   BACKGROUND_COLOR = color(#2d3138);
@@ -103,7 +111,7 @@ void setup() {
   GRID_Y = CANVAS_Y + (CANVAS_HEIGHT - (CANVAS_HEIGHT * GRID_PERCENTAGE)) / 2;
   GRID_WIDTH = CANVAS_WIDTH * GRID_PERCENTAGE;
   GRID_HEIGHT = CANVAS_HEIGHT * GRID_PERCENTAGE;
-  GRID_FONT_SIZE = width / 32;
+  GRID_FONT_SIZE = width / 36;
   GRID_FONT = createFont("georgia.ttf", GRID_FONT_SIZE);
 
   FUNCTION_CENTER_X = CANVAS_X + (CANVAS_WIDTH / 2);
@@ -112,8 +120,10 @@ void setup() {
   float functionBottomY = CANVAS_Y + FUNCTION_HEIGHT / 2;
   FUNCTION_BASELINE_Y = functionBottomY - FUNCTION_HEIGHT * FUNCTION_BASELINE_PERCENTAGE;
 
-  // Init function
+  // Init function x4-2x2+x
   function = new Polynomial();
+  //function.addTerm(new Term(1, 4));
+  //function.addTerm(new Term(2, 2));
   function.addTerm(new Term(1, 2));
   recalculateFunctionBox();
 
@@ -132,8 +142,9 @@ void draw() {
   delta = (millis() - lastFrame) / 1000f;
   runTime += delta;
   lastFrame = millis();
-  graphAnimationDelta += delta;
   background(BACKGROUND_COLOR);
+
+  pollForInput();
   if (DEBUG) {
     drawDebug();
     drawSpinner();
@@ -150,42 +161,93 @@ void draw() {
   }
   drawAxis();
   drawPolynomial();
+  drawControlPoints();
+  drawSlopeData();
+  graphAnimationDelta += delta;
+}
+
+void pollForInput() {
+  if (mousePressed) {
+    float clampX = clamp(mouseX, GRID_X, GRID_X + GRID_WIDTH);
+    float clampY = clamp(mouseY, GRID_Y, GRID_Y + GRID_HEIGHT);
+    ellipse(clampX, clampY, 15, 15);
+    boolean inA, inB;
+    noFill();
+    stroke(255, 0, 0);
+    float graphRange = GRID_UPPER_X - GRID_LOWER_X;
+    float x = graphRange * ctrlA;
+    float y = function.solveForX(x);
+    PVector screenConversion = graphToCanvas(x, y);
+    Circle tmp = new Circle(screenConversion.x, screenConversion.y, CTRL_PT_GRAB_RADIUS);
+    fill(255, 0, 0);
+    inA = tmp.pointInCircle(clampX, clampY);
+    x = graphRange * ctrlB;
+    y = function.solveForX(x);
+    screenConversion = graphToCanvas(x, y);
+    tmp = new Circle(screenConversion.x, screenConversion.y, CTRL_PT_GRAB_RADIUS);
+    inB = tmp.pointInCircle(clampX, clampY);
+    mouseInEitherPoint = inA || inB;
+    // Modify based on overlaps
+    if (inA) {
+      if (inB) {
+        switch (lastIndex) {
+        case -1:
+          inA = true;
+          inB = false;
+          break;
+        case 0:
+          inA = true;
+          inB = false;
+          break;
+        case 1:
+          inA = false;
+          inB = true;
+          break;
+        }
+      }
+    }
+
+    if (inA) {
+      ctrlA = (clampX - GRID_X) / (GRID_WIDTH);
+      lastIndex = 0;
+    } 
+
+    if (inB) {
+      lastIndex = 1;
+      ctrlB = (clampX - GRID_X) / (GRID_WIDTH);
+    }
+  }
 }
 
 void drawAnimation() {
   float alpha = graphAnimationDelta / GRAPH_ANIMATION_LENGTH;
-  alpha = function.solveForX(alpha);
+  alpha = clamp(function.solveForX(alpha), 0, 1);
   float currentX = GRID_LOWER_X + (GRID_UPPER_X - GRID_LOWER_X) * alpha;
   float currentY = function.solveForX(currentX);
   PVector tmp = graphToCanvas(currentX, currentY);
   noStroke();
   fill(GRID_COLOR);
-
   float pulseLength = GRAPH_ANIMATION_LENGTH / pulseCount; 
-  float diff =  graphAnimationDelta % pulseLength;
-  float modDiff;
-
-  if (diff > .5) {
-    modDiff = (1 - ((diff - .5) * 2));
-  } else {
-    modDiff = 2 * diff;
-  }
-  modDiff = function.solveForX(modDiff);
   float range = GRAPH_ANIMATION_BALL_MAX_RADIUS - GRAPH_ANIMATION_BALL_MIN_RADIUS;
-  ellipse(tmp.x, tmp.y, GRAPH_ANIMATION_BALL_MIN_RADIUS + (range * modDiff), GRAPH_ANIMATION_BALL_MIN_RADIUS + (range * modDiff));
-  if (alpha < 1) {
+  float modAlpha = graphAnimationDelta % pulseLength;
+  if (modAlpha > 0.5) { 
+    modAlpha = 1 - ((modAlpha - .5) * 2);
+  } else {
+    modAlpha *= 2;
+  }
+  animationRadius = modAlpha * range + GRAPH_ANIMATION_BALL_MIN_RADIUS;
+  ellipse(tmp.x, tmp.y, animationRadius, animationRadius);
+  if (alpha <= 1) {
     ballPositions.add(new PVector(tmp.x, tmp.y));
   }
-  
   stroke(GRID_COLOR, "o");
   noFill();
-  strokeWeight(0.25);
+  strokeWeight(2.5);
   PVector lastPos = ballPositions.get(0);
   for (PVector pos : ballPositions) {
     line(pos.x, pos.y, lastPos.x, lastPos.y);
     lastPos = pos;
   }
-
   float limitTmpAlpha;
   for (int i = 1; i <= limitCount; i++) {
     limitTmpAlpha = (float)i / (float) limitCount;
@@ -226,18 +288,30 @@ void drawAxis() {
   float midY = GRID_Y + GRID_HEIGHT;
   textSize(GRID_FONT_SIZE / 2);
   line(midX, midY - 10, midX, midY + 10);
-  text((GRID_UPPER_X - GRID_LOWER_X) / 2, midX, midY + GRID_FONT_SIZE);
+  text(GRID_LOWER_X + (GRID_UPPER_X - GRID_LOWER_X) / 2, midX, midY + GRID_FONT_SIZE);
   midX = GRID_X;
   midY = (GRID_Y) + GRID_HEIGHT / 2;
-  text((GRID_UPPER_Y - GRID_LOWER_Y) / 2, midX - GRID_FONT_SIZE, midY);
+  text(GRID_LOWER_Y + (GRID_UPPER_Y - GRID_LOWER_Y) / 2, midX - GRID_FONT_SIZE, midY);
   line(midX - 10, midY, midX + 10, midY);
+  
+  if (GRID_LOWER_Y < 0) {
+    PVector tmp = graphToCanvas(GRID_LOWER_X, 0);
+    PVector tmp2 = graphToCanvas(GRID_UPPER_X, 0);
+    line(tmp.x, tmp.y, tmp2.x, tmp2.y);
+  }
+  
+  if (GRID_LOWER_X < 0) {
+    PVector tmp = graphToCanvas(0, GRID_LOWER_Y);
+    PVector tmp2 = graphToCanvas(0, GRID_UPPER_Y);
+    line(tmp.x, tmp.y, tmp2.x, tmp2.y);
+  }
 }
 
 void drawGraph() {
   PVector tmp = graphToCanvas(GRID_LOWER_X, GRID_LOWER_Y);
   float lastX = tmp.x;
   float lastY = tmp.y;
-  strokeWeight(4);
+  strokeWeight(10);
   stroke(GRID_COLOR, "o");
   for (float x = GRID_LOWER_X; x <= GRID_UPPER_X; x += .0125) {
     tmp = graphToCanvas(x, function.solveForX(x));
@@ -245,6 +319,73 @@ void drawGraph() {
     lastX = tmp.x;
     lastY = tmp.y;
   }
+}
+
+// Draw the control points
+void drawControlPoints() {
+  // Calculate current alpha.
+  float graphAlpha = graphAnimationDelta / GRAPH_ANIMATION_LENGTH;
+  graphAlpha = function.solveForX(graphAlpha);
+  float textSize = animationRadius;
+  // Draw ctrl points A and B
+  float range = GRID_UPPER_X - GRID_LOWER_X;
+  float x = range * ctrlA;
+  float y = function.solveForX(x);
+  PVector tmp = graphToCanvas(x, y);
+
+  textSize(textSize);
+  textAlign(RIGHT, BOTTOM);
+  float r = red(CTRL_PT_COLOR);
+  float g = green(CTRL_PT_COLOR);
+  float b = blue(CTRL_PT_COLOR);
+  fill(color(r, g, b, 255 * graphAlpha), "");
+  stroke(color(r, g, b, 255 * graphAlpha), "");
+  // Only draw if the animation has extended this far...
+  if (graphAlpha > ctrlA) {
+    ellipse(tmp.x, tmp.y, textSize, textSize);
+    // Highlight if user is grabbing.
+    if (lastIndex == 0 && mouseInEitherPoint) {
+      noFill();
+      ellipse(tmp.x, tmp.y, textSize * 2, textSize * 2);
+    }
+    // Render control point name
+    fill(255, 255, 255, graphAlpha * 255);
+    text("a", tmp.x + textSize / 2, tmp.y + textSize / 2);
+  }
+
+  x = range * ctrlB;
+  y = function.solveForX(x);
+  tmp = graphToCanvas(x, y);
+  fill(color(r, g, b, 255 * graphAlpha), "");
+  stroke(color(r, g, b, 255 * graphAlpha), "");
+  // Only draw if the animation has extended this far...
+  if (graphAlpha > ctrlB) {
+    if (x > GRID_UPPER_X) {
+      ellipse(tmp.x + textSize, tmp.y, textSize / 4, textSize / 4);
+    }
+    if (y > GRID_UPPER_Y) {
+      ellipse(tmp.x, tmp.y - textSize, textSize / 4, textSize / 4);
+    }
+    ellipse(tmp.x, tmp.y, textSize, textSize);
+    // Highlight if user is grabbing.
+    if (lastIndex == 1 && mouseInEitherPoint) {
+      noFill();
+      ellipse(tmp.x, tmp.y, textSize * 2, textSize * 2);
+    }
+    // Render control point name
+    fill(255, 255, 255, graphAlpha * 255);
+    text("b", tmp.x + textSize / 2, tmp.y + textSize / 2);
+  }
+}
+
+void drawSlopeData() {
+  // Calculate current alpha.
+  float graphAlpha = graphAnimationDelta / GRAPH_ANIMATION_LENGTH;
+  graphAlpha = function.solveForX(graphAlpha);
+ 
+  
+   
+  
 }
 
 void drawPolynomial () {
@@ -274,63 +415,6 @@ void drawPolynomial () {
   }
 }
 
-void recalculateFunctionBox() {
-  float functionWidth = 0;
-  textFont(GRID_FONT);
-  functionWidth += textWidth("y=");
-
-  Term t;
-  String s;
-  for (int i = 0; i < function.getTermCount(); i ++) {
-    t = function.getTerm(i);
-    s = t.toString();
-    if (i == 0 && t.coefficient > 0 && s.substring(0, 1).equals("+")) {
-      s = s.substring(1, s.length());
-    }
-    functionWidth += textWidth(s);
-    if (i != function.getTermCount() - 1) {
-      functionWidth += FUNCTION_TERM_PADDING;
-    }
-  }
-  FUNCTION_WIDTH = functionWidth;
-}
-
-PVector graphToCanvas(float x, float y) {
-  float xAlpha = clamp(x, GRID_LOWER_X, GRID_UPPER_X) / (GRID_UPPER_X - GRID_LOWER_X);
-  float yAlpha = clamp(y, GRID_LOWER_Y, GRID_UPPER_Y) / (GRID_UPPER_Y - GRID_LOWER_Y);
-  return new PVector(GRID_X + GRID_WIDTH * xAlpha, (GRID_Y + GRID_HEIGHT) - GRID_HEIGHT * yAlpha);
-} 
-
-// Util Methods
-float clamp(float input, float low, float high) {
-  if (input < low) {
-    return low;
-  } else if (input > high) {
-    return high;
-  } else {
-    return input;
-  }
-}
-
-void fill(color c, String s) {
-  if (!palette.contains(c)) {
-    palette.add(c);
-  }
-  fill(c);
-}
-
-void stroke(color c, String s) {
-  if (!palette.contains(c)) {
-    palette.add(c);
-  }
-  stroke(c);
-}
-
-void keyPressed() {
-  if (key == ENTER) {
-    DEBUG = !DEBUG;
-  }
-}
 void drawDebug() {
   if (DEBUG) {
     fill(#FFFFFF);
@@ -537,8 +621,99 @@ class LimitAnimation {
       lineY = canvasY - lineLength;
       textAlign(CENTER, BOTTOM);
     }
-    text("lim x -> " + nf(x, 3, 2), canvasX, ((aboveHalf ? 1 : -1)) * limitSize + lineY);
+    text("lim X -> " + nf(x, 3, 2), canvasX, ((aboveHalf ? 1 : -1)) * limitSize + lineY);
     textSize(limitSize);
-    text(nf(y , 3, 2), canvasX, lineY + ((aboveHalf ? 1 : -1)) * (2 * limitSize)) ;
+    text(nf(y, 3, 2), canvasX, lineY + ((aboveHalf ? 1 : -1)) * (2 * limitSize)) ;
+  }
+}
+
+
+// Util Methods
+float clamp(float input, float low, float high) {
+  if (input < low) {
+    return low;
+  } else if (input > high) {
+    return high;
+  } else {
+    return input;
+  }
+}
+
+void fill(color c, String s) {
+  if (!palette.contains(c)) {
+    palette.add(c);
+  }
+  fill(c);
+}
+
+void stroke(color c, String s) {
+  if (!palette.contains(c)) {
+    palette.add(c);
+  }
+  stroke(c);
+}
+
+void recalculateFunctionBox() {
+  float functionWidth = 0;
+  textFont(GRID_FONT);
+  functionWidth += textWidth("y=");
+
+  Term t;
+  String s;
+  for (int i = 0; i < function.getTermCount(); i ++) {
+    t = function.getTerm(i);
+    s = t.toString();
+    if (i == 0 && t.coefficient > 0 && s.substring(0, 1).equals("+")) {
+      s = s.substring(1, s.length());
+    }
+    functionWidth += textWidth(s);
+    if (i != function.getTermCount() - 1) {
+      functionWidth += FUNCTION_TERM_PADDING;
+    }
+  }
+  FUNCTION_WIDTH = functionWidth;
+}
+
+// Model of a circle.
+class Circle {  
+  float midX, midY, radius;
+
+  Circle(float midX, float midY, float radius) {
+    this.midX = midX;
+    this.midY = midY;
+    this.radius = radius;
+  };
+
+  void setRadius(float radius) {
+    this.radius = radius;
+  }
+
+  // Returns true when this circle is overlapping with the provided circle
+  boolean overlaps(Circle partner) {
+    float dst = sqrt(pow(partner.midX - midX, 2) + pow(partner.midY - midY, 2));
+    return dst < (radius + partner.radius);
+  }
+
+  boolean pointInCircle(float x, float y) {
+    float dst = sqrt(pow(x - midX, 2) + pow(y - midY, 2));
+    return  dst < radius;
+  }
+}
+
+PVector graphToCanvas(float x, float y) {
+  float xAlpha = clamp(x, GRID_LOWER_X, GRID_UPPER_X) / (GRID_UPPER_X - GRID_LOWER_X);
+  float yAlpha = clamp(y, GRID_LOWER_Y, GRID_UPPER_Y) / (GRID_UPPER_Y - GRID_LOWER_Y);
+  return new PVector(GRID_X + GRID_WIDTH * xAlpha, (GRID_Y + GRID_HEIGHT) - GRID_HEIGHT * yAlpha);
+} 
+
+PVector canvasToGraph(float x, float y) {
+  float xAlpha = clamp(x, CANVAS_X, CANVAS_X + CANVAS_WIDTH);
+  float yAlpha = clamp(y, CANVAS_Y, CANVAS_Y - CANVAS_HEIGHT);
+  return new PVector(GRID_X + GRID_WIDTH * xAlpha, (GRID_Y + GRID_HEIGHT) - GRID_HEIGHT * yAlpha);
+} 
+
+void keyPressed() {
+  if (key == ENTER) {
+    DEBUG = !DEBUG;
   }
 }
