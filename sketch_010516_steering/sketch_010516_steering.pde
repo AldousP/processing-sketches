@@ -56,16 +56,6 @@ color GRID_COLOR;
 float zoomLevel = 1;
 float rotation;
 
-float SIN_WAVE = 0;
-float wavesDelta = 0;
-float waveLength = 1;
-//float scanLineDelta 
-float scanLineRange;
-float scanLineUpper;
-float scanLineDowner;
-
-int RECT_SUBDIV = 32;
-
 void setup()
 {
   strokeWeight(STROKE_WEIGHT);
@@ -87,17 +77,11 @@ void setup()
   PALETTE_WIDTH = CANVAS_WIDTH * PALETTE_PERCENTAGE;
   PALETTE_Y = CANVAS_Y + CANVAS_HEIGHT;
   PALETTE_X = CANVAS_X;
-  scanLineRange = height / 4;
 }
 
 void draw() {
   rotation += 10 * delta;
   delta = (millis() - lastFrame) / 1000f;
-  wavesDelta += delta;
-  if (wavesDelta > waveLength) {
-    wavesDelta -= waveLength * 2;
-  }
-  SIN_WAVE = sin(wavesDelta / waveLength);
   runTime += delta;
   lastFrame = millis();
   background(BACKGROUND_COLOR);
@@ -112,31 +96,6 @@ void draw() {
   drawDebug();
   drawPalette();
   drawTime();
-  drawScanLine();
-}
-
-void drawScanLine() {
-  float scanLineY = CANVAS_Y + ((SIN_WAVE / 2) + .5) * CANVAS_HEIGHT;
-  scanLineY += random(-8, 8);
-  stroke(color(0, 255, 255), "0");
-  scanLineUpper = scanLineY - scanLineRange / 2; 
-  scanLineDowner = scanLineY + scanLineRange / 2;
-  if (DEBUG) {
-    line(CANVAS_X, scanLineY, CANVAS_X + CANVAS_WIDTH, scanLineY);
-    line(CANVAS_X, scanLineUpper, CANVAS_X + CANVAS_WIDTH, scanLineUpper);
-    line(CANVAS_X, scanLineDowner, CANVAS_X + CANVAS_WIDTH, scanLineDowner);
-  }
-  
-  //stroke(opacityAdj(color(255, 255, 255), random(.25, 1)), "override");
-  //strokeWeight(4);
-  //line(CANVAS_X, scanLineY, CANVAS_X + CANVAS_WIDTH, scanLineY);
-  int lineDensity = 6;
-  //for (int i = 0; i < lineDensity; i ++) {
-  //  float y = random(scanLineUpper, scanLineDowner);
-  //  strokeWeight(random(.2, .75));
-  //  stroke(opacityAdj(color(255, 255, 255), random(.25, 1)), "override");
-  //  line(CANVAS_X, y, CANVAS_X + CANVAS_WIDTH, y);
-  //}
 }
 
 void drawGutterMask() {
@@ -322,26 +281,7 @@ void ellipse(PVector p, float r) {
 void rect(PVector p, float w, float h) {
   rectMode(CENTER);
   noStroke();
-  int subDiv = RECT_SUBDIV;
-  float fragmentHeight = h / zoomLevel;
-  float fragmentWidth = w / zoomLevel;
-  float baseLine = p.y + fragmentHeight / 2;
-  fragmentHeight = fragmentHeight / subDiv;
-  for (int i = 0; i < subDiv; i ++) {
-    float xPos = p.x;
-    float yPos = (baseLine - (fragmentHeight / 2)) - fragmentHeight * i;
-    float recWidth = fragmentWidth;
-    float recHeight =  fragmentHeight * 1.2;
-    float offset = 0;
-    float jitter = 0;
-    if (yPos > scanLineUpper && yPos < scanLineDowner) {
-      float fragmentAlpha = (yPos - scanLineUpper) / scanLineRange;
-      float diff = .5 - fragmentAlpha;
-      offset = 1 - abs(diff) * 2;
-      jitter += random(-2, 2);
-    }
-    rect(xPos + fragmentWidth / 32 * offset + jitter, yPos, recWidth + jitter, recHeight);
-  }
+  rect(p.x, p.y, w / zoomLevel, h / zoomLevel);
   rectMode(CORNER);
 }
 
