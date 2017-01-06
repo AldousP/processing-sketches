@@ -5,9 +5,9 @@ int FRAME_RATE = 60;
 float STROKE_WEIGHT = .01;
 
 boolean DEBUG = true;
-String title = "blank_slate";
-String date = "00.00.00";
-float sketchOpacity = 1;
+String title = "steering";
+String date = "01.05.17";
+float sketchOpacity = 1.1;
 
 int NML_L = -999;
 int NML_U = 999;
@@ -56,6 +56,16 @@ color GRID_COLOR;
 float zoomLevel = 1;
 float rotation;
 
+float SIN_WAVE = 0;
+float wavesDelta = 0;
+float waveLength = 1;
+//float scanLineDelta 
+float scanLineRange;
+float scanLineUpper;
+float scanLineDowner;
+
+int RECT_SUBDIV = 32;
+
 void setup()
 {
   strokeWeight(STROKE_WEIGHT);
@@ -77,25 +87,56 @@ void setup()
   PALETTE_WIDTH = CANVAS_WIDTH * PALETTE_PERCENTAGE;
   PALETTE_Y = CANVAS_Y + CANVAS_HEIGHT;
   PALETTE_X = CANVAS_X;
-  log("Sketch", "Beginning sketch " + title + "!", true);
+  scanLineRange = height / 4;
 }
 
 void draw() {
   rotation += 10 * delta;
   delta = (millis() - lastFrame) / 1000f;
+  wavesDelta += delta;
+  if (wavesDelta > waveLength) {
+    wavesDelta -= waveLength * 2;
+  }
+  SIN_WAVE = sin(wavesDelta / waveLength);
   runTime += delta;
   lastFrame = millis();
   background(BACKGROUND_COLOR);
-  drawDebug();
   drawSpinner();
- 
+
   drawGridLines();
   // Draw shapes
-  rect(graphToCanvas(0, 0), 75, 75);
+  rect(graphToCanvas(0, 0), 200, 200);
+  rect(graphToCanvas(0, .55), 100, 100);
   // Hacky clip!
   drawGutterMask();
+  drawDebug();
   drawPalette();
   drawTime();
+  drawScanLine();
+}
+
+void drawScanLine() {
+  float scanLineY = CANVAS_Y + ((SIN_WAVE / 2) + .5) * CANVAS_HEIGHT;
+  scanLineY += random(-8, 8);
+  stroke(color(0, 255, 255), "0");
+  scanLineUpper = scanLineY - scanLineRange / 2; 
+  scanLineDowner = scanLineY + scanLineRange / 2;
+  if (DEBUG) {
+    line(CANVAS_X, scanLineY, CANVAS_X + CANVAS_WIDTH, scanLineY);
+    line(CANVAS_X, scanLineUpper, CANVAS_X + CANVAS_WIDTH, scanLineUpper);
+    line(CANVAS_X, scanLineDowner, CANVAS_X + CANVAS_WIDTH, scanLineDowner);
+  }
+  
+  //stroke(opacityAdj(color(255, 255, 255), random(.25, 1)), "override");
+  //strokeWeight(4);
+  //line(CANVAS_X, scanLineY, CANVAS_X + CANVAS_WIDTH, scanLineY);
+  int lineDensity = 6;
+  //for (int i = 0; i < lineDensity; i ++) {
+  //  float y = random(scanLineUpper, scanLineDowner);
+  //  strokeWeight(random(.2, .75));
+  //  stroke(opacityAdj(color(255, 255, 255), random(.25, 1)), "override");
+  //  line(CANVAS_X, y, CANVAS_X + CANVAS_WIDTH, y);
+  //}
 }
 
 void drawGutterMask() {
@@ -104,20 +145,21 @@ void drawGutterMask() {
   rectMode(CORNER);
   rect(0, 0, width, (height - CANVAS_HEIGHT) / 2);
   rect(0, height - (height - CANVAS_HEIGHT) / 2, width, (height - CANVAS_HEIGHT) / 2);
-  rect(0, 0, (width - CANVAS_WIDTH) / 2 , height);
-  rect(width - (width - CANVAS_WIDTH) / 2, 0, (width - CANVAS_WIDTH) / 2 , height);
+  rect(0, 0, (width - CANVAS_WIDTH) / 2, height);
+  rect(width - (width - CANVAS_WIDTH) / 2, 0, (width - CANVAS_WIDTH) / 2, height);
 }
 
 void drawGridLines() {
-  if (CANVAS_LOWER_X < 0 && CANVAS_UPPER_X > 0) {
+  strokeWeight(STROKE_WEIGHT);
+  if (CANVAS_LOWER_X < 0 && CANVAS_UPPER_X > 0 && DEBUG) {
     float diff = abs(0 - CANVAS_LOWER_X);
     float alpha = clamp(diff / (GRID_WIDTH), 0, 1);
     float canvasX = (alpha * CANVAS_WIDTH) + CANVAS_X;
     stroke(color(GRID_COLOR), "o");
     line(canvasX, CANVAS_Y, canvasX, CANVAS_Y + CANVAS_HEIGHT);
   }
-  
-  if (CANVAS_LOWER_Y < 0 && CANVAS_UPPER_Y > 0) {
+
+  if (CANVAS_LOWER_Y < 0 && CANVAS_UPPER_Y > 0 & DEBUG) {
     float diff = abs(0 - CANVAS_LOWER_Y);
     float alpha = clamp(diff / (GRID_HEIGHT), 0, 1);
     float canvasY = CANVAS_Y + ((1 - alpha) * CANVAS_HEIGHT);
@@ -145,6 +187,12 @@ void drawDebug() {
   }
 }
 
+class Automaton {
+  float x; 
+  float y;
+  color drawColor;
+}
+
 // Projection methods
 PVector graphToCanvas(PVector pt) {
   return graphToCanvas(pt.x, pt.y);
@@ -155,7 +203,7 @@ PVector graphToCanvas(float x, float y) {
   float vAlpha = (y - CANVAS_LOWER_Y) / (CANVAS_UPPER_Y - CANVAS_LOWER_Y);
   float canvasX = CANVAS_X + CANVAS_WIDTH * hAlpha;
   float canvasY = CANVAS_Y + CANVAS_HEIGHT - (CANVAS_HEIGHT * vAlpha);
-  
+
   if (!inRange(hAlpha, 0, 1)) {
     if (hAlpha < 0) {
       canvasX = NML_L;
@@ -163,7 +211,7 @@ PVector graphToCanvas(float x, float y) {
       canvasX = NML_U;
     }
   }
-  
+
   if (!inRange(vAlpha, 0, 1)) {
     if (vAlpha < 0) {
       canvasY = NML_U;
@@ -225,38 +273,42 @@ void drawTime() {
 }
 
 void keyPressed() {
+  if (key == ENTER) {
+    DEBUG = !DEBUG;
+  }
+
   if (key == '+') {
     zoomIn(0.5);
   }
-  
+
   if (key == '-') {
     zoomOut(0.5);
   }
-  
+
   if (key == 'w') {
     translateViewport(0, GRID_HEIGHT / 8);
   }
-  
+
   if (key == 'a') {
     translateViewport(-GRID_WIDTH / 8, 0);
   }
-  
+
   if (key == 's') {
     translateViewport(0, -GRID_HEIGHT / 8);
   }
-  
+
   if (key == 'd') {
     translateViewport(GRID_WIDTH / 8, 0);
   }
-  
+
   if (key == '1') {
     sketchOpacity = 0;
   }
-  
+
   if (key == '2') {
     sketchOpacity = .5;
   }
-  
+
   if (key == '3') {
     sketchOpacity = 1;
   }
@@ -269,7 +321,27 @@ void ellipse(PVector p, float r) {
 
 void rect(PVector p, float w, float h) {
   rectMode(CENTER);
-  rect(p.x, p.y, clamp(w / zoomLevel, 0, CANVAS_WIDTH), clamp(h / zoomLevel, 0, CANVAS_HEIGHT));
+  noStroke();
+  int subDiv = RECT_SUBDIV;
+  float fragmentHeight = h / zoomLevel;
+  float fragmentWidth = w / zoomLevel;
+  float baseLine = p.y + fragmentHeight / 2;
+  fragmentHeight = fragmentHeight / subDiv;
+  for (int i = 0; i < subDiv; i ++) {
+    float xPos = p.x;
+    float yPos = (baseLine - (fragmentHeight / 2)) - fragmentHeight * i;
+    float recWidth = fragmentWidth;
+    float recHeight =  fragmentHeight * 1.2;
+    float offset = 0;
+    float jitter = 0;
+    if (yPos > scanLineUpper && yPos < scanLineDowner) {
+      float fragmentAlpha = (yPos - scanLineUpper) / scanLineRange;
+      float diff = .5 - fragmentAlpha;
+      offset = 1 - abs(diff) * 2;
+      jitter += random(-2, 2);
+    }
+    rect(xPos + fragmentWidth / 32 * offset + jitter, yPos, recWidth + jitter, recHeight);
+  }
   rectMode(CORNER);
 }
 
