@@ -43,8 +43,8 @@ DecimalFormat df = new DecimalFormat(".#");
 float colorDelta = 0;
 
 // There's some simple projection going on here. No scaling.
-float GRID_WIDTH = 1;
-float GRID_HEIGHT = 1;
+float GRID_WIDTH = 5;
+float GRID_HEIGHT = 5;
 float CANVAS_MID_X = 0;
 float CANVAS_MID_Y = 0;
 float CANVAS_LOWER_X = CANVAS_MID_X - GRID_WIDTH / 2;
@@ -54,7 +54,11 @@ float CANVAS_UPPER_Y = CANVAS_MID_Y + GRID_HEIGHT / 2;
 
 color GRID_COLOR;
 float zoomLevel = 1;
-float rotation;
+
+ArrayList<Automaton> automatons = new ArrayList<Automaton>();
+int AUTOMATON_COUNT = 1;
+
+Circle bounds;
 
 void setup()
 {
@@ -77,25 +81,38 @@ void setup()
   PALETTE_WIDTH = CANVAS_WIDTH * PALETTE_PERCENTAGE;
   PALETTE_Y = CANVAS_Y + CANVAS_HEIGHT;
   PALETTE_X = CANVAS_X;
+  for (int i = 0; i < AUTOMATON_COUNT; i ++) { 
+    automatons.add(new Automaton(0, 0));
+  }
+  
+  bounds = new Circle(0, 0, CANVAS_WIDTH);
 }
 
 void draw() {
-  rotation += 10 * delta;
   delta = (millis() - lastFrame) / 1000f;
   runTime += delta;
   lastFrame = millis();
   background(BACKGROUND_COLOR);
-  drawSpinner();
-
   drawGridLines();
-  // Draw shapes
-  rect(graphToCanvas(0, 0), 200, 200);
-  rect(graphToCanvas(0, .55), 100, 100);
-  // Hacky clip!
-  drawGutterMask();
+  drawAutomatons();
+  drawGutterMask(); // Hacky clip!
+  drawSpinner();
   drawDebug();
   drawPalette();
   drawTime();
+  bounds.draw();
+  //CANVAS_MID_X += 1 * delta;
+  //CANVAS_MID_Y += 1 * delta;
+  //CANVAS_LOWER_X = CANVAS_MID_X - GRID_WIDTH / 2;
+  //CANVAS_UPPER_X  =  CANVAS_MID_X + GRID_WIDTH / 2;
+  //CANVAS_LOWER_Y = CANVAS_MID_Y - GRID_HEIGHT / 2;
+  //CANVAS_UPPER_Y = CANVAS_MID_Y + GRID_HEIGHT / 2;
+}
+
+void drawAutomatons() {
+  for (Automaton a : automatons) {
+    a.update();
+  }
 }
 
 void drawGutterMask() {
@@ -150,6 +167,47 @@ class Automaton {
   float x; 
   float y;
   color drawColor;
+  PVector velocity;
+  float radius = 12;
+  float velocitySwitchDelta = 0;
+  
+  float MAX_SEE_AHEAD = .21;
+
+  PVector force = new PVector(0, 0);
+
+  Automaton(float x, float y) {
+    this.x = x;
+    this.y = y;
+    velocity = new PVector(0, 0);
+  }
+
+  void update() {
+    velocitySwitchDelta += delta;
+    if (velocitySwitchDelta > 3) {
+      velocitySwitchDelta -= 3;
+      float range = .25;
+      force = new PVector(random(-range, range), random(-range, range));
+      velocity = new PVector();
+    } 
+    velocity.x += force.x * delta;
+    velocity.y += force.y * delta;
+    x += velocity.x * delta;
+    y -= velocity.y * delta;
+    
+    PVector tmp = graphToCanvas(x, y); 
+    PVector vel = new PVector(x + velocity.x, y - velocity.y);
+    //P
+    PVector tmp2 = graphToCanvas(vel);
+    fill(0, 255, 0);
+    ellipse(tmp2.x, tmp2.y, radius / 2, radius / 2);
+    stroke(0, 255, 0);
+    strokeWeight(3.5);
+    line(tmp.x, tmp.y, tmp2.x, tmp2.y);
+    fill(color(#FFFFFF), "");
+    noStroke();
+    ellipse(tmp, radius);
+    
+  }
 }
 
 // Projection methods
@@ -195,9 +253,10 @@ void drawSpinner() {
   spinnerRotation += clamp(spinnerRotationSpeed, 0, 1000) * delta;
   float shortest = (SPINNER_HEIGHT < SPINNER_WIDTH ? SPINNER_HEIGHT : SPINNER_WIDTH);
   float radius = shortest / 6; 
+  strokeWeight(0);
   for (int i = 0; i < spinnerOrbs; i ++) {
-    float alpha = i / (float)spinnerOrbs;
-    fill(color(255, 255, 255, 255 * alpha), "overridden");
+    float alpha = i / (float) spinnerOrbs;
+    fill(color(255, 255, 255, alpha * 255), "overridden");
     float currentDegree = (360 / spinnerOrbs) * i + spinnerRotation;
     float orbX = SPINNER_WIDTH / 2 + cos(radians(currentDegree)) * radius;
     float orbY = SPINNER_HEIGHT / 2 + sin(radians(currentDegree)) * radius;
@@ -206,6 +265,7 @@ void drawSpinner() {
 }
 
 void drawPalette() {
+  if (!DEBUG) return;
   noFill();
   stroke(#FFFFFF, "o");
   strokeWeight(STROKE_WEIGHT);
@@ -220,6 +280,7 @@ void drawPalette() {
 }
 
 void drawTime() {
+  if (!DEBUG) return;
   fill(color(255, 255, 255, 128), "overridden");
   textAlign(RIGHT, CENTER);
   textSize(24);  
@@ -275,7 +336,7 @@ void keyPressed() {
 
 // Shape overrides
 void ellipse(PVector p, float r) {
-  ellipse(p.x, p.y, r * (1 - zoomLevel), r * (1 - zoomLevel));
+  ellipse(p.x, p.y, r / zoomLevel, r / zoomLevel);
 }
 
 void rect(PVector p, float w, float h) {
@@ -342,4 +403,30 @@ void log(String cat, String message, boolean timeStamp) {
   String time = timeStamp ? "[" + hour() + ":" + minute() + ":" + second() + ":" + millis() +  "]" : "";
   cat = "[" + cat + "]: ";
   println(time + cat + message);
+}
+
+// Model of a circle.
+class Circle {  
+  float midX, midY, radius;
+
+  Circle(float midX, float midY, float radius) {
+    this.midX = midX;
+    this.midY = midY;
+    this.radius = radius;
+  };
+  
+  void draw(){
+    PVector tmp = graphToCanvas(midX, midY);
+    ellipse(tmp.x, tmp.y, radius, radius);
+  }
+
+  void setRadius(float radius) {
+    this.radius = radius;
+  }
+
+  // Returns true when this circle is overlapping with the provided circle
+  boolean overlaps(Circle partner) {
+    float dst = sqrt(pow(partner.midX - midX, 2) + pow(partner.midY - midY, 2));
+    return dst < (radius + partner.radius);
+  }
 }
