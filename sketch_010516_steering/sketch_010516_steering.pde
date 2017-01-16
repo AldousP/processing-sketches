@@ -84,8 +84,8 @@ void setup()
   for (int i = 0; i < AUTOMATON_COUNT; i ++) { 
     automatons.add(new Automaton(0, 0));
   }
-  
-  bounds = new Circle(0, 0, CANVAS_WIDTH);
+
+  bounds = new Circle(0, 0, 1);
 }
 
 void draw() {
@@ -94,13 +94,14 @@ void draw() {
   lastFrame = millis();
   background(BACKGROUND_COLOR);
   drawGridLines();
+  bounds.draw();
+
   drawAutomatons();
   drawGutterMask(); // Hacky clip!
   drawSpinner();
   drawDebug();
   drawPalette();
   drawTime();
-  bounds.draw();
   //CANVAS_MID_X += 1 * delta;
   //CANVAS_MID_Y += 1 * delta;
   //CANVAS_LOWER_X = CANVAS_MID_X - GRID_WIDTH / 2;
@@ -170,8 +171,9 @@ class Automaton {
   PVector velocity;
   float radius = 12;
   float velocitySwitchDelta = 0;
-  
-  float MAX_SEE_AHEAD = .21;
+  float MAX_LOOK_AHEAD = 5;
+  float avoidanceForce = 1;
+  float MAX_VELOCITY = 5;
 
   PVector force = new PVector(0, 0);
 
@@ -179,25 +181,53 @@ class Automaton {
     this.x = x;
     this.y = y;
     velocity = new PVector(0, 0);
+
+    float range = .15;
+    force = new PVector(random(-range, range), random(-range, range));
+    velocity = new PVector();
   }
 
   void update() {
     velocitySwitchDelta += delta;
-    if (velocitySwitchDelta > 3) {
-      velocitySwitchDelta -= 3;
-      float range = .25;
-      force = new PVector(random(-range, range), random(-range, range));
-      velocity = new PVector();
-    } 
+
+    // Set new velocity
+    //if (velocitySwitchDelta > 1) {
+    //  velocitySwitchDelta -= 3;
+    //  float range = .15;
+    //  force = new PVector(random(-range, range), random(-range, range));
+    //  velocity = new PVector();
+    //} 
+
+    // Calculate velocity
     velocity.x += force.x * delta;
     velocity.y += force.y * delta;
     x += velocity.x * delta;
     y -= velocity.y * delta;
-    
+
+    float velocityAlpha = velocity.mag() / MAX_VELOCITY;
+    float maxLookAhead = MAX_LOOK_AHEAD * velocityAlpha;
+    float minLookAhead = maxLookAhead / 2;
+
     PVector tmp = graphToCanvas(x, y); 
     PVector vel = new PVector(x + velocity.x, y - velocity.y);
-    //P
+    PVector velNorMax = velocity.copy().normalize().mult(maxLookAhead);
+    PVector velNorMin = velocity.copy().normalize().mult(minLookAhead);
+    PVector aheadMax = new PVector(x + velNorMax.x, y - velNorMax.y);
+    PVector aheadMin = new PVector(x + velNorMin.x, y - velNorMin.y);
+
+    if (!bounds.contains(aheadMax)) {
+      float angle = atan2(bounds.pos.y - aheadMax.y, bounds.pos.x - aheadMax.x) + radians(180);
+      PVector avoidancePoint = new PVector(cos(angle) * bounds.radius, sin(angle) * bounds.radius);
+      angle = atan2(bounds.pos.y - avoidancePoint.y, bounds.pos.x - avoidancePoint.x);
+      PVector avoidanceVector = new PVector(cos(angle) * avoidanceForce, sin(angle) * avoidanceForce);
+      velocity.add(avoidanceVector);
+    }
+    velocity.limit(MAX_VELOCITY);
+
+    // Draw look aheads
     PVector tmp2 = graphToCanvas(vel);
+    PVector tmp3 = graphToCanvas(aheadMax);
+    PVector tmp4 = graphToCanvas(aheadMin);
     fill(0, 255, 0);
     ellipse(tmp2.x, tmp2.y, radius / 2, radius / 2);
     stroke(0, 255, 0);
@@ -206,7 +236,12 @@ class Automaton {
     fill(color(#FFFFFF), "");
     noStroke();
     ellipse(tmp, radius);
-    
+    fill(255, 0, 0);
+
+    fill(bounds.contains(aheadMax) ? color(128, 0, 0) : color(255, 0, 0), "");
+    ellipse(tmp3, radius);
+    fill(bounds.contains(aheadMin) ? color(128, 0, 0) : color(255, 0, 0), "");
+    ellipse(tmp4, radius);
   }
 }
 
@@ -408,15 +443,19 @@ void log(String cat, String message, boolean timeStamp) {
 // Model of a circle.
 class Circle {  
   float midX, midY, radius;
+  PVector pos;
 
   Circle(float midX, float midY, float radius) {
     this.midX = midX;
     this.midY = midY;
     this.radius = radius;
+    pos = new PVector(midX, midY);
   };
-  
-  void draw(){
+
+  void draw() {
     PVector tmp = graphToCanvas(midX, midY);
+    float radAlpha = radius / GRID_WIDTH;
+    float radius = radAlpha * CANVAS_WIDTH * 2;
     ellipse(tmp.x, tmp.y, radius, radius);
   }
 
@@ -428,5 +467,14 @@ class Circle {
   boolean overlaps(Circle partner) {
     float dst = sqrt(pow(partner.midX - midX, 2) + pow(partner.midY - midY, 2));
     return dst < (radius + partner.radius);
+  }
+
+  boolean contains(float x, float y) {
+    float dst = sqrt(pow(x - midX, 2) + pow(y - midY, 2));
+    return dst < radius;
+  }
+
+  boolean contains(PVector pt) {
+    return contains(pt.x, pt.y);
   }
 }
