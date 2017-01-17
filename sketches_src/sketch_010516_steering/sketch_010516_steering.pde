@@ -1,4 +1,4 @@
-import java.text.DecimalFormat;
+import java.text.DecimalFormat; //<>//
 
 float runTime = 0;
 int FRAME_RATE = 60;
@@ -56,8 +56,9 @@ color GRID_COLOR;
 float zoomLevel = 1;
 
 ArrayList<Automaton> automatons = new ArrayList<Automaton>();
-int AUTOMATON_COUNT = 1;
+int AUTOMATON_COUNT = 800;
 
+float rotation;
 Circle bounds;
 
 void setup()
@@ -81,11 +82,12 @@ void setup()
   PALETTE_WIDTH = CANVAS_WIDTH * PALETTE_PERCENTAGE;
   PALETTE_Y = CANVAS_Y + CANVAS_HEIGHT;
   PALETTE_X = CANVAS_X;
-  for (int i = 0; i < AUTOMATON_COUNT; i ++) { 
-    automatons.add(new Automaton(0, 0));
+  bounds = new Circle(0, 0, 2);
+  for (int i = 0; i < AUTOMATON_COUNT; i ++) {
+    float degree = radians(random(0, 360));
+    float radius = random(0, bounds.radius * .35);
+    automatons.add(new Automaton(cos(degree) * radius, sin(degree) * radius));
   }
-
-  bounds = new Circle(0, 0, 1);
 }
 
 void draw() {
@@ -94,6 +96,9 @@ void draw() {
   lastFrame = millis();
   background(BACKGROUND_COLOR);
   drawGridLines();
+  noFill();
+  stroke(255, 255, 255);
+  strokeWeight(5);
   bounds.draw();
 
   drawAutomatons();
@@ -167,81 +172,48 @@ void drawDebug() {
 class Automaton {
   float x; 
   float y;
-  color drawColor;
+  color drawColor = color(255, 255, 255, random(10, 225));
   PVector velocity;
-  float radius = 12;
-  float velocitySwitchDelta = 0;
-  float MAX_LOOK_AHEAD = 5;
+  float radius = random(3, 10);
+  float MAX_LOOK_AHEAD = .5;
   float avoidanceForce = 1;
   float MAX_VELOCITY = 5;
-
-  PVector force = new PVector(0, 0);
+  PVector pos = new PVector();
+  PVector force = new PVector();
+  float forceRange = 1;
 
   Automaton(float x, float y) {
     this.x = x;
     this.y = y;
     velocity = new PVector(0, 0);
+    resetSpeed();
+  }
 
-    float range = .15;
-    force = new PVector(random(-range, range), random(-range, range));
+  void resetSpeed() {
+    force = new PVector(random(-forceRange, forceRange), random(-forceRange, forceRange));
     velocity = new PVector();
   }
 
   void update() {
-    velocitySwitchDelta += delta;
-
-    // Set new velocity
-    //if (velocitySwitchDelta > 1) {
-    //  velocitySwitchDelta -= 3;
-    //  float range = .15;
-    //  force = new PVector(random(-range, range), random(-range, range));
-    //  velocity = new PVector();
-    //} 
-
-    // Calculate velocity
-    velocity.x += force.x * delta;
-    velocity.y += force.y * delta;
-    x += velocity.x * delta;
-    y -= velocity.y * delta;
-
+    pos.set(x, y);
     float velocityAlpha = velocity.mag() / MAX_VELOCITY;
     float maxLookAhead = MAX_LOOK_AHEAD * velocityAlpha;
-    float minLookAhead = maxLookAhead / 2;
-
     PVector tmp = graphToCanvas(x, y); 
-    PVector vel = new PVector(x + velocity.x, y - velocity.y);
     PVector velNorMax = velocity.copy().normalize().mult(maxLookAhead);
-    PVector velNorMin = velocity.copy().normalize().mult(minLookAhead);
     PVector aheadMax = new PVector(x + velNorMax.x, y - velNorMax.y);
-    PVector aheadMin = new PVector(x + velNorMin.x, y - velNorMin.y);
-
     if (!bounds.contains(aheadMax)) {
-      float angle = atan2(bounds.pos.y - aheadMax.y, bounds.pos.x - aheadMax.x) + radians(180);
-      PVector avoidancePoint = new PVector(cos(angle) * bounds.radius, sin(angle) * bounds.radius);
-      angle = atan2(bounds.pos.y - avoidancePoint.y, bounds.pos.x - avoidancePoint.x);
-      PVector avoidanceVector = new PVector(cos(angle) * avoidanceForce, sin(angle) * avoidanceForce);
-      velocity.add(avoidanceVector);
+      resetSpeed();
+    } else {
+      // Calculate velocity
+      velocity.x += force.x * delta;
+      velocity.y += force.y * delta;
     }
+    x += velocity.x * delta;
+    y -= velocity.y * delta;
     velocity.limit(MAX_VELOCITY);
-
-    // Draw look aheads
-    PVector tmp2 = graphToCanvas(vel);
-    PVector tmp3 = graphToCanvas(aheadMax);
-    PVector tmp4 = graphToCanvas(aheadMin);
-    fill(0, 255, 0);
-    ellipse(tmp2.x, tmp2.y, radius / 2, radius / 2);
-    stroke(0, 255, 0);
-    strokeWeight(3.5);
-    line(tmp.x, tmp.y, tmp2.x, tmp2.y);
-    fill(color(#FFFFFF), "");
     noStroke();
+    fill(drawColor, "");
     ellipse(tmp, radius);
-    fill(255, 0, 0);
-
-    fill(bounds.contains(aheadMax) ? color(128, 0, 0) : color(255, 0, 0), "");
-    ellipse(tmp3, radius);
-    fill(bounds.contains(aheadMin) ? color(128, 0, 0) : color(255, 0, 0), "");
-    ellipse(tmp4, radius);
   }
 }
 
