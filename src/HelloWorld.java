@@ -1,3 +1,5 @@
+import java.io.File;
+
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -7,11 +9,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import processing.core.PApplet;
 
 /**
  * HelloWorld.
@@ -20,7 +22,9 @@ public class HelloWorld extends Application {
 
     private final int WIDTH = 1280;
     private final int HEIGHT = 720;
+    private final boolean RESIZABLE = false;
     private final String TITLE = "Processing Sketches";
+    private final String SKETCHES_SRC = "sketches.";
 
     /**
      * Constructor.
@@ -42,17 +46,36 @@ public class HelloWorld extends Application {
 
         // Options List
         ListView<String> list = new ListView<String>();
-        ObservableList<String> items = FXCollections.observableArrayList (
-                "Single", "Double", "Suite", "Family App");
+
+        File folder = new File("src/sketches/");
+        File[] listOfFiles = folder.listFiles();
+        ObservableList<String> items = FXCollections.observableArrayList();
+
+        String tmp;
+        if (listOfFiles != null) {
+            for (File file : listOfFiles) {
+                tmp = file.getName();
+                items.add(tmp.substring(0, tmp.lastIndexOf('.')));
+            }
+        }
+
         list.setItems(items);
         list.setPrefWidth(300);
         list.setPrefHeight(400);
-
         grid.add(list, 0, 1, 2, 1);
+
+        Button btn = new Button();
+        btn.setText("Launch Sketch");
+        btn.setOnAction(event -> {
+            PApplet.main(SKETCHES_SRC + list.getSelectionModel().getSelectedItem(), new String[]{});
+        }
+        );
+        grid.getChildren().add(btn);
+
         Scene scene = new Scene(grid, WIDTH, HEIGHT);
         primaryStage.setTitle(TITLE);
         primaryStage.setScene(scene);
-        primaryStage.setResizable(false);
+        primaryStage.setResizable(RESIZABLE);
         primaryStage.show();
     }
 

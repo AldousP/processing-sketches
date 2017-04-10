@@ -10,7 +10,7 @@ import processing.core.PVector;
 /**
  * BlankSlate.
  */
-public class BlankSlate extends ProcessingApp {
+public class BlankSlate extends PApplet {
     float runTime = 0;
     int FRAME_RATE = 60;
     float STROKE_WEIGHT = .01f;
