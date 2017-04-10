@@ -99,11 +99,11 @@ public class Wheel extends PApplet {
     runTime += delta;
     lastFrame = millis();
     background(BACKGROUND_COLOR);
-    drawDebug();
     drawGridLines();
     // Draw shapes
     // Hacky clip!
     drawGutterMask();
+    drawDebug();
     drawSpinner();
     drawPalette();
     drawTime();
@@ -153,6 +153,8 @@ public class Wheel extends PApplet {
       textAlign(PConstants.RIGHT, PConstants.CENTER);
       float textSize = shortest / 4;
       textSize(textSize);
+      fill(DEBUG_COLOR);
+
       text(date, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize);
       text(title, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize * 2);
     }
