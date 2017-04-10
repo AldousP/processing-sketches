@@ -1,4 +1,4 @@
-![Processing Sketches](http://i.imgur.com/gHvwuEm.png "Header")
+![Processing Sketches](http://i.imgur.com/Ere8qzR.png "Header")
 ---
   '<img src="gifs/EvilEvergreenAngelfish.gif" width="128" style="float: right;" height="128"> 
   <img src="gifs/GlumFlickeringGenet.gif" width="128" height="128" style="float: right;"> 
