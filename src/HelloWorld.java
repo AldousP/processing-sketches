@@ -1,8 +1,11 @@
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
@@ -37,9 +40,19 @@ public class HelloWorld extends Application {
         scenetitle.setFont(Font.font("Tahoma", FontWeight.NORMAL, 20));
         grid.add(scenetitle, 0, 0, 2, 1);
 
+        // Options List
+        ListView<String> list = new ListView<String>();
+        ObservableList<String> items = FXCollections.observableArrayList (
+                "Single", "Double", "Suite", "Family App");
+        list.setItems(items);
+        list.setPrefWidth(300);
+        list.setPrefHeight(400);
+
+        grid.add(list, 0, 1, 2, 1);
         Scene scene = new Scene(grid, WIDTH, HEIGHT);
         primaryStage.setTitle(TITLE);
         primaryStage.setScene(scene);
+        primaryStage.setResizable(false);
         primaryStage.show();
     }
 

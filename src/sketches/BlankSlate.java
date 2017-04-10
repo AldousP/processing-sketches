@@ -1,6 +1,10 @@
+package sketches;
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
+import processing.core.PApplet;
+import processing.core.PConstants;
 import processing.core.PVector;
 
 /**
@@ -110,7 +114,7 @@ public class BlankSlate extends ProcessingApp {
     private void drawGutterMask() {
         noStroke();
         fill(BACKGROUND_COLOR);
-        rectMode(CORNER);
+        rectMode(PConstants.CORNER);
         rect(0, 0, width, (height - CANVAS_HEIGHT) / 2);
         rect(0, height - (height - CANVAS_HEIGHT) / 2, width, (height - CANVAS_HEIGHT) / 2);
         rect(0, 0, (width - CANVAS_WIDTH) / 2 , height);
@@ -119,7 +123,7 @@ public class BlankSlate extends ProcessingApp {
 
     private void drawGridLines() {
         if (CANVAS_LOWER_X < 0 && CANVAS_UPPER_X > 0) {
-            float diff = abs(0 - CANVAS_LOWER_X);
+            float diff = PApplet.abs(0 - CANVAS_LOWER_X);
             float alpha = clamp(diff / (GRID_WIDTH), 0, 1);
             float canvasX = (alpha * CANVAS_WIDTH) + CANVAS_X;
             stroke(color(GRID_COLOR), "o");
@@ -127,7 +131,7 @@ public class BlankSlate extends ProcessingApp {
         }
 
         if (CANVAS_LOWER_Y < 0 && CANVAS_UPPER_Y > 0) {
-            float diff = abs(0 - CANVAS_LOWER_Y);
+            float diff = PApplet.abs(0 - CANVAS_LOWER_Y);
             float alpha = clamp(diff / (GRID_HEIGHT), 0, 1);
             float canvasY = CANVAS_Y + ((1 - alpha) * CANVAS_HEIGHT);
             stroke(color(GRID_COLOR), "o");
@@ -146,7 +150,7 @@ public class BlankSlate extends ProcessingApp {
             noStroke();
             float shortest = (SPINNER_HEIGHT < SPINNER_WIDTH ? SPINNER_HEIGHT : SPINNER_WIDTH);
             // Render sketch info
-            textAlign(RIGHT, CENTER);
+            textAlign(PConstants.RIGHT, PConstants.CENTER);
             float textSize = shortest / 4;
             textSize(textSize);
             text(date, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize);
@@ -201,8 +205,8 @@ public class BlankSlate extends ProcessingApp {
             float alpha = i / (float)spinnerOrbs;
             fill(color(255, 255, 255, 255 * alpha), "overridden");
             float currentDegree = (360 / spinnerOrbs) * i + spinnerRotation;
-            float orbX = SPINNER_WIDTH / 2 + cos(radians(currentDegree)) * radius;
-            float orbY = SPINNER_HEIGHT / 2 + sin(radians(currentDegree)) * radius;
+            float orbX = SPINNER_WIDTH / 2 + PApplet.cos(PApplet.radians(currentDegree)) * radius;
+            float orbY = SPINNER_HEIGHT / 2 + PApplet.sin(PApplet.radians(currentDegree)) * radius;
             ellipse(orbX, orbY, radius, radius);
         }
     }
@@ -223,12 +227,12 @@ public class BlankSlate extends ProcessingApp {
 
     private void drawTime() {
         fill(color(255, 255, 255, 128), "overridden");
-        textAlign(RIGHT, CENTER);
+        textAlign(PConstants.RIGHT, PConstants.CENTER);
         textSize(24);
-        int millis = (int)((runTime - (floor(runTime))) * 1000);
+        int millis = (int)((runTime - (PApplet.floor(runTime))) * 1000);
         int seconds = (int)(runTime - (millis / 1000)) % 60;
-        int minutes = floor(runTime / (60)) % 60;
-        int hours = (floor(runTime / (60)) / 60) % 24;
+        int minutes = PApplet.floor(runTime / (60)) % 60;
+        int hours = (PApplet.floor(runTime / (60)) / 60) % 24;
         String timeFormat = String.format("%s:%s:%s:%03dms", hours, minutes, seconds, millis);
         text(timeFormat, PALETTE_X + CANVAS_WIDTH, PALETTE_Y + 24);
     }
@@ -277,9 +281,9 @@ public class BlankSlate extends ProcessingApp {
     }
 
     void rect(PVector p, float w, float h) {
-        rectMode(CENTER);
+        rectMode(PConstants.CENTER);
         rect(p.x, p.y, clamp(w / zoomLevel, 0, CANVAS_WIDTH), clamp(h / zoomLevel, 0, CANVAS_HEIGHT));
-        rectMode(CORNER);
+        rectMode(PConstants.CORNER);
     }
 
     void zoomIn(float zoom) {
@@ -336,8 +340,8 @@ public class BlankSlate extends ProcessingApp {
     }
 
     void log(String cat, String message, boolean timeStamp) {
-        String time = timeStamp ? "[" + hour() + ":" + minute() + ":" + second() + ":" + millis() +  "]" : "";
+        String time = timeStamp ? "[" + PApplet.hour() + ":" + PApplet.minute() + ":" + PApplet.second() + ":" + millis() +  "]" : "";
         cat = "[" + cat + "]: ";
-        println(time + cat + message);
+        PApplet.println(time + cat + message);
     }
 }
