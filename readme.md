@@ -1,10 +1,6 @@
 ![Processing Sketches](http://i.imgur.com/gHvwuEm.png "Header")
 ---
-<img src="gifs/EvilEvergreenAngelfish.gif" width="128" style="float: right;" height="128"> 
-<img src="gifs/GlumFlickeringGenet.gif" width="128" height="128" style="float: right;"> 
-<img src="gifs/LimpingWillingAmericanbadger.gif" width="128" height="128" style="float: right;"> 
-
-  |<img src="gifs/EvilEvergreenAngelfish.gif" width="128" style="float: right;" height="128"> 
+  '<img src="gifs/EvilEvergreenAngelfish.gif" width="128" style="float: right;" height="128"> 
   <img src="gifs/GlumFlickeringGenet.gif" width="128" height="128" style="float: right;"> 
   <img src="gifs/LimpingWillingAmericanbadger.gif" width="128" height="128" style="float: right;"> 
  
