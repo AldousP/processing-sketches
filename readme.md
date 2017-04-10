@@ -1,8 +1,8 @@
-
-
-<img src="https://thumbs.gfycat.com/WindingAntiqueArchaeopteryx-size_restricted.gif " alt="Cat's Cradle" width="128" height="128" />
-
-
+![Processing Sketches](http://i.imgur.com/gHvwuEm.png "Header")
+---
+<img src="gifs/EvilEvergreenAngelfish.gif" width="128" style="display: inline-block" height="128"> 
+<img src="gifs/GlumFlickeringGenet.gif" width="128" height="128" style="display: inline-block"> 
+<img src="gifs/LimpingWillingAmericanbadger.gif" width="128" height="128" style="display: inline-block"> 
 
 Importing & Building
 ====================
