@@ -63,7 +63,8 @@ public class Launcher extends Application {
         toolBar.getItems().add(new WindowButtons());
         borderPane.setTop(toolBar);
         GridPane grid = new GridPane();
-        borderPane.setBottom(grid);
+        borderPane.setCenter(grid);
+        borderPane.getCenter().setStyle("-fx-margin: 0;");
         borderPane.setAlignment(grid, Pos.CENTER);
         grid.setAlignment(Pos.CENTER);
         grid.setPadding(new Insets(25, 25, 25, 25));
@@ -92,7 +93,9 @@ public class Launcher extends Application {
         if (listOfFiles != null) {
             for (File file : listOfFiles) {
                 tmp = file.getName();
-                items.add(tmp.substring(0, tmp.lastIndexOf('.')));
+                if (!tmp.equals("BaseSketch.java")) {
+                  items.add(tmp.substring(0, tmp.lastIndexOf('.')));
+                }
             }
         }
 

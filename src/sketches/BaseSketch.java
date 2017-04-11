@@ -2,70 +2,61 @@ package sketches;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PVector;
+import processing.event.KeyEvent;
 
-/**
- * BlankSlate.
- */
-public class Wheel extends PApplet {
-  float runTime = 0;
-  int FRAME_RATE = 60;
-  float STROKE_WEIGHT = .01f;
-
-  boolean DEBUG = true;
-  String title = "wheels";
-  String date = "00.00.00";
-  float sketchOpacity = 1;
-
-  int NML_L = -999;
-  int NML_U = 999;
-
-  int DEBUG_COLOR;
-  int BACKGROUND_COLOR;
-  int DRAW_COLOR;
-  float spinnerRotation = 0;
-  int spinnerOrbs = 20;
-  boolean spinnerAccelerating = true;
-  float spinnerRotationSpeed = 100;
-  float spinnerAcceleration = 50;
-  float spinnerAccelerationInterval = 1080;
-  float spinnerDecay = 25;
-  float SPINNER_HEIGHT;
-  float SPINNER_WIDTH;
-
-  float CANVAS_PERCENTAGE = 0.85f;                   // Amount of the frame that the canvas will occupy.
-  float CANVAS_X;
-  float CANVAS_Y;
-  float CANVAS_WIDTH;
-  float CANVAS_HEIGHT;
-  float PALETTE_X;
-  float PALETTE_Y;
-  float PALETTE_HEIGHT;
-  float PALETTE_WIDTH;
-  float PALETTE_PERCENTAGE = 0.45f;                   // Amount of space between bottom of the bottom of the canvas to the bottom of the page that the palette will fill
-
-  int lastFrame;
-  float delta;
-  ArrayList<Integer> palette = new ArrayList();
-  DecimalFormat df = new DecimalFormat(".#");
-  float colorDelta = 0;
+abstract class BaseSketch extends PApplet{
+  protected float runTime = 0;
+  protected int FRAME_RATE = 60;
+  protected float STROKE_WEIGHT = .01f;
+  protected boolean DEBUG = true;
+  protected String title = "blank_slate";
+  protected String date = "00.00.00";
+  protected float sketchOpacity = 1;
+  protected int NML_L = -999;
+  protected int NML_U = 999;
+  protected int DEBUG_COLOR;
+  protected int BACKGROUND_COLOR;
+  protected int DRAW_COLOR;
+  protected float spinnerRotation = 0;
+  protected int spinnerOrbs = 20;
+  protected boolean spinnerAccelerating = true;
+  protected float spinnerRotationSpeed = 100;
+  protected float spinnerAcceleration = 50;
+  protected float spinnerAccelerationInterval = 1080;
+  protected float spinnerDecay = 25;
+  protected float SPINNER_HEIGHT;
+  protected float SPINNER_WIDTH;
+  protected float CANVAS_PERCENTAGE = 0.85f;                   // Amount of the frame that the canvas will occupy.
+  protected float CANVAS_X;
+  protected float CANVAS_Y;
+  protected float CANVAS_WIDTH;
+  protected float CANVAS_HEIGHT;
+  protected float PALETTE_X;
+  protected float PALETTE_Y;
+  protected float PALETTE_HEIGHT;
+  protected float PALETTE_WIDTH;
+  protected float PALETTE_PERCENTAGE = 0.45f;                   // Amount of space between bottom of the bottom of the canvas to the bottom of the page that the palette will fill
+  protected int lastFrame;
+  protected float delta;
+  protected ArrayList<Integer> palette = new ArrayList();
+  protected DecimalFormat df = new DecimalFormat(".#");
+  protected float colorDelta = 0;
 
   // There's some simple projection going on here. No scaling.
-  float GRID_WIDTH = 1;
-  float GRID_HEIGHT = 1;
-  float CANVAS_MID_X = 0;
-  float CANVAS_MID_Y = 0;
-  float CANVAS_LOWER_X = CANVAS_MID_X - GRID_WIDTH / 2;
-  float CANVAS_UPPER_X  =  CANVAS_MID_X + GRID_WIDTH / 2;
-  float CANVAS_LOWER_Y = CANVAS_MID_Y - GRID_HEIGHT / 2;
-  float CANVAS_UPPER_Y = CANVAS_MID_Y + GRID_HEIGHT / 2;
-
-  int GRID_COLOR;
-  float zoomLevel = 1;
-  float rotation;
+  protected float GRID_WIDTH = 1;
+  protected float GRID_HEIGHT = 1;
+  protected float CANVAS_MID_X = 0;
+  protected float CANVAS_MID_Y = 0;
+  protected float CANVAS_LOWER_X = CANVAS_MID_X - GRID_WIDTH / 2;
+  protected float CANVAS_UPPER_X  =  CANVAS_MID_X + GRID_WIDTH / 2;
+  protected float CANVAS_LOWER_Y = CANVAS_MID_Y - GRID_HEIGHT / 2;
+  protected float CANVAS_UPPER_Y = CANVAS_MID_Y + GRID_HEIGHT / 2;
+  protected int GRID_COLOR;
+  protected float zoomLevel = 1;
+  protected float rotation;
 
   public void settings() {
     size(700, 700);
@@ -93,17 +84,30 @@ public class Wheel extends PApplet {
     log("Sketch", "Beginning sketch " + title + "!", true);
   }
 
+  @Override
+  protected void handleKeyEvent(KeyEvent event) {
+    if (event.getKey() != ESC) {
+      super.handleKeyEvent(event);
+    }
+  }
+
+  @Override
+  public void exit() {
+    dispose();
+
+  }
+
   public void draw() {
     rotation += 10 * delta;
     delta = (millis() - lastFrame) / 1000f;
     runTime += delta;
     lastFrame = millis();
     background(BACKGROUND_COLOR);
+    drawDebug();
     drawGridLines();
     // Draw shapes
     // Hacky clip!
     drawGutterMask();
-    drawDebug();
     drawSpinner();
     drawPalette();
     drawTime();
@@ -153,8 +157,6 @@ public class Wheel extends PApplet {
       textAlign(PConstants.RIGHT, PConstants.CENTER);
       float textSize = shortest / 4;
       textSize(textSize);
-      fill(DEBUG_COLOR);
-
       text(date, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize);
       text(title, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize * 2);
     }
@@ -165,7 +167,7 @@ public class Wheel extends PApplet {
     return graphToCanvas(pt.x, pt.y);
   }
 
-  private PVector graphToCanvas(float x, float y) {
+  protected PVector graphToCanvas(float x, float y) {
     float hAlpha = (x - CANVAS_LOWER_X) / (CANVAS_UPPER_X - CANVAS_LOWER_X);
     float vAlpha = (y - CANVAS_LOWER_Y) / (CANVAS_UPPER_Y - CANVAS_LOWER_Y);
     float canvasX = CANVAS_X + CANVAS_WIDTH * hAlpha;
@@ -239,6 +241,7 @@ public class Wheel extends PApplet {
     text(timeFormat, PALETTE_X + CANVAS_WIDTH, PALETTE_Y + 24);
   }
 
+  @Override
   public void keyPressed() {
     if (key == '+') {
       zoomIn(0.5f);
