@@ -9,6 +9,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -79,6 +80,9 @@ public class Launcher extends Application {
         primaryStage.setResizable(RESIZABLE);
         primaryStage.show();
         primaryStage.getIcons().add(new Image("file:icon.png"));
+
+        ImageView header = new ImageView();
+        header.setImage(new Image("header.png"));
     }
 
     public static void main(String[] args) {
