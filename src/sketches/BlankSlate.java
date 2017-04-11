@@ -79,7 +79,7 @@ public class BlankSlate extends PApplet {
         BACKGROUND_COLOR = color(0xFF2d3138);
         DRAW_COLOR = color(0xFFFFFFFF);
         GRID_COLOR = color(0xFFf46842);
-        CANVAS_WIDTH = (float) width * (float) CANVAS_PERCENTAGE;
+        CANVAS_WIDTH = (float) width * CANVAS_PERCENTAGE;
         CANVAS_HEIGHT = height * CANVAS_PERCENTAGE;
         CANVAS_X = (width - CANVAS_WIDTH) / 2;
         CANVAS_Y = (height - CANVAS_HEIGHT) / 2;
