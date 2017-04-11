@@ -8,6 +8,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -70,13 +71,14 @@ public class Launcher extends Application {
             PApplet.main(SKETCHES_SRC + list.getSelectionModel().getSelectedItem(), new String[]{});
         }
         );
-        grid.getChildren().add(btn);
+        grid.add(btn, 0, 2, 2, 1);
 
         Scene scene = new Scene(grid, WIDTH, HEIGHT);
         primaryStage.setTitle(TITLE);
         primaryStage.setScene(scene);
         primaryStage.setResizable(RESIZABLE);
         primaryStage.show();
+        primaryStage.getIcons().add(new Image("file:icon.png"));
     }
 
     public static void main(String[] args) {
