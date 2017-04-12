@@ -1,4 +1,6 @@
 import java.io.File;
+import java.util.regex.Pattern;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -16,7 +18,10 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+
 import javax.swing.GroupLayout.Alignment;
+
+import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 import processing.core.PApplet;
 
 /**
@@ -58,17 +63,16 @@ public class Launcher extends Application {
         toolBar.setPrefHeight(height);
         toolBar.setMinHeight(height);
         toolBar.setMaxHeight(height);
-        borderPane.setStyle("-fx-background: #FFFFFF;");
-        toolBar.setStyle("-fx-background: #FFFFFF;");
+        borderPane.setStyle("-fx-background: #fff;");
+        toolBar.setStyle("-fx-background: #fff;");
         toolBar.getItems().add(new WindowButtons());
         borderPane.setTop(toolBar);
         GridPane grid = new GridPane();
         borderPane.setCenter(grid);
         borderPane.getCenter().setStyle("-fx-margin: 0;");
-        borderPane.setAlignment(grid, Pos.CENTER);
         grid.setAlignment(Pos.CENTER);
         grid.setPadding(new Insets(25, 25, 25, 25));
-        grid.setStyle("-fx-background: #FFFFFF;");
+        grid.setStyle("-fx-background: #fff;");
         Scene scene = new Scene(borderPane, WIDTH, HEIGHT);
         primaryStage.setTitle(TITLE);
         primaryStage.setScene(scene);
@@ -94,7 +98,9 @@ public class Launcher extends Application {
             for (File file : listOfFiles) {
                 tmp = file.getName();
                 if (!tmp.equals("BaseSketch.java")) {
-                  items.add(tmp.substring(0, tmp.lastIndexOf('.')));
+                    tmp = tmp.substring(0, tmp.lastIndexOf('.'));
+                    tmp = tmp.replaceAll("(\\p{Ll})(\\p{Lu})", "$1 $2");
+                    items.add(tmp);
                 }
             }
         }
@@ -103,27 +109,22 @@ public class Launcher extends Application {
         list.setPrefWidth(300);
         list.setPrefHeight(400);
         grid.add(list, 0, 1, 2, 1);
-
         Button btn = new Button();
         btn.setStyle(
-            "-fx-background-color:#330066;"
-            + "-fx-text-fill: white;"
-            + "-fx-border-style: none;"
-            + "-fx-font-size: 14px;"
-            + "-fx-: 14px;");
+                "-fx-background-color:#306;"
+                        + "-fx-text-fill: white;"
+                        + "-fx-border-style: none;"
+                        + "-fx-font-size: 14px;"
+                        + "-fx-start-margin: 10px;"
+                        + "-fx-: 14px;");
         btn.setText("Launch Sketch");
-        btn.setOnAction((javafx.event.ActionEvent event) ->
-            PApplet.main(SKETCHES_SRC + list.getSelectionModel().getSelectedItem(), new String[]{})
-        );
+        btn.setPrefWidth(128);
+        btn.setOnAction((javafx.event.ActionEvent event) -> {
+            String fileName = list.getSelectionModel().getSelectedItem();
+            PApplet.main(SKETCHES_SRC + (fileName.replaceAll("\\s+", "")), new String[] {});
+        });
         grid.add(btn, 0, 2, 2, 1);
-
         primaryStage.show();
-
-
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 
     class WindowButtons extends HBox {
@@ -132,14 +133,17 @@ public class Launcher extends Application {
             Button closeBtn = new Button("Exit");
             this.setAlignment(Pos.BOTTOM_RIGHT);
             closeBtn.setStyle(
-                "-fx-background-color:#330066;"
-                    + "-fx-text-fill: white;"
-                    + "-fx-border-style: none;"
-                    + "-fx-font-size: 14px;"
-                    + "-fx-: 10px;");
+                    "-fx-background-color:#306;"
+                            + "-fx-text-fill: white;"
+                            + "-fx-border-style: none;"
+                            + "-fx-font-size: 14px;"
+                            + "-fx-: 10px;");
             closeBtn.setOnAction(actionEvent -> Platform.exit());
             this.getChildren().add(closeBtn);
         }
     }
 
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
