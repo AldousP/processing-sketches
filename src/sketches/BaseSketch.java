@@ -367,4 +367,12 @@ abstract class BaseSketch extends PApplet {
     protected float getAngle(PVector vec) {
         return (float) Math.atan2(vec.y, vec.x);
     }
+
+    // Arrays
+    int wrapIndex(int index, int length) {
+        if (index > length - 1) {
+            index = wrapIndex(index - length, length);
+        }
+        return index;
+    };
 }
