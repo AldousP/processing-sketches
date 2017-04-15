@@ -57,7 +57,6 @@ abstract class BaseSketch extends PApplet {
     protected float CANVAS_LOWER_Y = CANVAS_MID_Y - GRID_HEIGHT / 2;
     protected float CANVAS_UPPER_Y = CANVAS_MID_Y + GRID_HEIGHT / 2;
     protected int GRID_COLOR;
-    protected float zoomLevel = 1;
 
     public void settings() {
         size(700, 700);
@@ -130,6 +129,7 @@ abstract class BaseSketch extends PApplet {
             float diff = PApplet.abs(0 - CANVAS_LOWER_X);
             float alpha = clamp(diff / (GRID_WIDTH), 0, 1);
             float canvasX = (alpha * CANVAS_WIDTH) + CANVAS_X;
+            strokeWeight(STROKE_WEIGHT);
             stroke(color(GRID_COLOR), "o");
             line(canvasX, CANVAS_Y, canvasX, CANVAS_Y + CANVAS_HEIGHT);
         }
@@ -138,6 +138,7 @@ abstract class BaseSketch extends PApplet {
             float diff = PApplet.abs(0 - CANVAS_LOWER_Y);
             float alpha = clamp(diff / (GRID_HEIGHT), 0, 1);
             float canvasY = CANVAS_Y + ((1 - alpha) * CANVAS_HEIGHT);
+            strokeWeight(STROKE_WEIGHT);
             stroke(color(GRID_COLOR), "o");
             line(CANVAS_X, canvasY, CANVAS_X + CANVAS_WIDTH, canvasY);
         }
@@ -231,7 +232,7 @@ abstract class BaseSketch extends PApplet {
     }
 
     private void drawTime() {
-        fill(color(255, 255, 255, 128), "overridden");
+        fill(color(DEBUG_COLOR, 128), "overridden");
         textAlign(PConstants.RIGHT, PConstants.CENTER);
         textSize(24);
         int millis = (int) ((runTime - (PApplet.floor(runTime))) * 1000);
@@ -244,14 +245,6 @@ abstract class BaseSketch extends PApplet {
 
     @Override
     public void keyPressed() {
-        if (key == '+') {
-            zoomIn(0.5f);
-        }
-
-        if (key == '-') {
-            zoomOut(0.5f);
-        }
-
         if (key == 'w') {
             translateViewport(0, GRID_HEIGHT / 8);
         }
@@ -287,24 +280,21 @@ abstract class BaseSketch extends PApplet {
 
     // Shapes
     void ellipse(PVector p, float r) {
-        ellipse(p.x, p.y, r * (1 - zoomLevel), r * (1 - zoomLevel));
+        ellipse(p.x, p.y, r * (1), r * (1));
     }
 
     void rect(PVector p, float w, float h) {
         rectMode(PConstants.CENTER);
-        rect(p.x, p.y, clamp(w / zoomLevel, 0, CANVAS_WIDTH), clamp(h / zoomLevel, 0, CANVAS_HEIGHT));
+        rect(p.x, p.y, clamp(w , 0, CANVAS_WIDTH), clamp(h , 0, CANVAS_HEIGHT));
         rectMode(PConstants.CORNER);
     }
 
-    // Camera
-    void zoomIn(float zoom) {
-        zoomLevel -= clamp(zoom, 0, 1);
-        zoomLevel = clamp(zoomLevel, 0, 100);
+    void triangle(PVector a, PVector b, PVector c) {
+        triangle(a.x, a.y, b.x, b.y, c.x, c.y);
     }
 
-    void zoomOut(float zoom) {
-        zoomLevel += clamp(zoom, 0, 1);
-        zoomLevel = clamp(zoomLevel, 0, 100);
+    void line(PVector a, PVector b) {
+        line(a.x, a.y, b.x, b.y);
     }
 
     void translateViewport(float x, float y) {

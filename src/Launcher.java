@@ -19,9 +19,6 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-import javax.swing.GroupLayout.Alignment;
-
-import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 import processing.core.PApplet;
 
 /**
