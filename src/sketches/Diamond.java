@@ -1,8 +1,5 @@
 package sketches;
 
-/**
- * BlankSlate.
- */
 public class Diamond extends BaseSketch {
     protected int DIAMOND_VERTICES = 6;
     protected float DIAMOND_HEIGHT;
@@ -29,6 +26,7 @@ public class Diamond extends BaseSketch {
         title = "Diamond";
         date = "06.19.16";
         STROKE_WEIGHT = 2;
+        DEBUG = false;
         DIAMOND_HEIGHT = height * 0.75f;
         MAX_RADIUS = width / 4;
         MIDX = width / 2;
