@@ -20,7 +20,6 @@ repositories {
 
 dependencies {
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
-    implementation 'com.google.guava:guava:20.0'
     compile 'org.processing:core:3.2.3'
 }
 
