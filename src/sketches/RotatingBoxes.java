@@ -40,8 +40,6 @@ public class RotatingBoxes extends BaseSketch {
 
     public void draw() {
         super.draw();
-        delta = (millis() - lastFrame) / 1000f;
-        lastFrame = millis();
         // RESET THE CAMERA
         translate(width/2, height/2);
         linePos += lineSpeed * delta;
@@ -49,7 +47,6 @@ public class RotatingBoxes extends BaseSketch {
         if (linePos > width)
             linePos = linePos - width;
 
-        ////// DRAW THE SEQUENCER LINE //////
         if (DEBUG) {
             stroke(LINE_COLOR);
             line(linePos - (width / 2) , (height / 2 + 1), linePos - (width / 2) , - (width / 2));
@@ -60,7 +57,6 @@ public class RotatingBoxes extends BaseSketch {
             text((linePos / width), linePos - (width / 2), (height/2 + 1));
         }
 
-        // DRAW THE BOXES
         drawPosX = (gridSubdivisionX / 2 + -1 * (width / 2));
         drawPosY = (gridSubdivisionY / 2 + -1 * (height / 2));
         int progress = 0;
