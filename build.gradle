@@ -16,11 +16,12 @@ repositories {
     mavenCentral()
     jcenter()
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+   
 }
 
 dependencies {
-    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     compile 'org.processing:core:3.2.3'
+    compile fileTree(dir: 'lib', includes: ['*.jar'])
 }
 
 sourceSets {
@@ -31,8 +32,8 @@ sourceSets {
     }
 }
 
-buildscript {
 
+buildscript {
     repositories {
         mavenLocal()
         mavenCentral()

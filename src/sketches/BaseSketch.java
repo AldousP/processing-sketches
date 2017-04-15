@@ -82,7 +82,6 @@ abstract class BaseSketch extends PApplet {
         PALETTE_WIDTH = CANVAS_WIDTH * PALETTE_PERCENTAGE;
         PALETTE_Y = CANVAS_Y + CANVAS_HEIGHT;
         PALETTE_X = CANVAS_X;
-        log("Sketch", "Beginning sketch " + title + "!", true);
     }
 
     @Override

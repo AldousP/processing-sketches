@@ -121,14 +121,13 @@ public class Launcher extends Application {
         btn.setPrefWidth(128);
         btn.setOnAction((javafx.event.ActionEvent event) -> {
             String fileName = list.getSelectionModel().getSelectedItem();
-            PApplet.main(SKETCHES_SRC + (fileName.replaceAll("\\s+", "")), new String[] {});
+            PApplet.main(SKETCHES_SRC + (fileName.replaceAll("\\s+", "")), new String[]{});
         });
         grid.add(btn, 0, 2, 2, 1);
         primaryStage.show();
     }
 
     class WindowButtons extends HBox {
-
         public WindowButtons() {
             Button closeBtn = new Button("Exit");
             this.setAlignment(Pos.BOTTOM_RIGHT);
