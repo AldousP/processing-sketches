@@ -25,7 +25,7 @@ public class SpringGrid extends BaseSketch {
         title = "Spring Grid";
         date = "10.18.16";
 
-        DEBUG_COLOR = color(0xba73a4);
+        DEBUG_COLOR = color(0x000000);
         BACKGROUND_COLOR = color(0xFF6189a5);
         DRAW_COLOR = color(0xFFFFFFFF);
         STROKE_WEIGHT = 1;
@@ -120,9 +120,7 @@ public class SpringGrid extends BaseSketch {
             float diff = length - currentLength;
             speed += tension * diff - speed * dampening;
             currentLength += speed;
-
             inRange = false;
-
             if (mousePressed) {
                 float xPos = constrain(mouseX, canvasOffsetX, canvasOffsetX + canvasWidth);
                 float yPos = constrain(mouseY, canvasOffsetY, canvasOffsetY + canvasHeight);
@@ -142,8 +140,8 @@ public class SpringGrid extends BaseSketch {
 
         void render() {
             noFill();
-            stroke(DRAW_COLOR);
-            fill(DRAW_COLOR);
+            stroke(DRAW_COLOR, "");
+            fill(DRAW_COLOR, "");
             ellipse(oX, oY, size, size);
         }
     }
