@@ -358,6 +358,10 @@ abstract class BaseSketch extends PApplet {
         return (float) Math.atan2(vec.y, vec.x);
     }
 
+    protected float distance(PVector a, PVector b) {
+        return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+    }
+
     // Arrays
     int wrapIndex(int index, int length) {
         if (index > length - 1) {
