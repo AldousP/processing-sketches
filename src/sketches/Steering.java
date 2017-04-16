@@ -4,15 +4,12 @@ import processing.core.PVector;
 
 import java.util.ArrayList;
 
-/**
- * BlankSlate.
- */
 public class Steering extends BaseSketch {
     protected ArrayList<Automaton> automatons;
     protected ArrayList<Obstacle> obstacles;
-    protected float automatonRadius = .025f;
-    protected float obstacleRadius = .025f;
-    int obstacleCount = 10;
+    protected float automatonRadius = .0075f;
+    protected float obstacleRadius = .05f;
+    int obstacleCount = 00;
     int OBSTACLE_COLOR;
 
     public void setup() {
@@ -21,7 +18,7 @@ public class Steering extends BaseSketch {
         date = "04.15.17";
         automatons = new ArrayList<>();
         obstacles = new ArrayList<>();
-        automatons.add(new Automaton(new PVector(0, 0), 100, 100));
+        automatons.add(new Automaton(new PVector(0, 0)));
         BACKGROUND_COLOR = color(0xd3dae5);
         DRAW_COLOR = color(0xFF43474f);
         DEBUG_COLOR = color(0xFF43474f);
@@ -52,44 +49,74 @@ public class Steering extends BaseSketch {
         for (Automaton automaton : automatons) {
             automaton.update(delta);
         }
-
         PVector pos;
-        PVector vel;
-        PVector pointerPos = new PVector();
-
-        for (Automaton automaton : automatons) {
-            vel = automaton.velocity;
-            pos = automaton.position;
-            fill(DRAW_COLOR, "");
-            ellipse(graphToCanvas(pos), CANVAS_WIDTH * (automatonRadius * 2));
-            float rotation = vel.mag() > 0 ? (float) Math.atan2(vel.y, vel.x) : 0;
-            pointerPos.set(
-                    (float) Math.cos(rotation) * automatonRadius,
-                    (float) Math.sin(rotation) * automatonRadius
-            );
-            strokeWeight(5);
-            stroke(DEBUG_COLOR, "");
-            line(graphToCanvas(pointerPos.add(pos)), graphToCanvas(pos));
-        }
-
         for (Obstacle obstacle : obstacles) {
             fill(OBSTACLE_COLOR, "");
             stroke(OBSTACLE_COLOR, "");
             ellipse(graphToCanvas(obstacle.position), CANVAS_WIDTH * obstacleRadius);
+        }
+
+        for (Automaton automaton : automatons) {
+            pos = automaton.position;
+            noStroke();
+            fill(DRAW_COLOR, "");
+            ellipse(graphToCanvas(pos), CANVAS_WIDTH * (automatonRadius * 2));
         }
     }
 
     class Automaton {
         PVector position;
         PVector velocity;
+        float wanderCircleDistance = .045f;
+        float wanderCircleRadius = .1f;
+        float speed = 0;
+        float maxSpeed = .15f;
+        float wanderAngle = 0;
+        float ANGLE_CHANGE = 0.025f;
 
-        Automaton(PVector position, float width, float height) {
+        Automaton(PVector position) {
             this.position = position;
-            this.velocity = new PVector(0, 0);
+            this.velocity = new PVector(speed, speed);
         }
 
         void update(float delta) {
+            float rotation = atan2(velocity.y, velocity.x);
+            float circleX = cos(rotation) * wanderCircleDistance;
+            float circleY = sin(rotation) * wanderCircleDistance;
+            PVector circleCenter = new PVector(circleX, circleY);
+            PVector displacement = new PVector(0, 0);
+
+            PVector steeringForce = circleCenter.add(displacement);
+            steeringForce.rotate(wanderAngle);
+            wanderAngle += random(-ANGLE_CHANGE, ANGLE_CHANGE);
+
+            velocity.add(steeringForce);
+            if (velocity.mag() > maxSpeed) {
+                velocity.setMag(maxSpeed);
+            }
             position.add(velocity.x * delta, velocity.y * delta);
+
+            // Wrap Arounds
+            if (position.x > GRID_WIDTH / 2) {
+                position.x = position.x - GRID_WIDTH;
+            }
+
+            if (position.x < - GRID_WIDTH / 2) {
+                position.x = position.x + GRID_WIDTH;
+            }
+
+            if (position.y > GRID_HEIGHT / 2) {
+                position.y = position.y - GRID_HEIGHT;
+            }
+
+            if (position.y < -GRID_HEIGHT / 2) {
+                position.y = position.y + GRID_HEIGHT;
+            }
+
+            noFill();
+            stroke(0, 128, 64);
+            strokeWeight(1);
+            ellipse(graphToCanvas(circleX + position.x, circleY+ position.y), wanderCircleRadius * 200);
         }
     }
 
