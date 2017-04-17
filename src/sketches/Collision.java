@@ -2,14 +2,8 @@ package sketches;
 
 import processing.core.PVector;
 
-import java.util.ArrayList;
-
-/**
- * BlankSlate.
- */
 public class Collision extends BaseSketch {
     float rectW = 0.1f;
-    ArrayList<PVector> rects;
     PVector tmp = new PVector();
 
     public void setup() {
