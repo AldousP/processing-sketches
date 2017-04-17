@@ -252,19 +252,19 @@ abstract class BaseSketch extends PApplet {
     public void keyPressed() {
         if (CONTROLS_LOCKED) return;
         if (key == 'w') {
-            translateViewport(0, GRID_HEIGHT / 8);
+            translateViewport(0, GRID_HEIGHT / 64);
         }
 
         if (key == 'a') {
-            translateViewport(-GRID_WIDTH / 8, 0);
+            translateViewport(-GRID_WIDTH / 64, 0);
         }
 
         if (key == 's') {
-            translateViewport(0, -GRID_HEIGHT / 8);
+            translateViewport(0, -GRID_HEIGHT / 64);
         }
 
         if (key == 'd') {
-            translateViewport(GRID_WIDTH / 8, 0);
+            translateViewport(GRID_WIDTH / 64, 0);
         }
 
         if (key == '1') {
@@ -320,17 +320,18 @@ abstract class BaseSketch extends PApplet {
 
     // Methods for drawing shapes within the projection context.
     void drawWorldRect(PVector pos, float w, float h) {
-        pos.div(zoom);
-        PVector tmp = graphToCanvas(pos);
-        noFill();
-        stroke(DRAW_COLOR);
-        rect(tmp, w * V_FRAGMENTS_PER_UNIT / zoom, h * H_FRAGMENTS_PER_UNIT / zoom);
+        rect(graphToCanvas(pos.copy().set(pos.x / zoom, pos.y / zoom)),
+                w * V_FRAGMENTS_PER_UNIT / zoom, h * H_FRAGMENTS_PER_UNIT / zoom);
     }
 
     void drawWorldEllipse(PVector pos, float r) {
-        noFill();
-        stroke(DRAW_COLOR);
         ellipse(graphToCanvas(pos.copy().div(zoom)), r * H_FRAGMENTS_PER_UNIT / zoom);
+    }
+
+    void drawWorldText(String text, PVector pos, float fontSize) {
+        textSize(fontSize / zoom);
+        PVector tmp = graphToCanvas(pos.x / zoom, pos.y / zoom);
+        text(text, tmp.x, tmp.y);
     }
 
     // Color
@@ -377,12 +378,24 @@ abstract class BaseSketch extends PApplet {
         return val >= lower && val <= upper;
     }
 
+    /**
+     * Get relative rotation between two points In Degrees
+     * @param originX
+     * @param originY
+     * @param ptX
+     * @param ptY
+     * @return
+     */
     float getRelativeRotationOfPoint(float originX, float originY, float ptX, float ptY) {
         float result = degrees(atan2(ptY - originY, ptX - originX));
         if (result < 0) {
             result += 360;
         }
         return result;
+    }
+
+    float getRelativeRotationOfPoint(PVector origin, PVector pt) {
+        return getRelativeRotationOfPoint(origin.x, origin.y, pt.x, pt.y);
     }
 
     float distance(PVector a, PVector b) {
