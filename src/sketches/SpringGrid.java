@@ -4,17 +4,17 @@ package sketches;
  * Spring Grid
  */
 public class SpringGrid extends BaseSketch {
-    protected Spring[] springs;
-    protected int gridX = 16;
-    protected int gridY = 16;
-    protected float tension = 0.065f;
-    protected float dampening = 0.05f;
-    protected float padding = .05f;
-    protected float canvasOffsetX;
-    protected float canvasOffsetY;
-    protected float canvasWidth;
-    protected float canvasHeight;
-    protected float attractRadius = 160;
+    Spring[] springs;
+    int gridX = 16;
+    int gridY = 16;
+    float tension = 0.065f;
+    float dampening = 0.05f;
+    float padding = .05f;
+    float canvasOffsetX;
+    float canvasOffsetY;
+    float canvasWidth;
+    float canvasHeight;
+    float attractRadius = 160;
 
     public void settings() {
         size(700, 700);
@@ -24,15 +24,12 @@ public class SpringGrid extends BaseSketch {
         super.setup();
         title = "Spring Grid";
         date = "10.18.16";
-
         DEBUG_COLOR = color(0x000000);
         BACKGROUND_COLOR = color(0xFF6189a5);
         DRAW_COLOR = color(0xFFFFFFFF);
         STROKE_WEIGHT = 1;
-
         strokeWeight(STROKE_WEIGHT);
         frameRate(FRAME_RATE);
-        // SET VARIABLES THAT DEPEND ON WIDTH AND HEIGHT
         canvasOffsetX = width * padding;
         canvasOffsetY = height * padding;
         canvasWidth = width - canvasOffsetX * 2;
@@ -61,8 +58,8 @@ public class SpringGrid extends BaseSketch {
     public void draw() {
         super.draw();
         updateSimulation();
-        stroke(DRAW_COLOR, "");
-        fill(DRAW_COLOR, "");
+        stroke(DRAW_COLOR);
+        fill(DRAW_COLOR);
         strokeWeight(STROKE_WEIGHT);
         int springIndex = 0;
         Spring s;
@@ -97,7 +94,7 @@ public class SpringGrid extends BaseSketch {
         );
     }
 
-    protected void updateSimulation() {
+    void updateSimulation() {
         for (Spring spring : springs) {
             spring.update(dampening, tension);
         }
@@ -140,8 +137,8 @@ public class SpringGrid extends BaseSketch {
 
         void render() {
             noFill();
-            stroke(DRAW_COLOR, "");
-            fill(DRAW_COLOR, "");
+            stroke(DRAW_COLOR);
+            fill(DRAW_COLOR);
             ellipse(oX, oY, size, size);
         }
     }

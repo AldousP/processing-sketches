@@ -74,14 +74,14 @@ public class RotatingBoxes extends BaseSketch {
 
                 translate(drawPosX, drawPosY);
                 rotate(radians(currRotation));
-                stroke(0x9e9e9e, "");
+                stroke(0x9e9e9e);
                 //line(0, 99900, 0, -99999);
                 //line(99999, 0, -99999, 0);
                 noStroke();
                 fill(DRAW_COLOR);
                 rect(0, 0, rectW, rectH);
                 // DRAW SPEED
-                fill(0xAAAAAA,"");
+                fill(0xAAAAAA);
                 rotate(-radians(currRotation));
                 translate(-drawPosX, -drawPosY);
                 drawPosY += gridSubdivisionY;

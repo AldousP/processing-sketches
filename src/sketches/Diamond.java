@@ -35,12 +35,12 @@ public class Diamond extends BaseSketch {
         GRID_COLOR = color(0xFFFFFFFF);
         DRAW_COLOR = color(0xFF4ECDC4);
         strokeWeight(STROKE_WEIGHT);
-        fill(DRAW_COLOR, "");
+        fill(DRAW_COLOR);
     }
 
     public void draw() {
         super.draw();
-        stroke(DRAW_COLOR, "");
+        stroke(DRAW_COLOR);
         radius += RADIUS_INCREMENT * delta;
         if ( ((RADIUS_INCREMENT < 0) && radius < MIN_RADIUS) || ((RADIUS_INCREMENT > 0) && radius > MAX_RADIUS)) {
             RADIUS_INCREMENT *= -1;

@@ -19,7 +19,11 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import javax.swing.GroupLayout.Alignment;
+
+import jdk.nashorn.internal.runtime.regexp.joni.Regex;
 import processing.core.PApplet;
+import processing.core.PVector;
 
 /**
  * Launcher.
@@ -122,6 +126,8 @@ public class Launcher extends Application {
         });
         grid.add(btn, 0, 2, 2, 1);
         primaryStage.show();
+//        PApplet.main(SKETCHES_SRC + "Collision", new String[]{});
+
     }
 
     class WindowButtons extends HBox {
@@ -138,6 +144,7 @@ public class Launcher extends Application {
             this.getChildren().add(closeBtn);
         }
     }
+
 
     public static void main(String[] args) {
         launch(args);

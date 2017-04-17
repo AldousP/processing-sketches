@@ -46,15 +46,15 @@ public class Steering extends BaseSketch {
         }
         PVector pos;
         for (Obstacle obstacle : obstacles) {
-            fill(OBSTACLE_COLOR, "");
-            stroke(OBSTACLE_COLOR, "");
+            fill(OBSTACLE_COLOR);
+            stroke(OBSTACLE_COLOR);
             ellipse(graphToCanvas(obstacle.position), CANVAS_WIDTH * obstacle.radius);
         }
 
         for (Automaton automaton : automatons) {
             pos = automaton.position;
             noStroke();
-            fill(DRAW_COLOR, "");
+            fill(DRAW_COLOR);
             ellipse(graphToCanvas(pos), CANVAS_WIDTH * (automatonRadius * 2));
             textSize(10);
             PVector text = graphToCanvas(pos);

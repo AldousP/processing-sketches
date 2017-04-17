@@ -61,14 +61,14 @@ public class CatsCradle extends BaseSketch {
             y3 = nodes[wrapIndex(i + 4, len)].y;
 
             lerped = lerpColor(from, to, (float) i / len);
-            fill(lerped, "");
+            fill(lerped);
             triangle(x1, y1, x2, y2, x3, y3);
         }
 
         // Draw connectors
         for (Node n : nodes) {
             n.update(delta);
-            fill(color(140, 47, 94), "");
+            fill(color(140, 47, 94));
             float x1, y1, x2, y2;
             for (Node neighbor : n.neighbors) {
                 if (neighbor != n) {
@@ -106,8 +106,8 @@ public class CatsCradle extends BaseSketch {
 
         if (DEBUG) {
             textSize(50);
-            fill(color(255, 0, 0), "");
-            fill(color(100, 240, 0), "");
+            fill(color(255, 0, 0));
+            fill(color(100, 240, 0));
         }
     }
 
@@ -219,7 +219,7 @@ public class CatsCradle extends BaseSketch {
         void draw() {
             noStroke();
             for (Particle p : particles) {
-                fill(p.fill, "");
+                fill(p.fill);
                 float x1, y1, x2, y2, x3, y3, x4, y4;
                 float radian = p.diameter;
 

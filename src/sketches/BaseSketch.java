@@ -17,6 +17,7 @@ abstract class BaseSketch extends PApplet {
     protected String title = "base_sketch";
     protected String date = "00.00.00";
     protected float sketchOpacity = 1;
+    // No man's land, the point where shapes outside the canvas bounds are drawn.
     protected int NML_L = -999;
     protected int NML_U = 999;
     protected int DEBUG_COLOR;
@@ -58,6 +59,11 @@ abstract class BaseSketch extends PApplet {
     protected float CANVAS_UPPER_Y = CANVAS_MID_Y + GRID_HEIGHT / 2;
     protected int GRID_COLOR;
 
+    protected float zoom = 1;
+    float H_FRAGMENTS_PER_UNIT;
+    float V_FRAGMENTS_PER_UNIT;
+    boolean CONTROLS_LOCKED = false;
+
     public void settings() {
         size(700, 700);
     }
@@ -65,7 +71,6 @@ abstract class BaseSketch extends PApplet {
     public void setup() {
         strokeWeight(STROKE_WEIGHT);
         frameRate(FRAME_RATE);
-        // Init variables
         DEBUG_COLOR = color(0xFFFFFFFF);
         BACKGROUND_COLOR = color(0xFF2d3138);
         DRAW_COLOR = color(0xFFFFFFFF);
@@ -76,11 +81,12 @@ abstract class BaseSketch extends PApplet {
         CANVAS_Y = (height - CANVAS_HEIGHT) / 2;
         SPINNER_WIDTH = (width - CANVAS_WIDTH) / 2;
         SPINNER_HEIGHT = (height - CANVAS_HEIGHT) / 2;
-
         PALETTE_HEIGHT = CANVAS_Y * PALETTE_PERCENTAGE;
         PALETTE_WIDTH = CANVAS_WIDTH * PALETTE_PERCENTAGE;
         PALETTE_Y = CANVAS_Y + CANVAS_HEIGHT;
         PALETTE_X = CANVAS_X;
+        H_FRAGMENTS_PER_UNIT = CANVAS_WIDTH / GRID_WIDTH;
+        V_FRAGMENTS_PER_UNIT = CANVAS_HEIGHT / GRID_HEIGHT;
     }
 
     @Override
@@ -130,7 +136,7 @@ abstract class BaseSketch extends PApplet {
             float alpha = clamp(diff / (GRID_WIDTH), 0, 1);
             float canvasX = (alpha * CANVAS_WIDTH) + CANVAS_X;
             strokeWeight(STROKE_WEIGHT);
-            stroke(color(GRID_COLOR), "o");
+            stroke(color(GRID_COLOR));
             line(canvasX, CANVAS_Y, canvasX, CANVAS_Y + CANVAS_HEIGHT);
         }
 
@@ -139,17 +145,17 @@ abstract class BaseSketch extends PApplet {
             float alpha = clamp(diff / (GRID_HEIGHT), 0, 1);
             float canvasY = CANVAS_Y + ((1 - alpha) * CANVAS_HEIGHT);
             strokeWeight(STROKE_WEIGHT);
-            stroke(color(GRID_COLOR), "o");
+            stroke(color(GRID_COLOR));
             line(CANVAS_X, canvasY, CANVAS_X + CANVAS_WIDTH, canvasY);
         }
     }
 
     private void drawDebug() {
         if (DEBUG) {
-            fill(0xFFFFFF, "o");
+            fill(0xFFFFFF);
             noFill();
             strokeWeight(STROKE_WEIGHT);
-            stroke(DEBUG_COLOR, "overridden");
+            stroke(DEBUG_COLOR);
             // Render format
             rect(CANVAS_X, CANVAS_Y, CANVAS_WIDTH, CANVAS_HEIGHT);
             noStroke();
@@ -193,9 +199,8 @@ abstract class BaseSketch extends PApplet {
         return new PVector(canvasX, canvasY);
     }
 
-    // Boilerplate Methods
+    // Control the loading spinner
     private void drawSpinner() {
-        // Control the loading spinner
         spinnerRotationSpeed -= spinnerDecay * delta;
         if (spinnerAccelerating) {
             spinnerRotationSpeed += spinnerAcceleration * delta;
@@ -209,7 +214,7 @@ abstract class BaseSketch extends PApplet {
         float radius = shortest / 6;
         for (int i = 0; i < spinnerOrbs; i++) {
             float alpha = i / (float) spinnerOrbs;
-            fill(color(255, 255, 255, 255 * alpha), "overridden");
+            fill(color(255, 255, 255, 255 * alpha));
             float currentDegree = (360 / spinnerOrbs) * i + spinnerRotation;
             float orbX = SPINNER_WIDTH / 2 + PApplet.cos(PApplet.radians(currentDegree)) * radius;
             float orbY = SPINNER_HEIGHT / 2 + PApplet.sin(PApplet.radians(currentDegree)) * radius;
@@ -219,20 +224,20 @@ abstract class BaseSketch extends PApplet {
 
     private void drawPalette() {
         noFill();
-        stroke(0xFFFFFF, "o");
+        stroke(0xFFFFFF);
         strokeWeight(STROKE_WEIGHT);
         rect(PALETTE_X, PALETTE_Y, PALETTE_WIDTH, PALETTE_HEIGHT);
         noStroke();
         float chipWidth = PALETTE_WIDTH / palette.size();
         float chipHeight = PALETTE_HEIGHT;
         for (int i = 0; i < palette.size(); i++) {
-            fill(palette.get(i), "o");
+            fill(palette.get(i));
             rect(PALETTE_X + chipWidth * i, PALETTE_Y, chipWidth, chipHeight);
         }
     }
 
     private void drawTime() {
-        fill(color(DEBUG_COLOR, 128), "overridden");
+        fill(color(DEBUG_COLOR, 128));
         textAlign(PConstants.RIGHT, PConstants.CENTER);
         textSize(24);
         int millis = (int) ((runTime - (PApplet.floor(runTime))) * 1000);
@@ -245,6 +250,7 @@ abstract class BaseSketch extends PApplet {
 
     @Override
     public void keyPressed() {
+        if (CONTROLS_LOCKED) return;
         if (key == 'w') {
             translateViewport(0, GRID_HEIGHT / 8);
         }
@@ -273,19 +279,27 @@ abstract class BaseSketch extends PApplet {
             sketchOpacity = 1;
         }
 
+        if (key == '+') {
+            zoom -= 0.1;
+        }
+
+        if (key == '-') {
+            zoom += 0.1;
+        }
+
         if (key == 't') {
             DEBUG = !DEBUG;
         }
     }
 
-    // Shapes
+    // Shape Overrides (For using vectors rather than points)
     void ellipse(PVector p, float r) {
-        ellipse(p.x, p.y, r * (1), r * (1));
+        ellipse(p.x, p.y, r, r);
     }
 
     void rect(PVector p, float w, float h) {
         rectMode(PConstants.CENTER);
-        rect(p.x, p.y, clamp(w , 0, CANVAS_WIDTH), clamp(h , 0, CANVAS_HEIGHT));
+        rect(p.x, p.y, clamp(w, 0, CANVAS_WIDTH), clamp(h, 0, CANVAS_HEIGHT));
         rectMode(PConstants.CORNER);
     }
 
@@ -304,28 +318,45 @@ abstract class BaseSketch extends PApplet {
         CANVAS_LOWER_Y += y;
     }
 
+    // Methods for drawing shapes within the projection context.
+    void drawWorldRect(PVector pos, float w, float h) {
+        pos.div(zoom);
+        PVector tmp = graphToCanvas(pos);
+        noFill();
+        stroke(DRAW_COLOR);
+        rect(tmp, w * V_FRAGMENTS_PER_UNIT / zoom, h * H_FRAGMENTS_PER_UNIT / zoom);
+    }
+
+    void drawWorldEllipse(PVector pos, float r) {
+        noFill();
+        stroke(DRAW_COLOR);
+        ellipse(graphToCanvas(pos.copy().div(zoom)), r * H_FRAGMENTS_PER_UNIT / zoom);
+    }
+
     // Color
-    protected void fill(int c, String s) {
+    @Override
+    public void fill(int c) {
         if (!palette.contains(c)) {
             palette.add(c);
         }
         float opacity = (alpha(c) * sketchOpacity) / 255;
-        fill(opacityAdj(c, opacity));
+        super.fill(opacityAdj(c, opacity));
     }
 
-    protected void stroke(int c, String s) {
+    @Override
+    public void stroke(int c) {
         if (!palette.contains(c)) {
             palette.add(c);
         }
         float opacity = (alpha(c) * sketchOpacity) / 255;
-        stroke(opacityAdj(c, opacity));
+        super.stroke(opacityAdj(c, opacity));
     }
 
-    protected int opacityAdj(int colorIn, float opacity) {
+    int opacityAdj(int colorIn, float opacity) {
         return color(red(colorIn), green(colorIn), blue(colorIn), 255 * opacity);
     }
 
-    protected void log(String cat, String message, boolean timeStamp) {
+    void log(String cat, String message, boolean timeStamp) {
         String time = timeStamp ? "[" + PApplet.hour() + ":" + PApplet.minute() + ":" + PApplet.second() + ":" + millis() + "]" : "";
         cat = "[" + cat + "]: ";
         PApplet.println(time + cat + message);
@@ -342,11 +373,11 @@ abstract class BaseSketch extends PApplet {
         }
     }
 
-    protected boolean inRange(float val, float lower, float upper) {
+    boolean inRange(float val, float lower, float upper) {
         return val >= lower && val <= upper;
     }
 
-    protected float getRelativeRotationOfPoint(float originX, float originY, float ptX, float ptY) {
+    float getRelativeRotationOfPoint(float originX, float originY, float ptX, float ptY) {
         float result = degrees(atan2(ptY - originY, ptX - originX));
         if (result < 0) {
             result += 360;
@@ -354,19 +385,15 @@ abstract class BaseSketch extends PApplet {
         return result;
     }
 
-    protected float getAngle(PVector vec) {
-        return (float) Math.atan2(vec.y, vec.x);
-    }
-
-    protected float distance(PVector a, PVector b) {
+    float distance(PVector a, PVector b) {
         return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
     }
 
-    // Arrays
+    // Array Utils
     int wrapIndex(int index, int length) {
         if (index > length - 1) {
             index = wrapIndex(index - length, length);
         }
         return index;
-    };
+    }
 }
