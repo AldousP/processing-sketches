@@ -8,9 +8,11 @@ public class Steering extends BaseSketch {
     protected ArrayList<Automaton> automatons;
     protected ArrayList<Obstacle> obstacles;
     protected float automatonRadius = .0075f;
-    protected float obstacleRadius = .05f;
-    int obstacleCount = 20;
+    protected float obstacleRadius = .015f;
+    int obstacleCount = 300;
+    int automatonCount = 1;
     int OBSTACLE_COLOR;
+    float maxAvoidForce = .18f;
 
     public void setup() {
         super.setup();
@@ -18,29 +20,22 @@ public class Steering extends BaseSketch {
         date = "04.15.17";
         automatons = new ArrayList<>();
         obstacles = new ArrayList<>();
-        automatons.add(new Automaton(new PVector(0, 0), obstacles));
         BACKGROUND_COLOR = color(0xd3dae5);
         DRAW_COLOR = color(0xFF43474f);
         DEBUG_COLOR = color(0xFF43474f);
+        DEBUG = false;
         GRID_COLOR = color(0xFF43474f);
         OBSTACLE_COLOR = color(0xFFD68A51);
 
-        PVector tmp = new PVector();
-        boolean valid;
+        PVector tmp;
         for (int i = 0; i < obstacleCount; i++) {
-            valid = false;
-            while (!valid) {
-                tmp = new PVector(
-                        random(-0.5f, 0.5f),
-                        random(-0.5f, 0.5f)
-                );
-                for (Automaton automaton : automatons) {
-                    if (abs(automaton.position.dist(tmp)) > .1) {
-                        valid = true;
-                    }
-                }
-            }
-            obstacles.add(new Obstacle(tmp, obstacleRadius));
+            tmp = new PVector(random(-0.5f, 0.5f), random(-0.5f, 0.5f));
+            obstacles.add(new Obstacle(tmp, random(obstacleRadius / 2, obstacleRadius * 2)));
+        }
+
+        for (int i = 0; i < automatonCount; i++) {
+            tmp = new PVector(random(-0.5f, 0.5f), random(-0.5f, 0.5f));
+            automatons.add(new Automaton(tmp, obstacles));
         }
     }
 
@@ -53,7 +48,7 @@ public class Steering extends BaseSketch {
         for (Obstacle obstacle : obstacles) {
             fill(OBSTACLE_COLOR, "");
             stroke(OBSTACLE_COLOR, "");
-            ellipse(graphToCanvas(obstacle.position), CANVAS_WIDTH * obstacleRadius);
+            ellipse(graphToCanvas(obstacle.position), CANVAS_WIDTH * obstacle.radius);
         }
 
         for (Automaton automaton : automatons) {
@@ -61,6 +56,9 @@ public class Steering extends BaseSketch {
             noStroke();
             fill(DRAW_COLOR, "");
             ellipse(graphToCanvas(pos), CANVAS_WIDTH * (automatonRadius * 2));
+            textSize(10);
+            PVector text = graphToCanvas(pos);
+            text("Avoid Force " + maxAvoidForce, CANVAS_X, CANVAS_Y);
         }
     }
 
@@ -72,10 +70,10 @@ public class Steering extends BaseSketch {
         float wanderCircleRadius = .1f;
         float speed = 0;
         float wanderAngle = 0;
-        float ANGLE_CHANGE = 0.015f;
-        float MAX_SPEED = .15f;
-        float MAX_SEE_AHEAD = wanderCircleDistance;
-        float MAX_AVOID_FORCE = .005f;
+        float ANGLE_CHANGE = 0.02f;
+        float MAX_SPEED = .20f;
+        float MAX_SEE_AHEAD = wanderCircleDistance * 2;
+        float MAX_AVOID_FORCE = .15f;
 
         Automaton(PVector position, ArrayList<Obstacle> obstacles) {
             this.position = position;
@@ -107,8 +105,8 @@ public class Steering extends BaseSketch {
                 }
             }
             if (closest != null) {
-                PVector avoidForce = ahead.sub(closest.position);
-                avoidForce = avoidForce.normalize().setMag(MAX_AVOID_FORCE);
+                PVector avoidForce = ahead.copy().sub(closest.position);
+                avoidForce = avoidForce.normalize().setMag(maxAvoidForce);
                 velocity.add(avoidForce);
             }
 
@@ -134,14 +132,15 @@ public class Steering extends BaseSketch {
                 position.y = position.y + GRID_HEIGHT;
             }
 
-            noFill();
-            stroke(0, 128, 64);
-            strokeWeight(1);
-
-            if (closest != null) {
-                stroke(128, 0, 0);
+            if (DEBUG) {
+                noFill();
+                stroke(0, 128, 64);
+                strokeWeight(1);
+                if (closest != null) {
+                    stroke(128, 0, 0);
+                }
+                ellipse(graphToCanvas(circleX + position.x, circleY + position.y), wanderCircleRadius * 200);
             }
-            ellipse(graphToCanvas(circleX + position.x, circleY + position.y), wanderCircleRadius * 200);
         }
     }
 
@@ -159,3 +158,5 @@ public class Steering extends BaseSketch {
         }
     }
 }
+
+
