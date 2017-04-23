@@ -8,7 +8,9 @@ public class Collision extends BaseSketch {
     float rectW = 0.1f;
     PVector tmp = new PVector();
     ArrayList<Entity> entities = new ArrayList<>();
-    PVector gravity = new PVector(.015f, 0);
+    PVector gravity = new PVector(.05f, 0);
+    PVector center = new PVector(0, 0);
+    PVector sampleVector = new PVector(.35f, .35f);
 
     public void setup() {
         super.setup();
@@ -16,9 +18,9 @@ public class Collision extends BaseSketch {
         date = "04.17.2017";
         H_FRAGMENTS_PER_UNIT = CANVAS_WIDTH / GRID_WIDTH;
         V_FRAGMENTS_PER_UNIT = CANVAS_HEIGHT / GRID_HEIGHT;
-        entities.add(new Entity(new PVector(0, .25f), .025f, .025f, true));
-        entities.add(new Entity(new PVector(.25f, .25f), .025f, .025f, false));
-//        entities.add(new Entity(new PVector(0, -.25f),1f, .025f, false));
+        entities.add(new Entity(new PVector(0f, .25f), .045f, .045f, false));
+        entities.add(new Entity(new PVector(-.25f, .25f), .045f, .045f, true));
+        STROKE_WEIGHT = 1.5f;
     }
 
     public void draw() {
@@ -30,11 +32,10 @@ public class Collision extends BaseSketch {
         for (Entity entity : entities) {
             for (Entity collider : entities) {
                 if (entity != collider) {
-                    float gap = entity.pos.dist(collider.pos);
-                    float rotation = getRelativeRotationOfPoint(entity.pos, collider.pos);
-                    fill(255, 255, 255);
-                    stroke(255, 255, 255);
-                    drawWorldText("" + rotation, entity.pos, 14);
+                    boolean colliding = colliding(entity, collider);
+                    entity.colliding = colliding;
+                    collider.colliding = true;
+
                 }
             }
         }
@@ -45,10 +46,96 @@ public class Collision extends BaseSketch {
             if (entity.colliding) {
                 stroke(color(255, 64, 64));
             }
-            strokeWeight(3);
-            drawWorldRect(entity.pos, entity.w, entity.h);
+            drawWorldRect(entity.pos, entity.w, entity.h, STROKE_WEIGHT);
         }
     }
+
+    PVector project(Entity entity, PVector axis) {
+        PVector axisNorm = axis.copy().normalize();
+        float min = entity.getCorner(1).dot(axisNorm);
+        float max = min;
+        for (int i = 0; i < 4; i++) {
+            float proj = entity.getCorner(i).dot(axisNorm);
+            if (proj < min) {
+                min = proj;
+            }
+
+            if (proj > max) {
+                max = proj;
+            }
+        }
+
+        return new PVector(min, max);
+    }
+
+    PVector perpendicular(PVector axis) {
+        return axis.copy().set(axis.y, -axis.x);
+    }
+
+    boolean colliding(Entity a, Entity b) {
+        Segment seg;
+        PVector axis;
+        PVector projA;
+        PVector projB;
+        for (int i = 1; i <= 4; i++) {
+            seg = new Segment(a.getCorner(i), a.getCorner(wrapIndex(i + 1, 4)));
+            axis = seg.dir;
+            axis = perpendicular(axis);
+            projA = project(a, axis);
+            projB = project(b, axis);
+            drawWorldLine(seg.pointA, seg.pointB, STROKE_WEIGHT);
+            if (
+                inRange(projA.x, projB.x, projB.y)
+                || inRange(projA.y, projB.x, projB.y)
+                || inRange(projB.y, projA.x, projB.y)
+                || inRange(projB.y, projA.x, projB.y)
+            ) {
+                return true;
+            }
+        }
+
+        for (int i = 1; i <= 4; i++) {
+            seg = new Segment(b.getCorner(i), b.getCorner(wrapIndex(i + 1, 4)));
+            axis = seg.dir;
+            axis = perpendicular(axis);
+            projA = project(a, axis);
+            projB = project(b, axis);
+            if (
+                    inRange(projA.x, projB.x, projB.y)
+                            || inRange(projA.y, projB.x, projB.y)
+                            || inRange(projB.y, projA.x, projB.y)
+                            || inRange(projB.y, projA.x, projB.y)
+                    ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void keyPressed() {
+        super.keyPressed();
+        if (CONTROLS_LOCKED) return;
+        if (key == '[') {
+            sampleVector.rotate(1.5f * delta);
+        }
+
+        if (key == ']') {
+            sampleVector.rotate(-1.5f * delta);
+        }
+
+        if (key == 'n') {
+            sampleVector = sampleVector.normalize();
+        }
+
+        if (key == 'j') {
+            sampleVector.setMag(sampleVector.mag() - .1f * delta);
+        }
+
+        if (key == 'k') {
+            sampleVector.setMag(sampleVector.mag() + .1f * delta);
+        }
+    }
+
 
     class Entity {
         PVector pos;
@@ -82,8 +169,8 @@ public class Collision extends BaseSketch {
          * Returns a corner on the bounding box of the object. 1-4 clockwise.
          */
         public PVector getCorner(int corner) {
-            float hW = width / 2;
-            float hH = height / 2;
+            float hW = w / 2;
+            float hH = h / 2;
             switch (corner) {
                 case 1:
                     return new PVector(pos.x + hW, pos.y + hH);
@@ -96,7 +183,6 @@ public class Collision extends BaseSketch {
                 default:
                     return new PVector(pos.x + hW, pos.y + hH);
             }
-
         }
     }
 }

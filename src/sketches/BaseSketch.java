@@ -319,13 +319,20 @@ abstract class BaseSketch extends PApplet {
     }
 
     // Methods for drawing shapes within the projection context.
-    void drawWorldRect(PVector pos, float w, float h) {
+    void drawWorldRect(PVector pos, float w, float h, float strokeWeight) {
+        strokeWeight(strokeWeight / zoom);
         rect(graphToCanvas(pos.copy().set(pos.x / zoom, pos.y / zoom)),
                 w * V_FRAGMENTS_PER_UNIT / zoom, h * H_FRAGMENTS_PER_UNIT / zoom);
     }
 
-    void drawWorldEllipse(PVector pos, float r) {
+    void drawWorldEllipse(PVector pos, float r, float strokeWeight) {
+        strokeWeight(strokeWeight / zoom);
         ellipse(graphToCanvas(pos.copy().div(zoom)), r * H_FRAGMENTS_PER_UNIT / zoom);
+    }
+
+    void drawWorldLine(PVector pt1, PVector pt2, float strokeWeight) {
+        strokeWeight(strokeWeight / zoom);
+        line(graphToCanvas(pt1.copy().div(zoom)), graphToCanvas(pt2.copy().div(zoom)));
     }
 
     void drawWorldText(String text, PVector pos, float fontSize) {
@@ -408,5 +415,23 @@ abstract class BaseSketch extends PApplet {
             index = wrapIndex(index - length, length);
         }
         return index;
+    }
+
+    class Ray {
+        PVector point;
+        PVector dir;
+
+    }
+
+    class Segment {
+        PVector pointA;
+        PVector pointB;
+        PVector dir;
+
+        Segment (PVector pA, PVector pB) {
+            pointA = pA;
+            pointB = pB;
+            dir = new PVector(pointB.x - pointA.x, pointB.y - pointA.y);
+        }
     }
 }
