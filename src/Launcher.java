@@ -126,6 +126,7 @@ public class Launcher extends Application {
         });
         grid.add(btn, 0, 2, 2, 1);
         primaryStage.show();
+//        PApplet.main(SKETCHES_SRC + "BlankSlate", new String[]{});
 
     }
 

@@ -1,12 +1,14 @@
 package sketches;
 
+import static util.SolMath.getRelativeRotationOfPoint;
+
 /**
  * Spring Grid
  */
 public class SpringGrid extends BaseSketch {
     Spring[] springs;
-    int gridX = 16;
-    int gridY = 16;
+    int gridX = 32;
+    int gridY = 32;
     float tension = 0.065f;
     float dampening = 0.05f;
     float padding = .05f;
@@ -14,7 +16,7 @@ public class SpringGrid extends BaseSketch {
     float canvasOffsetY;
     float canvasWidth;
     float canvasHeight;
-    float attractRadius = 160;
+    float attractRadius = 45;
 
     public void settings() {
         size(700, 700);

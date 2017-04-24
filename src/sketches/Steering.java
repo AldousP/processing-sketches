@@ -4,6 +4,8 @@ import processing.core.PVector;
 
 import java.util.ArrayList;
 
+import static util.SolMath.distance;
+
 public class Steering extends BaseSketch {
     protected ArrayList<Automaton> automatons;
     protected ArrayList<Obstacle> obstacles;

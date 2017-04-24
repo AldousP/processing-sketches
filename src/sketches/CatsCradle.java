@@ -2,6 +2,8 @@ package sketches;
 
 import java.util.ArrayList;
 
+import static util.SolArray.wrapIndex;
+
 public class CatsCradle extends BaseSketch {
     // Portion of the canvas that nodes will spawn within
     float SPAWN_REGION_PERCENTAGE = 0.95f;

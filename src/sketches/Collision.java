@@ -1,8 +1,12 @@
 package sketches;
 
 import processing.core.PVector;
+import util.Segment;
 
 import java.util.ArrayList;
+
+import static util.SolArray.wrapIndex;
+import static util.SolMath.inRange;
 
 public class Collision extends BaseSketch {
     float rectW = 0.1f;

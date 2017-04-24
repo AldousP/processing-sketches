@@ -1,12 +1,18 @@
 package sketches;
 
 import java.text.DecimalFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Queue;
 
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PVector;
 import processing.event.KeyEvent;
+
+import static util.SolMath.clamp;
+import static util.SolMath.inRange;
 
 abstract class BaseSketch extends PApplet {
 
@@ -17,12 +23,14 @@ abstract class BaseSketch extends PApplet {
     protected String title = "base_sketch";
     protected String date = "00.00.00";
     protected float sketchOpacity = 1;
-    // No man's land, the point where shapes outside the canvas bounds are drawn.
+    // The point where shapes outside the canvas bounds are drawn.
     protected int NML_L = -999;
     protected int NML_U = 999;
     protected int DEBUG_COLOR;
     protected int BACKGROUND_COLOR;
     protected int DRAW_COLOR;
+    protected int FPS_GRAPH_LOW_Y = 0;
+    protected int FPS_GRAPH_HIGH_Y = 120;
     protected float spinnerRotation = 0;
     protected int spinnerOrbs = 20;
     protected boolean spinnerAccelerating = true;
@@ -41,14 +49,13 @@ abstract class BaseSketch extends PApplet {
     protected float PALETTE_Y;
     protected float PALETTE_HEIGHT;
     protected float PALETTE_WIDTH;
-    protected float PALETTE_PERCENTAGE = 0.45f;                   // Amount of space between bottom of the bottom of the canvas to the bottom of the page that the palette will fill
+    protected float PALETTE_PERCENTAGE = 0.25f;                   // Amount of space between bottom of the bottom of the canvas to the bottom of the page that the palette will fill
     protected int lastFrame;
     protected float delta;
     protected ArrayList<Integer> palette = new ArrayList();
-    protected DecimalFormat df = new DecimalFormat(".#");
-    protected float colorDelta = 0;
+    protected boolean paletteLogging = true;
 
-    // There's some simple projection going on here. No scaling.
+    // Projection Variables.
     protected float GRID_WIDTH = 1;
     protected float GRID_HEIGHT = 1;
     protected float CANVAS_MID_X = 0;
@@ -63,6 +70,10 @@ abstract class BaseSketch extends PApplet {
     float H_FRAGMENTS_PER_UNIT;
     float V_FRAGMENTS_PER_UNIT;
     boolean CONTROLS_LOCKED = false;
+    private int FRAMETIME_QUEUE_SIZE = 100;
+    private int FRAMERATE_QUEUE_SIZE = 100;
+    private Queue<Float> FRAMETIMES;
+    private Queue<Float> FRAMERATES;
 
     public void settings() {
         size(700, 700);
@@ -71,6 +82,8 @@ abstract class BaseSketch extends PApplet {
     public void setup() {
         strokeWeight(STROKE_WEIGHT);
         frameRate(FRAME_RATE);
+        FRAMETIMES = new ArrayDeque<>();
+        FRAMERATES = new ArrayDeque<>();
         DEBUG_COLOR = color(0xFFFFFFFF);
         BACKGROUND_COLOR = color(0xFF2d3138);
         DRAW_COLOR = color(0xFFFFFFFF);
@@ -103,6 +116,10 @@ abstract class BaseSketch extends PApplet {
 
     public void draw() {
         delta = (millis() - lastFrame) / 1000f;
+        FRAMETIMES.add(delta);
+        if (FRAMETIMES.size() > FRAMETIME_QUEUE_SIZE) {
+            FRAMETIMES.poll();
+        }
         runTime += delta;
         lastFrame = millis();
         background(BACKGROUND_COLOR);
@@ -112,12 +129,15 @@ abstract class BaseSketch extends PApplet {
         // Hacky clip!
         drawGutterMask();
         if (DEBUG) {
+            togglePaletteLogging();
             drawDebug();
             drawSpinner();
             drawPalette();
             drawTime();
+            drawFPS();
+            togglePaletteLogging();
         }
-        fill(255, 255, 255, 255);
+        fill(color(255, 255, 255));
     }
 
     private void drawGutterMask() {
@@ -236,6 +256,60 @@ abstract class BaseSketch extends PApplet {
         }
     }
 
+    private void drawFPS() {
+        float frameTime = 0;
+        Iterator<Float> iterator = FRAMETIMES.iterator();
+        while (iterator.hasNext()) {
+            frameTime += iterator.next();
+        }
+        frameTime /= FRAMETIMES.size();
+        frameTime = 1000 / frameTime;
+        frameTime /= 1000;
+        FRAMERATES.add(frameTime);
+        if (FRAMERATES.size() > FRAMERATE_QUEUE_SIZE) {
+            FRAMERATES.poll();
+        }
+        float FRAME_SIZE = CANVAS_WIDTH / 24;
+        float FRAME_X = PALETTE_X + (CANVAS_WIDTH / 2) - FRAME_SIZE;
+        float FRAME_Y = CANVAS_Y + CANVAS_HEIGHT + 16;
+        fill(BACKGROUND_COLOR);
+        stroke(DEBUG_COLOR);
+        float FRAME_INCREMENT = FRAME_SIZE * 2/ FRAMERATES.size();
+        rect(FRAME_X, FRAME_Y, FRAME_SIZE * 2, FRAME_SIZE);
+
+        PVector drawPoint = new PVector();
+        PVector lastDrawPoint = new PVector(FRAME_X, FRAME_Y + FRAME_SIZE / 2);
+        iterator = FRAMERATES.iterator();
+        int i = 0;
+        float BASE_X = FRAME_X;
+        float BASE_Y = FRAME_Y + FRAME_SIZE;
+        while (iterator.hasNext()) {
+            float fps = iterator.next();
+            float alpha = fps / FPS_GRAPH_HIGH_Y - FPS_GRAPH_LOW_Y;
+            drawPoint.set(BASE_X + i * FRAME_INCREMENT, BASE_Y - FRAME_SIZE * (alpha));
+            stroke(color(0, 255, 255));
+            line(lastDrawPoint, drawPoint);
+            i++;
+            lastDrawPoint.set(drawPoint);
+        }
+
+        fill(BACKGROUND_COLOR);
+        stroke(DEBUG_COLOR);
+        rect(FRAME_X - 5, FRAME_Y - 5,  12, 12);
+
+        if (frameTime < 60) {
+            fill(lerpColor(
+                    color(200, 100, 100),
+                    DEBUG_COLOR, frameTime / 60));
+        } else {
+            fill(DEBUG_COLOR);
+        }
+        noStroke();
+        textAlign(PConstants.CENTER, PConstants.CENTER);
+        textSize(8);
+        text(round(frameTime), FRAME_X, FRAME_Y);
+    }
+
     private void drawTime() {
         fill(color(DEBUG_COLOR, 128));
         textAlign(PConstants.RIGHT, PConstants.CENTER);
@@ -344,7 +418,7 @@ abstract class BaseSketch extends PApplet {
     // Color
     @Override
     public void fill(int c) {
-        if (!palette.contains(c)) {
+        if (paletteLogging && !palette.contains(c)) {
             palette.add(c);
         }
         float opacity = (alpha(c) * sketchOpacity) / 255;
@@ -353,85 +427,25 @@ abstract class BaseSketch extends PApplet {
 
     @Override
     public void stroke(int c) {
-        if (!palette.contains(c)) {
+        if (paletteLogging && !palette.contains(c)) {
             palette.add(c);
         }
         float opacity = (alpha(c) * sketchOpacity) / 255;
         super.stroke(opacityAdj(c, opacity));
     }
 
+
     int opacityAdj(int colorIn, float opacity) {
         return color(red(colorIn), green(colorIn), blue(colorIn), 255 * opacity);
+    }
+
+    boolean togglePaletteLogging() {
+        return paletteLogging = !paletteLogging;
     }
 
     void log(String cat, String message, boolean timeStamp) {
         String time = timeStamp ? "[" + PApplet.hour() + ":" + PApplet.minute() + ":" + PApplet.second() + ":" + millis() + "]" : "";
         cat = "[" + cat + "]: ";
         PApplet.println(time + cat + message);
-    }
-
-    // Math
-    float clamp(float input, float low, float high) {
-        if (input < low) {
-            return low;
-        } else if (input > high) {
-            return high;
-        } else {
-            return input;
-        }
-    }
-
-    boolean inRange(float val, float lower, float upper) {
-        return val >= lower && val <= upper;
-    }
-
-    /**
-     * Get relative rotation between two points In Degrees
-     * @param originX
-     * @param originY
-     * @param ptX
-     * @param ptY
-     * @return
-     */
-    float getRelativeRotationOfPoint(float originX, float originY, float ptX, float ptY) {
-        float result = degrees(atan2(ptY - originY, ptX - originX));
-        if (result < 0) {
-            result += 360;
-        }
-        return result;
-    }
-
-    float getRelativeRotationOfPoint(PVector origin, PVector pt) {
-        return getRelativeRotationOfPoint(origin.x, origin.y, pt.x, pt.y);
-    }
-
-    float distance(PVector a, PVector b) {
-        return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
-    }
-
-    // Array Utils
-    int wrapIndex(int index, int length) {
-        if (index > length - 1) {
-            index = wrapIndex(index - length, length);
-        }
-        return index;
-    }
-
-    class Ray {
-        PVector point;
-        PVector dir;
-
-    }
-
-    class Segment {
-        PVector pointA;
-        PVector pointB;
-        PVector dir;
-
-        Segment (PVector pA, PVector pB) {
-            pointA = pA;
-            pointB = pB;
-            dir = new PVector(pointB.x - pointA.x, pointB.y - pointA.y);
-        }
     }
 }
