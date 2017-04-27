@@ -45,4 +45,8 @@ public class SolMath {
     public static float distance(PVector a, PVector b) {
         return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
     }
+
+    public static PVector perpendicular(PVector axis) {
+        return axis.copy().set(axis.y, -axis.x);
+    }
 }

@@ -11,12 +11,12 @@ public class SpringGrid extends BaseSketch {
     int gridY = 32;
     float tension = 0.065f;
     float dampening = 0.05f;
-    float padding = .05f;
+    float padding = .15f;
     float canvasOffsetX;
     float canvasOffsetY;
     float canvasWidth;
     float canvasHeight;
-    float attractRadius = 45;
+    float attractRadius = 105;
 
     public void settings() {
         size(700, 700);
@@ -26,9 +26,9 @@ public class SpringGrid extends BaseSketch {
         super.setup();
         title = "Spring Grid";
         date = "10.18.16";
-        DEBUG_COLOR = color(0x000000);
+        DEBUG_COLOR = color(0xFFFFFF);
         BACKGROUND_COLOR = color(0xFF6189a5);
-        DRAW_COLOR = color(0xFFFFFFFF);
+        DRAW_COLOR = color(0xFFFFFF);
         STROKE_WEIGHT = 1;
         strokeWeight(STROKE_WEIGHT);
         frameRate(FRAME_RATE);

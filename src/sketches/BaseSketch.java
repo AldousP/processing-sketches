@@ -10,6 +10,7 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PVector;
 import processing.event.KeyEvent;
+import util.geometry.Polygon;
 
 import static util.SolMath.clamp;
 import static util.SolMath.inRange;
@@ -58,12 +59,12 @@ abstract class BaseSketch extends PApplet {
     // Projection Variables.
     protected float GRID_WIDTH = 1;
     protected float GRID_HEIGHT = 1;
-    protected float CANVAS_MID_X = 0;
-    protected float CANVAS_MID_Y = 0;
-    protected float CANVAS_LOWER_X = CANVAS_MID_X - GRID_WIDTH / 2;
-    protected float CANVAS_UPPER_X = CANVAS_MID_X + GRID_WIDTH / 2;
-    protected float CANVAS_LOWER_Y = CANVAS_MID_Y - GRID_HEIGHT / 2;
-    protected float CANVAS_UPPER_Y = CANVAS_MID_Y + GRID_HEIGHT / 2;
+    protected float GRID_MID_X = 0;
+    protected float GRID_MIX_Y = 0;
+    protected float GRID_LOWER_X = GRID_MID_X - GRID_WIDTH / 2;
+    protected float GRID_UPPER_X = GRID_MID_X + GRID_WIDTH / 2;
+    protected float GRID_LOWER_Y = GRID_MIX_Y - GRID_HEIGHT / 2;
+    protected float GRID_UPPER_Y = GRID_MIX_Y + GRID_HEIGHT / 2;
     protected int GRID_COLOR;
 
     protected float zoom = 1;
@@ -74,6 +75,10 @@ abstract class BaseSketch extends PApplet {
     private int FRAMERATE_QUEUE_SIZE = 100;
     private Queue<Float> FRAMETIMES;
     private Queue<Float> FRAMERATES;
+    PVector tmp1 = new PVector();
+    PVector tm2 = new PVector();
+
+    protected DecimalFormat decimal = new DecimalFormat("#.##");
 
     public void settings() {
         size(700, 700);
@@ -151,8 +156,8 @@ abstract class BaseSketch extends PApplet {
     }
 
     private void drawGridLines() {
-        if (CANVAS_LOWER_X < 0 && CANVAS_UPPER_X > 0) {
-            float diff = PApplet.abs(0 - CANVAS_LOWER_X);
+        if (GRID_LOWER_X < 0 && GRID_UPPER_X > 0) {
+            float diff = PApplet.abs(0 - GRID_LOWER_X);
             float alpha = clamp(diff / (GRID_WIDTH), 0, 1);
             float canvasX = (alpha * CANVAS_WIDTH) + CANVAS_X;
             strokeWeight(STROKE_WEIGHT);
@@ -160,8 +165,8 @@ abstract class BaseSketch extends PApplet {
             line(canvasX, CANVAS_Y, canvasX, CANVAS_Y + CANVAS_HEIGHT);
         }
 
-        if (CANVAS_LOWER_Y < 0 && CANVAS_UPPER_Y > 0) {
-            float diff = PApplet.abs(0 - CANVAS_LOWER_Y);
+        if (GRID_LOWER_Y < 0 && GRID_UPPER_Y > 0) {
+            float diff = PApplet.abs(0 - GRID_LOWER_Y);
             float alpha = clamp(diff / (GRID_HEIGHT), 0, 1);
             float canvasY = CANVAS_Y + ((1 - alpha) * CANVAS_HEIGHT);
             strokeWeight(STROKE_WEIGHT);
@@ -187,17 +192,18 @@ abstract class BaseSketch extends PApplet {
             fill(DEBUG_COLOR);
             text(date, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize);
             text(title, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize * 2);
+            text("Zoom: " + zoom, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize * 3);
         }
     }
 
     // Projection methods
-    PVector graphToCanvas(PVector pt) {
-        return graphToCanvas(pt.x, pt.y);
+    PVector worldToScreen(PVector pt) {
+        return worldToScreen(pt.x, pt.y);
     }
 
-    protected PVector graphToCanvas(float x, float y) {
-        float hAlpha = (x - CANVAS_LOWER_X) / (CANVAS_UPPER_X - CANVAS_LOWER_X);
-        float vAlpha = (y - CANVAS_LOWER_Y) / (CANVAS_UPPER_Y - CANVAS_LOWER_Y);
+    protected PVector worldToScreen(float x, float y) {
+        float hAlpha = (x - GRID_LOWER_X) / (GRID_UPPER_X - GRID_LOWER_X);
+        float vAlpha = (y - GRID_LOWER_Y) / (GRID_UPPER_Y - GRID_LOWER_Y);
         float canvasX = CANVAS_X + CANVAS_WIDTH * hAlpha;
         float canvasY = CANVAS_Y + CANVAS_HEIGHT - (CANVAS_HEIGHT * vAlpha);
 
@@ -217,6 +223,26 @@ abstract class BaseSketch extends PApplet {
             }
         }
         return new PVector(canvasX, canvasY);
+    }
+
+    protected PVector screenToWorld(float x, float y) {
+        if (y < CANVAS_Y) {
+            y = CANVAS_Y;
+        } else if (y > CANVAS_Y + CANVAS_HEIGHT) {
+            y = CANVAS_Y + CANVAS_HEIGHT;
+        }
+
+        if (x < CANVAS_X) {
+            x = CANVAS_X;
+        } else if (x > CANVAS_X + CANVAS_WIDTH) {
+            x = CANVAS_X + CANVAS_WIDTH;
+        }
+
+        float hAlpha = x - CANVAS_X / CANVAS_WIDTH;
+        float vAlpha = y - CANVAS_Y / CANVAS_HEIGHT;
+        float worldX = GRID_LOWER_X + GRID_WIDTH * hAlpha;
+        float worldY = GRID_LOWER_X + GRID_WIDTH * vAlpha;
+        return new PVector(worldX, worldY);
     }
 
     // Control the loading spinner
@@ -364,6 +390,10 @@ abstract class BaseSketch extends PApplet {
         if (key == 't') {
             DEBUG = !DEBUG;
         }
+
+        if (zoom < .1f ) {
+            zoom = .1f;
+        }
     }
 
     // Shape Overrides (For using vectors rather than points)
@@ -386,33 +416,37 @@ abstract class BaseSketch extends PApplet {
     }
 
     void translateViewport(float x, float y) {
-        CANVAS_LOWER_X += x;
-        CANVAS_UPPER_X += x;
-        CANVAS_UPPER_Y += y;
-        CANVAS_LOWER_Y += y;
+        GRID_LOWER_X += x;
+        GRID_UPPER_X += x;
+        GRID_UPPER_Y += y;
+        GRID_LOWER_Y += y;
     }
 
     // Methods for drawing shapes within the projection context.
     void drawWorldRect(PVector pos, float w, float h, float strokeWeight) {
         strokeWeight(strokeWeight / zoom);
-        rect(graphToCanvas(pos.copy().set(pos.x / zoom, pos.y / zoom)),
+        rect(worldToScreen(pos.copy().set(pos.x / zoom, pos.y / zoom)),
                 w * V_FRAGMENTS_PER_UNIT / zoom, h * H_FRAGMENTS_PER_UNIT / zoom);
     }
 
     void drawWorldEllipse(PVector pos, float r, float strokeWeight) {
         strokeWeight(strokeWeight / zoom);
-        ellipse(graphToCanvas(pos.copy().div(zoom)), r * H_FRAGMENTS_PER_UNIT / zoom);
+        ellipse(worldToScreen(pos.copy().div(zoom)), r * H_FRAGMENTS_PER_UNIT / zoom);
+    }
+
+    void drawWorldEllipse(float x, float y, float r, float strokeWeight) {
+        drawWorldEllipse(tmp1.set(x, y), r, strokeWeight);
     }
 
     void drawWorldLine(PVector pt1, PVector pt2, float strokeWeight) {
         strokeWeight(strokeWeight / zoom);
-        line(graphToCanvas(pt1.copy().div(zoom)), graphToCanvas(pt2.copy().div(zoom)));
+        line(worldToScreen(pt1.copy().div(zoom)), worldToScreen(pt2.copy().div(zoom)));
     }
 
     void drawWorldText(String text, PVector pos, float fontSize) {
         textSize(fontSize / zoom);
-        PVector tmp = graphToCanvas(pos.x / zoom, pos.y / zoom);
-        text(text, tmp.x, tmp.y);
+        tmp1 = worldToScreen(pos.x / zoom, pos.y / zoom);
+        text(text, tmp1.x, tmp1.y);
     }
 
     // Color
@@ -447,5 +481,44 @@ abstract class BaseSketch extends PApplet {
         String time = timeStamp ? "[" + PApplet.hour() + ":" + PApplet.minute() + ":" + PApplet.second() + ":" + millis() + "]" : "";
         cat = "[" + cat + "]: ";
         PApplet.println(time + cat + message);
+    }
+
+    /**
+     * Geometry rendering.
+     */
+    protected void drawShape (Polygon shape) {
+        PVector lastPt = shape.vertices.get(shape.vertices.size() - 1).copy().add(shape.position);
+        for (PVector current : shape.vertices) {
+            tmp1.set(current).add(shape.position);
+            drawWorldLine(lastPt, tmp1, STROKE_WEIGHT);
+            lastPt.set(tmp1);
+        }
+    }
+
+    /**
+     * Used to scale scaling values for polygons by the delta time.
+     * @param scaling
+     * @param delta
+     * @return
+     */
+    protected PVector getScalingForDelta(PVector scaling, float delta) {
+        float adjX;
+        float adjY;
+        if (scaling.x >= 1) {
+            adjX = (scaling.x - 1) * delta + 1;
+        } else {
+            adjX = scaling.x * delta;
+        }
+
+        if (scaling.y >= 1) {
+            adjY = (scaling.y - 1) * delta + 1;
+        } else {
+            adjY = scaling.y * delta;
+        }
+        return scaling.set(adjX, adjY);
+    }
+
+    protected PVector getScalingForDelta(float x, float y, float delta) {
+        return getScalingForDelta(tmp1.set(x, y), delta);
     }
 }

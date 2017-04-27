@@ -50,16 +50,16 @@ public class Steering extends BaseSketch {
         for (Obstacle obstacle : obstacles) {
             fill(OBSTACLE_COLOR);
             stroke(OBSTACLE_COLOR);
-            ellipse(graphToCanvas(obstacle.position), CANVAS_WIDTH * obstacle.radius);
+            ellipse(worldToScreen(obstacle.position), CANVAS_WIDTH * obstacle.radius);
         }
 
         for (Automaton automaton : automatons) {
             pos = automaton.position;
             noStroke();
             fill(DRAW_COLOR);
-            ellipse(graphToCanvas(pos), CANVAS_WIDTH * (automatonRadius * 2));
+            ellipse(worldToScreen(pos), CANVAS_WIDTH * (automatonRadius * 2));
             textSize(10);
-            PVector text = graphToCanvas(pos);
+            PVector text = worldToScreen(pos);
             text("Avoid Force " + maxAvoidForce, CANVAS_X, CANVAS_Y);
         }
     }
@@ -141,7 +141,7 @@ public class Steering extends BaseSketch {
                 if (closest != null) {
                     stroke(128, 0, 0);
                 }
-                ellipse(graphToCanvas(circleX + position.x, circleY + position.y), wanderCircleRadius * 200);
+                ellipse(worldToScreen(circleX + position.x, circleY + position.y), wanderCircleRadius * 200);
             }
         }
     }
