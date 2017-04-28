@@ -70,7 +70,6 @@ abstract class BaseSketch extends PApplet {
     protected float zoom = 1;
     float H_FRAGMENTS_PER_UNIT;
     float V_FRAGMENTS_PER_UNIT;
-    boolean CONTROLS_LOCKED = false;
     private int FRAMETIME_QUEUE_SIZE = 100;
     private int FRAMERATE_QUEUE_SIZE = 100;
     private Queue<Float> FRAMETIMES;
@@ -175,7 +174,7 @@ abstract class BaseSketch extends PApplet {
         }
     }
 
-    private void drawDebug() {
+    protected void drawDebug() {
         if (DEBUG) {
             fill(0xFFFFFF);
             noFill();
@@ -238,10 +237,10 @@ abstract class BaseSketch extends PApplet {
             x = CANVAS_X + CANVAS_WIDTH;
         }
 
-        float hAlpha = x - CANVAS_X / CANVAS_WIDTH;
-        float vAlpha = y - CANVAS_Y / CANVAS_HEIGHT;
-        float worldX = GRID_LOWER_X + GRID_WIDTH * hAlpha;
-        float worldY = GRID_LOWER_X + GRID_WIDTH * vAlpha;
+        float hAlpha = (x - CANVAS_X) / CANVAS_WIDTH;
+        float vAlpha = (y - CANVAS_Y) / CANVAS_HEIGHT;
+        float worldX = GRID_LOWER_X * zoom + GRID_WIDTH * zoom * hAlpha;
+        float worldY = GRID_LOWER_Y * zoom + GRID_HEIGHT * zoom * vAlpha;
         return new PVector(worldX, worldY);
     }
 
@@ -350,7 +349,6 @@ abstract class BaseSketch extends PApplet {
 
     @Override
     public void keyPressed() {
-        if (CONTROLS_LOCKED) return;
         if (key == 'w') {
             translateViewport(0, GRID_HEIGHT / 64);
         }
@@ -467,7 +465,6 @@ abstract class BaseSketch extends PApplet {
         float opacity = (alpha(c) * sketchOpacity) / 255;
         super.stroke(opacityAdj(c, opacity));
     }
-
 
     int opacityAdj(int colorIn, float opacity) {
         return color(red(colorIn), green(colorIn), blue(colorIn), 255 * opacity);
