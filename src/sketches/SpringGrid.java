@@ -7,8 +7,8 @@ import static util.SolMath.getRelativeRotationOfPoint;
  */
 public class SpringGrid extends BaseSketch {
     Spring[] springs;
-    int gridX = 32;
-    int gridY = 32;
+    int gridX = 20;
+    int gridY = 20;
     float tension = 0.065f;
     float dampening = 0.05f;
     float padding = .15f;
@@ -28,7 +28,6 @@ public class SpringGrid extends BaseSketch {
         date = "10.18.16";
         DEBUG_COLOR = color(0xFFFFFF);
         BACKGROUND_COLOR = color(0xFF6189a5);
-        DRAW_COLOR = color(0xFFFFFF);
         STROKE_WEIGHT = 1;
         strokeWeight(STROKE_WEIGHT);
         frameRate(FRAME_RATE);
