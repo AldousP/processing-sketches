@@ -96,17 +96,17 @@ public class Polygon {
      return true;
     }
 
-    public static Polygon triangle(PVector position, float radius) {
-            float inc = (float) (2f * Math.PI) / 3;
-            float startingPos = (float) (Math.PI / 2f);
-            float currPos = 0f;
-            ArrayList<PVector> pts = new ArrayList<>();
-            while (currPos < 2 * Math.PI) {
-                currPos += inc;
-                float x = (float) Math.cos(startingPos + currPos) * radius;
-                float y = (float) Math.sin(startingPos + currPos) * radius;
-                pts.add(new PVector(x, y));
-            }
-            return new Polygon(pts).position(position.x, position.y);
+    public static Polygon generate(PVector position, float radius, int segments) {
+        float inc = (float) (2f * Math.PI) / segments;
+        float startingPos = (float) (Math.PI / 2f);
+        float currPos = 0f;
+        ArrayList<PVector> pts = new ArrayList<>();
+        while (currPos < 2 * Math.PI) {
+            currPos += inc;
+            float x = (float) Math.cos(startingPos + currPos) * radius;
+            float y = (float) Math.sin(startingPos + currPos) * radius;
+            pts.add(new PVector(x, y));
+        }
+        return new Polygon(pts).position(position.x, position.y);
     }
 }
