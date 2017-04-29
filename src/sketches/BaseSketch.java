@@ -448,6 +448,10 @@ abstract class BaseSketch extends PApplet {
         text(text, tmp1.x, tmp1.y);
     }
 
+    void drawWorldText(String text, float x, float y, float fontSize) {
+        drawWorldText(text, tmp1.set(x, y), fontSize);
+    }
+
     // Color
     @Override
     public void fill(int c) {
