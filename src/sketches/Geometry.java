@@ -55,34 +55,21 @@ public class Geometry extends BaseSketch {
         return midDst < dstAvg;
     }
 
+    @SuppressWarnings("SuspiciousNameCombination")
     public boolean collides(Polygon polyA, Polygon polyB) {
         boolean collides = true;
-
-        for (int i = 0; i < polyA.vertices.size(); i++) {
-            PVector ptA = polyA.vertices.get(i);
-            PVector ptB = polyA.vertices.get(SolArray.wrapIndex(i + 1, polyA.vertices.size()));
-            PVector midPoint = ptB.copy().add(ptA).mult(0.5f);
-            PVector diff = ptA.copy().sub(ptB);
-            PVector perp = diff.set(diff.y, -diff.x);
-            PVector projA = project(polyA, perp);
-            PVector projB = project(polyB, perp);
-
-            if (!overlaps(projA.x, projA.y, projB.x, projB.y)) {
-                collides = false;
-            }
-        }
-
-        for (int i = 0; i < polyB.vertices.size(); i++) {
-            PVector ptA = polyB.vertices.get(i);
-            PVector ptB = polyB.vertices.get(SolArray.wrapIndex(i + 1, polyB.vertices.size()));
-            PVector midPoint = ptB.copy().add(ptA).mult(0.5f);
-            PVector diff = ptA.copy().sub(ptB);
-            PVector perp = diff.set(diff.y, -diff.x);
-            PVector projA = project(polyA, perp);
-            PVector projB = project(polyB, perp);
-
-            if (!overlaps(projA.x, projA.y, projB.x, projB.y)) {
-                collides = false;
+        for (int t = 0; t < 2; t++) {
+            Polygon target = t == 0 ? polyA : polyB;
+            for (int i = 0; i < target.vertices.size(); i++) {
+                PVector ptA = target.vertices.get(i);
+                PVector ptB = target.vertices.get(SolArray.wrapIndex(i + 1, target.vertices.size()));
+                PVector diff = ptA.copy().sub(ptB);
+                PVector perp = diff.set(diff.y, -diff.x);
+                PVector projA = project(polyA, perp);
+                PVector projB = project(polyB, perp);
+                if (!overlaps(projA.x, projA.y, projB.x, projB.y)) {
+                    collides = false;
+                }
             }
         }
         return collides;
