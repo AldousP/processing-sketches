@@ -15,8 +15,8 @@ public class Geometry extends BaseSketch {
         STROKE_WEIGHT = 1.5f;
         title = "Geometry";
         date = "04.26.17";
-        polygons.add(Polygon.generate(tmp1.set(0, 0), 0.075f, 3));
-        polygons.add(Polygon.generate(tmp1.set(0, 0), 0.075f, 8).tag("cursor"));
+        polygons.add(Polygon.generate(0, 0, 0.075f, 3));
+        polygons.add(Polygon.generate(0, 0, 0.075f, 8).tag("cursor"));
     }
 
     public void draw() {

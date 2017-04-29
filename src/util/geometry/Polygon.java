@@ -11,6 +11,7 @@ public class Polygon {
     public PVector position = new PVector();
     private PVector midPoint = new PVector();
     private PVector tmp = new PVector();
+    private static PVector statTmp = new PVector();
     private PVector lastPt = new PVector();
     private int color;
     private ArrayList<String> tags = new ArrayList<>();
@@ -94,6 +95,10 @@ public class Polygon {
     static public boolean overlaps(Polygon a, Polygon b) {
 
      return true;
+    }
+
+    public static Polygon generate(float x, float y, float radius, int segments) {
+        return generate(statTmp.set(x, y), radius, segments);
     }
 
     public static Polygon generate(PVector position, float radius, int segments) {
