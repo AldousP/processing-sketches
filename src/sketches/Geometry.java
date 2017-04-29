@@ -14,23 +14,11 @@ public class Geometry extends BaseSketch {
 
     public void setup() {
         super.setup();
-        STROKE_WEIGHT = 2.5f;
+        STROKE_WEIGHT = 1.5f;
         title = "Geometry";
         date = "04.26.17";
-        polygons.add(new Polygon(
-                new PVector(.25f, .25f),
-                new PVector(.25f, -.25f),
-                new PVector(-.25f, -.25f),
-                new PVector(-.25f, .25f)
-        ).scale(.35f).rotate(49));
-
-        polygons.add(new Polygon(
-                new PVector(.25f, .25f),
-                new PVector(.25f, -.25f),
-                new PVector(-.25f, -.25f),
-                new PVector(-.25f, .25f),
-                new PVector(-.35f, .15f)
-        ).scale(.35f).rotate(49).translate(-.025f, 0).tag("cursor"));
+        polygons.add(Polygon.triangle(tmp1.set(0, 0), 0.15f));
+        polygons.add(Polygon.triangle(tmp1.set(0, 0), 0.15f).tag("cursor"));
     }
 
     public void draw() {
@@ -40,7 +28,7 @@ public class Geometry extends BaseSketch {
 
         for (Polygon polygon : polygons) {
             stroke(polygon.getColor());
-            drawShape(polygon.rotate(45 * delta));
+            drawShape(polygon);
             for (Polygon collider : polygons) {
                 if (collider != polygon && collides(polygon, collider)) {
                     polygon.color(color(0, 255, 0));
@@ -50,7 +38,6 @@ public class Geometry extends BaseSketch {
                     collider.color(color(255, 255, 255));
                 }
             }
-
             if (polygon.hasTag("cursor")) {
                 tmp1.set(screenToWorld(mouseX, height - mouseY));
                 polygon.position(tmp1.x, tmp1.y);

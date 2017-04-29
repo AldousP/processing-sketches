@@ -20,6 +20,11 @@ public class Polygon {
         this.vertices.addAll(Arrays.asList(vertices));
     }
 
+    public Polygon (ArrayList<PVector> vertices) {
+        this.vertices = new ArrayList<>();
+        this.vertices.addAll(vertices);
+    }
+
     public PVector midPoint() {
         vertices.forEach(vert -> midPoint.add(vert));
         midPoint.div(vertices.size() + 1);
@@ -89,5 +94,19 @@ public class Polygon {
     static public boolean overlaps(Polygon a, Polygon b) {
 
      return true;
+    }
+
+    public static Polygon triangle(PVector position, float radius) {
+            float inc = (float) (2f * Math.PI) / 3;
+            float startingPos = (float) (Math.PI / 2f);
+            float currPos = 0f;
+            ArrayList<PVector> pts = new ArrayList<>();
+            while (currPos < 2 * Math.PI) {
+                currPos += inc;
+                float x = (float) Math.cos(startingPos + currPos) * radius;
+                float y = (float) Math.sin(startingPos + currPos) * radius;
+                pts.add(new PVector(x, y));
+            }
+            return new Polygon(pts).position(position.x, position.y);
     }
 }
