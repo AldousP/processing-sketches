@@ -1,21 +1,16 @@
 package sketches;
 
 import processing.core.PVector;
-import util.Segment;
+import util.SolArray;
 import util.geometry.Polygon;
 
-import java.awt.*;
 import java.util.ArrayList;
-
-import static util.SolArray.wrapIndex;
-import static util.SolMath.inRange;
 
 /**
  * BlankSlate.
  */
 public class Geometry extends BaseSketch {
     ArrayList<Polygon> polygons = new ArrayList<>();
-    public int debugVertice = 0;
 
     public void setup() {
         super.setup();
@@ -27,6 +22,14 @@ public class Geometry extends BaseSketch {
                 new PVector(-.25f, -.25f),
                 new PVector(-.25f, .25f)
         ).scale(.35f).rotate(49));
+
+        polygons.add(new Polygon(
+                new PVector(.25f, .25f),
+                new PVector(.25f, -.25f),
+                new PVector(-.25f, -.25f),
+                new PVector(-.25f, .25f),
+                new PVector(-.35f, .15f)
+        ).scale(.35f).rotate(49).translate(-.025f, 0).tag("cursor"));
     }
 
     public void draw() {
@@ -35,48 +38,74 @@ public class Geometry extends BaseSketch {
         strokeWeight(5);
 
         for (Polygon polygon : polygons) {
-            drawShape(polygon);
-            if (debugVertice > polygon.vertices.size() - 1) {
-                return;
+            stroke(polygon.getColor());
+            drawShape(polygon.rotate(45 * delta));
+            for (Polygon collider : polygons) {
+                if (collider != polygon && collides(polygon, collider)) {
+                    polygon.color(color(0, 255, 0));
+                    collider.color(color(0, 255, 0));
+                } else {
+                    polygon.color(color(255, 255, 255));
+                    collider.color(color(255, 255, 255));
+                }
             }
-            PVector a = polygon.vertices.get(debugVertice);
-            PVector b = polygon.vertices.get(wrapIndex(debugVertice + 1, polygon.vertices.size()));
-            drawWorldLine(a.add(polygon.position), b.add(polygon.position), 3);
 
-            PVector midPoint = b.copy().add(a).mult(0.5f);
-            drawWorldEllipse(midPoint, .015f, STROKE_WEIGHT);
+            if (polygon.hasTag("cursor")) {
+                tmp1.set(screenToWorld(mouseX, height - mouseY));
+                polygon.position(tmp1.x, tmp1.y);
+            }
         }
     }
 
-    public void drawDebug() {
-        super.drawDebug();
-        textSize(24);
-        textAlign(1);
-        text("EDGE: " + debugVertice, CANVAS_X, CANVAS_Y - 24);
+    public boolean overlaps(float a1, float a2, float b1, float b2) {
+        float dstA = a2 - a1;
+        float dstB = b2 - b1;
+        float dstAvg = (dstA + dstB) / 2;
+        float midA = a1 + (a2 - a1) / 2;
+        float midB = b1 + (b2 - b1) / 2;
+        float midDst = abs(midB - midA);
+        return midDst < dstAvg;
     }
 
-    @Override
-    public void keyPressed() {
-        super.keyPressed();
-        if (key == 'y') {
-            debugVertice --;
+    public boolean collides(Polygon polyA, Polygon polyB) {
+        boolean collides = true;
+
+        for (int i = 0; i < polyA.vertices.size(); i++) {
+            PVector ptA = polyA.vertices.get(i);
+            PVector ptB = polyA.vertices.get(SolArray.wrapIndex(i + 1, polyA.vertices.size()));
+            PVector midPoint = ptB.copy().add(ptA).mult(0.5f);
+            PVector diff = ptA.copy().sub(ptB);
+            PVector perp = diff.set(diff.y, -diff.x);
+            PVector projA = project(polyA, perp);
+            PVector projB = project(polyB, perp);
+
+            if (!overlaps(projA.x, projA.y, projB.x, projB.y)) {
+                collides = false;
+            }
         }
 
-        if (key == 'u') {
-            debugVertice ++;
-        }
+        for (int i = 0; i < polyB.vertices.size(); i++) {
+            PVector ptA = polyB.vertices.get(i);
+            PVector ptB = polyB.vertices.get(SolArray.wrapIndex(i + 1, polyB.vertices.size()));
+            PVector midPoint = ptB.copy().add(ptA).mult(0.5f);
+            PVector diff = ptA.copy().sub(ptB);
+            PVector perp = diff.set(diff.y, -diff.x);
+            PVector projA = project(polyA, perp);
+            PVector projB = project(polyB, perp);
 
-        if (debugVertice < 0) {
-            debugVertice = 0;
+            if (!overlaps(projA.x, projA.y, projB.x, projB.y)) {
+                collides = false;
+            }
         }
+        return collides;
     }
 
     PVector project(Polygon entity, PVector axis) {
         PVector axisNorm = axis.copy().normalize();
-        float min = entity.vertices.get(0).dot(axisNorm);
+        float min = entity.vertices.get(0).copy().add(entity.position).dot(axisNorm);
         float max = min;
         for (int i = 0; i < entity.vertices.size(); i++) {
-            float proj = entity.vertices.get(i).dot(axisNorm);
+            float proj = entity.vertices.get(i).copy().add(entity.position).dot(axisNorm);
             if (proj < min) {
                 min = proj;
             }
@@ -86,9 +115,5 @@ public class Geometry extends BaseSketch {
             }
         }
         return new PVector(min, max);
-    }
-
-    PVector perpendicular(PVector axis) {
-        return axis.copy().set(-axis.x, -axis.y);
     }
 }

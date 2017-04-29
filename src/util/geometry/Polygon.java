@@ -2,7 +2,6 @@ package util.geometry;
 
 import processing.core.PVector;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,10 +9,9 @@ import java.util.Collections;
 public class Polygon {
     public ArrayList<PVector> vertices;
     public PVector position = new PVector();
-    public float width;
-    public float height;
     private PVector midPoint = new PVector();
     private PVector tmp = new PVector();
+    private PVector lastPt = new PVector();
     private int color;
     private ArrayList<String> tags = new ArrayList<>();
 
@@ -29,7 +27,8 @@ public class Polygon {
     }
 
     public Polygon translate(float x, float y) {
-       position.add(x, y);
+        lastPt.set(position);
+        position.add(x, y);
         return this;
     }
 
@@ -82,6 +81,7 @@ public class Polygon {
     }
 
     public Polygon position(float x, float y) {
+        lastPt.set(position);
         position.set(x, y);
         return this;
     }
