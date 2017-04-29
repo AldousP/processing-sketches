@@ -10,6 +10,7 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PVector;
 import processing.event.KeyEvent;
+import util.SolArray;
 import util.geometry.Polygon;
 
 import static util.SolMath.clamp;
@@ -517,5 +518,52 @@ abstract class BaseSketch extends PApplet {
 
     protected PVector getScalingForDelta(float x, float y, float delta) {
         return getScalingForDelta(tmp1.set(x, y), delta);
+    }
+
+    public boolean overlaps(float a1, float a2, float b1, float b2) {
+        float dstA = a2 - a1;
+        float dstB = b2 - b1;
+        float dstAvg = (dstA + dstB) / 2;
+        float midA = a1 + (a2 - a1) / 2;
+        float midB = b1 + (b2 - b1) / 2;
+        float midDst = abs(midB - midA);
+        return midDst < dstAvg;
+    }
+
+    @SuppressWarnings("SuspiciousNameCombination")
+    public boolean collides(Polygon polyA, Polygon polyB) {
+        boolean collides = true;
+        for (int t = 0; t < 2; t++) {
+            Polygon target = t == 0 ? polyA : polyB;
+            for (int i = 0; i < target.vertices.size(); i++) {
+                PVector ptA = target.vertices.get(i);
+                PVector ptB = target.vertices.get(SolArray.wrapIndex(i + 1, target.vertices.size()));
+                PVector diff = ptA.copy().sub(ptB);
+                PVector perp = diff.set(diff.y, -diff.x);
+                PVector projA = project(polyA, perp);
+                PVector projB = project(polyB, perp);
+                if (!overlaps(projA.x, projA.y, projB.x, projB.y)) {
+                    collides = false;
+                }
+            }
+        }
+        return collides;
+    }
+
+    PVector project(Polygon entity, PVector axis) {
+        PVector axisNorm = axis.copy().normalize();
+        float min = entity.vertices.get(0).copy().add(entity.position).dot(axisNorm);
+        float max = min;
+        for (int i = 0; i < entity.vertices.size(); i++) {
+            float proj = entity.vertices.get(i).copy().add(entity.position).dot(axisNorm);
+            if (proj < min) {
+                min = proj;
+            }
+
+            if (proj > max) {
+                max = proj;
+            }
+        }
+        return new PVector(min, max);
     }
 }
