@@ -14,6 +14,7 @@ public class Geometry extends BaseSketch {
 
     public void setup() {
         super.setup();
+        STROKE_WEIGHT = 2.5f;
         title = "Geometry";
         date = "04.26.17";
         polygons.add(new Polygon(
