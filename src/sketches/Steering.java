@@ -62,6 +62,7 @@ public class Steering extends BaseSketch {
             PVector text = worldToScreen(pos);
             text("Avoid Force " + maxAvoidForce, CANVAS_X, CANVAS_Y);
         }
+        postDraw();
     }
 
     class Automaton {

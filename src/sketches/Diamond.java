@@ -66,5 +66,6 @@ public class Diamond extends BaseSketch {
             lastX2 = x;
             lastY2 = y;
         }
+        postDraw();
     }
 }

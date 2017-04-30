@@ -26,7 +26,8 @@ public class SpringGrid extends BaseSketch {
         super.setup();
         title = "Spring Grid";
         date = "10.18.16";
-        DEBUG_COLOR = color(0xFFFFFF);
+        DEBUG_COLOR = color(255, 255, 255);
+        DRAW_COLOR = color(255, 255, 255);
         BACKGROUND_COLOR = color(0xFF6189a5);
         STROKE_WEIGHT = 1;
         strokeWeight(STROKE_WEIGHT);
@@ -93,6 +94,7 @@ public class SpringGrid extends BaseSketch {
                 attractRadius * 2,
                 attractRadius * 2
         );
+        postDraw();
     }
 
     void updateSimulation() {

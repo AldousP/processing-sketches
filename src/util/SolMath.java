@@ -49,4 +49,11 @@ public class SolMath {
     public static PVector perpendicular(PVector axis) {
         return axis.copy().set(axis.y, -axis.x);
     }
+
+    public static int wrapIndex(int index, int length) {
+        if (index > length - 1) {
+            index = wrapIndex(index - length, length);
+        }
+        return index;
+    }
 }

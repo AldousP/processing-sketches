@@ -2,7 +2,7 @@ package sketches;
 
 import java.util.ArrayList;
 
-import static util.SolArray.wrapIndex;
+import static util.SolMath.wrapIndex;
 
 public class CatsCradle extends BaseSketch {
     // Portion of the canvas that nodes will spawn within
@@ -111,6 +111,7 @@ public class CatsCradle extends BaseSketch {
             fill(color(255, 0, 0));
             fill(color(100, 240, 0));
         }
+        postDraw();
     }
 
     // Classes

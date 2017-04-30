@@ -1,20 +1,16 @@
 package sketches;
 
 import java.text.DecimalFormat;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Queue;
+import java.util.*;
 
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PVector;
 import processing.event.KeyEvent;
-import util.SolArray;
+import util.SolMath;
 import util.geometry.Polygon;
 
 import static util.SolMath.clamp;
-import static util.SolMath.inRange;
 
 abstract class BaseSketch extends PApplet {
 
@@ -25,9 +21,6 @@ abstract class BaseSketch extends PApplet {
     protected String title = "base_sketch";
     protected String date = "00.00.00";
     protected float sketchOpacity = 1;
-    // The point where shapes outside the canvas bounds are drawn.
-    protected int NML_L = -999;
-    protected int NML_U = 999;
     protected int DEBUG_COLOR;
     protected int BACKGROUND_COLOR;
     protected int DRAW_COLOR;
@@ -76,7 +69,6 @@ abstract class BaseSketch extends PApplet {
     private Queue<Float> FRAMETIMES;
     private Queue<Float> FRAMERATES;
     PVector tmp1 = new PVector();
-    PVector tm2 = new PVector();
 
     protected DecimalFormat decimal = new DecimalFormat("#.##");
 
@@ -131,6 +123,10 @@ abstract class BaseSketch extends PApplet {
         if (DEBUG) {
             drawGridLines();
         }
+
+    }
+
+    public void postDraw() {
         // Hacky clip!
         drawGutterMask();
         if (DEBUG) {
@@ -206,22 +202,6 @@ abstract class BaseSketch extends PApplet {
         float vAlpha = (y - GRID_LOWER_Y) / (GRID_UPPER_Y - GRID_LOWER_Y);
         float canvasX = CANVAS_X + CANVAS_WIDTH * hAlpha;
         float canvasY = CANVAS_Y + CANVAS_HEIGHT - (CANVAS_HEIGHT * vAlpha);
-
-        if (!inRange(hAlpha, 0, 1)) {
-            if (hAlpha < 0) {
-                canvasX = NML_L;
-            } else {
-                canvasX = NML_U;
-            }
-        }
-
-        if (!inRange(vAlpha, 0, 1)) {
-            if (vAlpha < 0) {
-                canvasY = NML_U;
-            } else {
-                canvasY = NML_L;
-            }
-        }
         return new PVector(canvasX, canvasY);
     }
 
@@ -352,6 +332,7 @@ abstract class BaseSketch extends PApplet {
     public void keyPressed() {
         if (key == 'w') {
             translateViewport(0, GRID_HEIGHT / 64);
+            System.out.print("W");
         }
 
         if (key == 'a') {
@@ -383,7 +364,7 @@ abstract class BaseSketch extends PApplet {
         }
 
         if (key == '-') {
-            zoom += 0.1;
+            zoom += 0.01;
         }
 
         if (key == 't') {
@@ -391,7 +372,7 @@ abstract class BaseSketch extends PApplet {
         }
 
         if (zoom < .1f ) {
-            zoom = .1f;
+            zoom = .01f;
         }
     }
 
@@ -497,6 +478,19 @@ abstract class BaseSketch extends PApplet {
         }
     }
 
+    protected void drawVolume(Polygon... shape) {
+        List<Polygon> polygons = Arrays.asList(shape);
+        Polygon last = polygons.get(polygons.size() - 1);
+        for (Polygon polygon : polygons) {
+            int size = last.vertices.size() > polygon.vertices.size()
+                    ? polygon.vertices.size() : last.vertices.size();
+            for (int i = 0; i < size; i++) {
+                drawWorldLine(polygon.vertices.get(i).copy().add(polygon.position), last.vertices.get(i).copy().add(last.position), STROKE_WEIGHT);
+            }
+        }
+
+    }
+
     /**
      * Used to scale scaling values for polygons by the delta time.
      * @param scaling
@@ -524,7 +518,7 @@ abstract class BaseSketch extends PApplet {
         return getScalingForDelta(tmp1.set(x, y), delta);
     }
 
-    public boolean overlaps(float a1, float a2, float b1, float b2) {
+    protected boolean overlaps(float a1, float a2, float b1, float b2) {
         float dstA = a2 - a1;
         float dstB = b2 - b1;
         float dstAvg = (dstA + dstB) / 2;
@@ -535,13 +529,13 @@ abstract class BaseSketch extends PApplet {
     }
 
     @SuppressWarnings("SuspiciousNameCombination")
-    public boolean collides(Polygon polyA, Polygon polyB) {
+    protected boolean collides(Polygon polyA, Polygon polyB) {
         boolean collides = true;
         for (int t = 0; t < 2; t++) {
             Polygon target = t == 0 ? polyA : polyB;
             for (int i = 0; i < target.vertices.size(); i++) {
                 PVector ptA = target.vertices.get(i);
-                PVector ptB = target.vertices.get(SolArray.wrapIndex(i + 1, target.vertices.size()));
+                PVector ptB = target.vertices.get(SolMath.wrapIndex(i + 1, target.vertices.size()));
                 PVector diff = ptA.copy().sub(ptB);
                 PVector perp = diff.set(diff.y, -diff.x);
                 PVector projA = project(polyA, perp);
@@ -554,7 +548,7 @@ abstract class BaseSketch extends PApplet {
         return collides;
     }
 
-    PVector project(Polygon entity, PVector axis) {
+    protected PVector project(Polygon entity, PVector axis) {
         PVector axisNorm = axis.copy().normalize();
         float min = entity.vertices.get(0).copy().add(entity.position).dot(axisNorm);
         float max = min;
