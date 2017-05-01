@@ -5,9 +5,6 @@ import util.geometry.Polygon;
 
 import java.util.ArrayList;
 
-/**
- * BlankSlate.
- */
 public class Spiral extends BaseSketch {
     ArrayList<Polygon> polygons = new ArrayList<>();
 
@@ -19,10 +16,10 @@ public class Spiral extends BaseSketch {
         STROKE_WEIGHT = 0.15f;
         BACKGROUND_COLOR = color(70, 23, 32);
         DRAW_COLOR = color(230, 230, 230);
-        title = "Geometry";
+        title = "Spiral";
         date = "04.29.17";
         DEBUG = false;
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 10; i++) {
             polygons.add(Polygon
                     .generate(0, 0, (float) Math.pow(.1f * i, 2), 12)
                     .scale(0.1f * i)

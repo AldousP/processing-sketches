@@ -5,9 +5,6 @@ import util.geometry.Polygon;
 
 import java.util.ArrayList;
 
-/**
- * BlankSlate.
- */
 public class Geometry extends BaseSketch {
     ArrayList<Polygon> polygons = new ArrayList<>();
 
@@ -39,7 +36,7 @@ public class Geometry extends BaseSketch {
 
         for (Polygon polygon : polygons) {
             for (Polygon collider : polygons) {
-                if (collider != polygon && collides(polygon, collider)) {
+                if (collider != polygon && collides(polygon, collider, tmp1)) {
                     drawWorldText("I'm colliding", polygon.position, 12);
                 }
             }
@@ -48,7 +45,6 @@ public class Geometry extends BaseSketch {
                 tmp1.set(screenToWorld(mouseX, height - mouseY));
                 polygon.position(tmp1.x, tmp1.y).rotate(180 * delta);
             }
-
             drawShape(polygon);
         }
 

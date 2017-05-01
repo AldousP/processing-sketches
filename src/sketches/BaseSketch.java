@@ -7,6 +7,7 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PVector;
 import processing.event.KeyEvent;
+import util.Segment;
 import util.SolMath;
 import util.geometry.Polygon;
 
@@ -423,6 +424,10 @@ abstract class BaseSketch extends PApplet {
         line(worldToScreen(pt1.copy().div(zoom)), worldToScreen(pt2.copy().div(zoom)));
     }
 
+    void drawWorldLine(Segment segment, float strokeWeight) {
+        drawWorldLine(segment.pointA, segment.pointB, strokeWeight);
+    }
+
     void drawWorldText(String text, PVector pos, float fontSize) {
         textSize(fontSize / zoom);
         tmp1 = worldToScreen(pos.x / zoom, pos.y / zoom);
@@ -529,7 +534,8 @@ abstract class BaseSketch extends PApplet {
     }
 
     @SuppressWarnings("SuspiciousNameCombination")
-    protected boolean collides(Polygon polyA, Polygon polyB) {
+    protected boolean collides(Polygon polyA, Polygon polyB, PVector penA) {
+        penA = new PVector(0, 0);
         boolean collides = true;
         for (int t = 0; t < 2; t++) {
             Polygon target = t == 0 ? polyA : polyB;
@@ -540,8 +546,16 @@ abstract class BaseSketch extends PApplet {
                 PVector perp = diff.set(diff.y, -diff.x);
                 PVector projA = project(polyA, perp);
                 PVector projB = project(polyB, perp);
-                if (!overlaps(projA.x, projA.y, projB.x, projB.y)) {
+                PVector overlap = SolMath.overlap(projA.x, projA.y, projB.x, projB.y);
+                if (overlap.x == 0 && overlap.y == 0) {
                     collides = false;
+                } else {
+                    PVector newPen = perp.copy().normalize().setMag(overlap.y - overlap.x);
+                    PVector penTarget = penA;
+
+                    if (newPen.mag() < penTarget.mag()) {
+                        penTarget.set(newPen);
+                    }
                 }
             }
         }

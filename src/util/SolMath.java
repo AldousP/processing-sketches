@@ -56,4 +56,25 @@ public class SolMath {
         }
         return index;
     }
+
+    public static boolean colliding(float a1, float a2, float b1, float b2) {
+        float distA = Math.abs(a2 - a1) / 2;
+        float distB = Math.abs(b2 - b1) / 2;
+        float midA = (a1 + a2) / 2;
+        float midB = (b1 + b2) / 2;
+
+        if (Math.abs(midA - midB) < distA + distB) {
+            return Math.sqrt((midB - midA) * (midB - midA)) < (distA + distB);
+        } else {
+            return false;
+        }
+    }
+
+    public static PVector overlap(float a1, float a2, float b1, float b2) {
+        if (colliding(a1, a2, b1, b2)) {
+            return new PVector(Math.max(a1, b1), Math.min(a2, b2));
+        } else {
+            return new PVector(0 ,0);
+        }
+    }
 }
