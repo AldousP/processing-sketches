@@ -10,7 +10,10 @@ import java.util.ArrayList;
 public class LinearTrans extends BaseSketch {
     ArrayList<PVector> pts =  new ArrayList<>();
     int gridDensity = 25;
-    float canvasRotation = 0;
+
+
+    float alpha = 0;
+    float alphaInc = 0.0001f;
 
     public void setup() {
         super.setup();
@@ -59,6 +62,17 @@ public class LinearTrans extends BaseSketch {
 
     public void draw() {
         super.draw();
+        alpha += alphaInc;
+        if (alpha > 1) {
+            alpha = 1;
+            alphaInc *= -1;
+        }
+
+        if (alpha < 0) {
+            alpha = 0;
+            alphaInc *= -1;
+        }
+
         stroke(color(255, 0, 0));
         drawWorldLine(tmp1.set(0, 0), iHat, 5);
         stroke(color(0, 255, 0));
@@ -68,7 +82,10 @@ public class LinearTrans extends BaseSketch {
         for (PVector pt : pts) {
             drawWorldEllipse(pt, 0.005f, 0.005f);
         }
-        postDraw();
 
+        drawWorldText("Rotate  with M & N", 0, -.25f, 36);
+        drawWorldText("Shift jHat with [ & ]", 0, -.35f, 36);
+        drawWorldText("Shift iHat with { & }", 0, -.45f, 36);
+        postDraw();
     }
 }
