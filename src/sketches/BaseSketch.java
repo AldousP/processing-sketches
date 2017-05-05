@@ -5,6 +5,7 @@ import java.util.*;
 
 import processing.core.PApplet;
 import processing.core.PConstants;
+import processing.core.PMatrix2D;
 import processing.core.PVector;
 import processing.event.KeyEvent;
 import util.Segment;
@@ -70,6 +71,9 @@ abstract class BaseSketch extends PApplet {
     private Queue<Float> FRAMETIMES;
     private Queue<Float> FRAMERATES;
     PVector tmp1 = new PVector();
+
+    PVector iHat = new PVector(1, 0);
+    PVector jHat = new PVector(0, 1);
 
     protected DecimalFormat decimal = new DecimalFormat("#.##");
 
@@ -365,15 +369,15 @@ abstract class BaseSketch extends PApplet {
         }
 
         if (key == '-') {
-            zoom += 0.01;
+            zoom += 0.1;
         }
 
         if (key == 't') {
             DEBUG = !DEBUG;
         }
 
-        if (zoom < .1f ) {
-            zoom = .01f;
+        if (zoom <= 0f ) {
+            zoom = .0001f;
         }
     }
 
@@ -411,8 +415,12 @@ abstract class BaseSketch extends PApplet {
     }
 
     void drawWorldEllipse(PVector pos, float r, float strokeWeight) {
+        PVector tempPos = pos.copy();
+        PVector prodA = iHat.copy().mult(tempPos.x);
+        PVector prodB = jHat.copy().mult(tempPos.y);
+        PVector adj = prodA.add(prodB);
         strokeWeight(strokeWeight / zoom);
-        ellipse(worldToScreen(pos.copy().div(zoom)), r * H_FRAGMENTS_PER_UNIT / zoom);
+        ellipse(worldToScreen(adj.div(zoom)), r * H_FRAGMENTS_PER_UNIT / zoom);
     }
 
     void drawWorldEllipse(float x, float y, float r, float strokeWeight) {
