@@ -30,36 +30,6 @@ public class LinearTrans extends BaseSketch {
         }
     }
 
-    @Override
-    public void keyPressed() {
-        super.keyPressed();
-        if (key == ']') {
-            jHat.x += 0.5 * delta;
-        }
-
-        if (key == '[') {
-            jHat.x -= 0.5 * delta;
-        }
-
-        if (key == '}') {
-            iHat.y += 0.5 * delta;
-        }
-
-        if (key == '{') {
-            iHat.y -= 0.5 * delta;
-        }
-
-        if (key == 'n') {
-            iHat.rotate(radians(-60 * delta));
-            jHat.rotate(radians(-60 * delta));
-        }
-
-        if (key == 'm') {
-            iHat.rotate(radians(60 * delta));
-            jHat.rotate(radians(60 * delta));
-        }
-    }
-
     public void draw() {
         super.draw();
         alpha += alphaInc;

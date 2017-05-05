@@ -1,6 +1,7 @@
 package sketches;
 
-import static util.SolMath.getRelativeRotationOfPoint;
+import processing.core.PConstants;
+import processing.core.PVector;
 
 /**
  * Spring Grid
@@ -11,12 +12,6 @@ public class SpringGrid extends BaseSketch {
     int gridY = 20;
     float tension = 0.065f;
     float dampening = 0.05f;
-    float padding = .15f;
-    float canvasOffsetX;
-    float canvasOffsetY;
-    float canvasWidth;
-    float canvasHeight;
-    float attractRadius = 105;
 
     public void settings() {
         size(700, 700);
@@ -28,29 +23,26 @@ public class SpringGrid extends BaseSketch {
         date = "10.18.16";
         DEBUG_COLOR = color(255, 255, 255);
         DRAW_COLOR = color(255, 255, 255);
-        BACKGROUND_COLOR = color(0xFF6189a5);
+        BACKGROUND_COLOR = color(25, 25, 25);
         STROKE_WEIGHT = 1;
         strokeWeight(STROKE_WEIGHT);
-        frameRate(FRAME_RATE);
-        canvasOffsetX = width * padding;
-        canvasOffsetY = height * padding;
-        canvasWidth = width - canvasOffsetX * 2;
-        canvasHeight = height - canvasOffsetY * 2;
+        frameRate(30);
         DEBUG = false;
         springs = new Spring[gridX * gridY];
+        zoom = 1.5f;
 
         int springCount = 0;
         float hAlpha;
         float vAlpha;
-        float canvasDivW = canvasWidth / gridX;
-        float canvasDivH = canvasHeight / gridY;
         for (int i = 0; i < gridX; i ++) {
             for (int j = 0; j < gridY; j ++) {
                 Spring s = new Spring();
                 hAlpha = (float) i / (float) gridX;
                 vAlpha = (float) j / (float) gridY;
-                s.x = canvasOffsetX + canvasDivW / 2 + hAlpha * canvasWidth;
-                s.y = canvasOffsetY + canvasDivH / 2 + vAlpha * canvasHeight;
+                s.position = new PVector(hAlpha + -.5f, vAlpha + -.5f);
+                s.length = 0;
+                s.currentLength = random(0, 0.025f);
+                s.rotation = random(0, 360);
                 springs[springCount] = s;
                 springCount ++;
             }
@@ -60,40 +52,39 @@ public class SpringGrid extends BaseSketch {
     public void draw() {
         super.draw();
         updateSimulation();
-        stroke(DRAW_COLOR);
+        stroke(color(255, 255, 255));
         fill(DRAW_COLOR);
+        STROKE_WEIGHT = 2;
         strokeWeight(STROKE_WEIGHT);
+
+        textAlign(PConstants.CENTER, PConstants.CENTER);
+        if (DEBUG) {
+            noFill();
+            stroke(GRID_COLOR);
+            drawWorldText("THERE ARE " + springs.length + " SPRINGS", 0, 0, 24);
+        }
         int springIndex = 0;
         Spring s;
         for (int i = 0; i < gridX; i++) {
             for (int j = 0; j < gridY; j++) {
                 s = springs[springIndex];
-                s.render();
+                drawWorldEllipse(s.position.copy().add(s.spring), s.size, STROKE_WEIGHT);
+                drawWorldLine(s.position, s.position.copy().add(s.spring), STROKE_WEIGHT);
                 // Draw Neighbors
                 if (springIndex < springs.length - 1) {
                     if (j != gridY - 1) {
-                        line(springs[springIndex + 1].oX, springs[springIndex + 1].oY, s.oX, s.oY);
+                        Spring spring = springs[springIndex + 1];
+                        drawWorldLine(spring.position.copy().add(spring.spring), s.position.copy().add(s.spring), STROKE_WEIGHT);
                     }
 
                     if (springIndex + gridY < springs.length) {
-                        line(springs[springIndex + gridY].oX, springs[springIndex + gridY].oY, s.oX, s.oY);
+                        Spring spring = springs[springIndex + gridY];
+                        drawWorldLine(spring.position.copy().add(spring.spring), s.position.copy().add(s.spring), STROKE_WEIGHT);
                     }
                 }
                 springIndex ++;
             }
         }
-
-        if (mousePressed) {
-            stroke(DRAW_COLOR);
-        }
-
-        noFill();
-        ellipse(
-                constrain(mouseX, canvasOffsetX, canvasOffsetX + canvasWidth),
-                constrain(mouseY, canvasOffsetY, canvasOffsetY + canvasHeight),
-                attractRadius * 2,
-                attractRadius * 2
-        );
         postDraw();
     }
 
@@ -105,44 +96,24 @@ public class SpringGrid extends BaseSketch {
 
     protected class Spring {
         float length = 1;
-        float currentLength = 1;
-        float x;
-        float y;
+        float currentLength = 0;
+        PVector position;
+        PVector spring = new PVector();
         float speed;
-        float oX;
-        float oY;
         boolean inRange;
         float rotation;
-        float distance;
-        float size = (canvasWidth / gridX / 2);
+        float size = 0.005f;
 
         void update(float dampening, float tension) {
             float diff = length - currentLength;
             speed += tension * diff - speed * dampening;
             currentLength += speed;
             inRange = false;
-            if (mousePressed) {
-                float xPos = constrain(mouseX, canvasOffsetX, canvasOffsetX + canvasWidth);
-                float yPos = constrain(mouseY, canvasOffsetY, canvasOffsetY + canvasHeight);
-                float distanceToPoint = sqrt(pow(x - xPos, 2) + pow(y - yPos, 2));
-                distance = distanceToPoint;
-                float alphaDistance = distanceToPoint / attractRadius;
-                if (distanceToPoint < attractRadius) {
-                    rotation = getRelativeRotationOfPoint(x, y, xPos, yPos);
-                    inRange = true;
-                    speed = (alphaDistance) * 1;
-                }
+            spring.set(cos(radians(rotation)) * currentLength, sin(radians(rotation)) * currentLength);
+            if (speed < 0.00025f) {
+                speed = random(0.00025f, 0.0005f);
+                rotation = random(0, 360);
             }
-
-            oX = cos(radians(rotation)) * currentLength + x;
-            oY = sin(radians(rotation)) * currentLength + y;
-        }
-
-        void render() {
-            noFill();
-            stroke(DRAW_COLOR);
-            fill(DRAW_COLOR);
-            ellipse(oX, oY, size, size);
         }
     }
 }

@@ -71,6 +71,7 @@ abstract class BaseSketch extends PApplet {
     private Queue<Float> FRAMETIMES;
     private Queue<Float> FRAMERATES;
     PVector tmp1 = new PVector();
+    PVector tmp2 = new PVector();
 
     PVector iHat = new PVector(1, 0);
     PVector jHat = new PVector(0, 1);
@@ -379,6 +380,32 @@ abstract class BaseSketch extends PApplet {
         if (zoom <= 0f ) {
             zoom = .0001f;
         }
+
+        if (key == ']') {
+            jHat.x += 0.5 * delta;
+        }
+
+        if (key == '[') {
+            jHat.x -= 0.5 * delta;
+        }
+
+        if (key == '}') {
+            iHat.y += 0.5 * delta;
+        }
+
+        if (key == '{') {
+            iHat.y -= 0.5 * delta;
+        }
+
+        if (key == 'n') {
+            iHat.rotate(radians(-60 * delta));
+            jHat.rotate(radians(-60 * delta));
+        }
+
+        if (key == 'm') {
+            iHat.rotate(radians(60 * delta));
+            jHat.rotate(radians(60 * delta));
+        }
     }
 
     // Shape Overrides (For using vectors rather than points)
@@ -407,13 +434,6 @@ abstract class BaseSketch extends PApplet {
         GRID_LOWER_Y += y;
     }
 
-    // Methods for drawing shapes within the projection context.
-    void drawWorldRect(PVector pos, float w, float h, float strokeWeight) {
-        strokeWeight(strokeWeight / zoom);
-        rect(worldToScreen(pos.copy().set(pos.x / zoom, pos.y / zoom)),
-                w * V_FRAGMENTS_PER_UNIT / zoom, h * H_FRAGMENTS_PER_UNIT / zoom);
-    }
-
     void drawWorldEllipse(PVector pos, float r, float strokeWeight) {
         PVector tempPos = pos.copy();
         PVector prodA = iHat.copy().mult(tempPos.x);
@@ -423,22 +443,30 @@ abstract class BaseSketch extends PApplet {
         ellipse(worldToScreen(adj.div(zoom)), r * H_FRAGMENTS_PER_UNIT / zoom);
     }
 
-    void drawWorldEllipse(float x, float y, float r, float strokeWeight) {
-        drawWorldEllipse(tmp1.set(x, y), r, strokeWeight);
-    }
-
     void drawWorldLine(PVector pt1, PVector pt2, float strokeWeight) {
-        strokeWeight(strokeWeight / zoom);
-        line(worldToScreen(pt1.copy().div(zoom)), worldToScreen(pt2.copy().div(zoom)));
-    }
+        PVector tempPos = pt1.copy();
+        PVector prodA = iHat.copy().mult(tempPos.x);
+        PVector prodB = jHat.copy().mult(tempPos.y);
+        PVector adj1 = prodA.add(prodB);
 
-    void drawWorldLine(Segment segment, float strokeWeight) {
-        drawWorldLine(segment.pointA, segment.pointB, strokeWeight);
+        tempPos = pt2.copy();
+        prodA = iHat.copy().mult(tempPos.x);
+        prodB = jHat.copy().mult(tempPos.y);
+        PVector adj2 = prodA.add(prodB);
+
+
+        strokeWeight(strokeWeight / zoom);
+        line(worldToScreen(adj1.copy().div(zoom)), worldToScreen(adj2.copy().div(zoom)));
     }
 
     void drawWorldText(String text, PVector pos, float fontSize) {
+        PVector tempPos = pos.copy();
+        PVector prodA = iHat.copy().mult(tempPos.x);
+        PVector prodB = jHat.copy().mult(tempPos.y);
+        PVector adj = prodA.add(prodB);
+
         textSize(fontSize / zoom);
-        tmp1 = worldToScreen(pos.x / zoom, pos.y / zoom);
+        tmp1 = worldToScreen(adj.x / zoom, adj.y / zoom);
         text(text, tmp1.x, tmp1.y);
     }
 

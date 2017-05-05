@@ -12,25 +12,25 @@ public class Spiral extends BaseSketch {
     float alpha = 0;
     float alphaInc = 0.0001f;
 
-    PVector rRange = new PVector(10, 100);
-    PVector gRange = new PVector(10, 100);
-    PVector bRange = new PVector(10, 100);
+    PVector rRange = new PVector(10, 80);
+    PVector gRange = new PVector(10, 120);
+    PVector bRange = new PVector(10, 180);
     PVector camRange = new PVector(0.5f, 5);
 
     float r = rRange.x;
     float g = gRange.y;
     float b = bRange.x + (bRange.y - bRange.x) / 2;
 
-    float rInc = -10;
-    float gInc = 10;
-    float bInc = -10;
+    float rInc = 10;
+    float gInc = -10;
+    float bInc = 10;
 
     public void settings() {size(700, 700);
     }
 
     public void setup() {
         super.setup();
-        STROKE_WEIGHT = 0.5f;
+        STROKE_WEIGHT = 0.8f;
         BACKGROUND_COLOR = color(70, 23, 32);
         DRAW_COLOR = color(230, 230, 230);
         title = "Spiral";
@@ -42,7 +42,7 @@ public class Spiral extends BaseSketch {
                     .scale(0.5f * i)
                     .rotate(10 * i));
         }
-        zoom = 5;
+        zoom = 0.5f;
     }
 
     public void draw() {
