@@ -110,7 +110,7 @@ public class SpringGrid extends BaseSketch {
             currentLength += speed;
             inRange = false;
             spring.set(cos(radians(rotation)) * currentLength, sin(radians(rotation)) * currentLength);
-            if (speed < 0.00025f) {
+            if (speed < 0.0000025f) {
                 speed = random(0.00025f, 0.0005f);
                 rotation = random(0, 360);
             }

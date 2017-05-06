@@ -76,6 +76,8 @@ abstract class BaseSketch extends PApplet {
     PVector iHat = new PVector(1, 0);
     PVector jHat = new PVector(0, 1);
 
+    float zoomInc = 0.001f;
+
     protected DecimalFormat decimal = new DecimalFormat("#.##");
 
     public void settings() {
@@ -366,11 +368,11 @@ abstract class BaseSketch extends PApplet {
         }
 
         if (key == '+') {
-            zoom -= 0.1;
+            zoom -= zoomInc;
         }
 
         if (key == '-') {
-            zoom += 0.1;
+            zoom += zoomInc;
         }
 
         if (key == 't') {
