@@ -5,10 +5,8 @@ import java.util.*;
 
 import processing.core.PApplet;
 import processing.core.PConstants;
-import processing.core.PMatrix2D;
 import processing.core.PVector;
 import processing.event.KeyEvent;
-import util.Segment;
 import util.SolMath;
 import util.geometry.Polygon;
 
@@ -72,11 +70,9 @@ abstract class BaseSketch extends PApplet {
     private Queue<Float> FRAMERATES;
     PVector tmp1 = new PVector();
     PVector tmp2 = new PVector();
-
     PVector iHat = new PVector(1, 0);
     PVector jHat = new PVector(0, 1);
-
-    float zoomInc = 0.001f;
+    float zoomInc = 0.1f;
 
     protected DecimalFormat decimal = new DecimalFormat("#.##");
 
@@ -177,6 +173,9 @@ abstract class BaseSketch extends PApplet {
             stroke(color(GRID_COLOR));
             line(CANVAS_X, canvasY, CANVAS_X + CANVAS_WIDTH, canvasY);
         }
+
+        drawWorldText("iHat: " + iHat.x + ", " + iHat.y, iHat, 12);
+        drawWorldText("jHat: " + jHat.x + ", " + jHat.y, jHat, 12);
     }
 
     protected void drawDebug() {
@@ -399,12 +398,12 @@ abstract class BaseSketch extends PApplet {
             iHat.y -= 0.5 * delta;
         }
 
-        if (key == 'n') {
+        if (key == CODED && keyCode == LEFT) {
             iHat.rotate(radians(-60 * delta));
             jHat.rotate(radians(-60 * delta));
         }
 
-        if (key == 'm') {
+        if (key == CODED && keyCode == RIGHT) {
             iHat.rotate(radians(60 * delta));
             jHat.rotate(radians(60 * delta));
         }

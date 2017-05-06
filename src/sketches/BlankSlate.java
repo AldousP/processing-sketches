@@ -15,4 +15,19 @@ public class BlankSlate extends BaseSketch {
         super.draw();
         postDraw();
     }
+
+    @Override
+    protected void drawDebug() {
+        super.drawDebug();
+        drawWorldText("I'm a Sketch Specific Debug Line", 0, 0, 12);
+    }
+
+    @Override
+    public void keyPressed() {
+        if (key == 'a') {
+        }
+
+        if (key == CODED && keyCode == LEFT) {
+        }
+    }
 }
