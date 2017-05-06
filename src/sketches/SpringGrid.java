@@ -66,7 +66,6 @@ public class SpringGrid extends BaseSketch {
         updateSimulation();
         stroke(color(255, 255, 255));
         fill(DRAW_COLOR);
-        STROKE_WEIGHT = 2;
         strokeWeight(STROKE_WEIGHT);
         tension = SolMath.clamp(tension, 0, 5);
         dampening = SolMath.clamp(dampening, 0, 5);
@@ -97,7 +96,6 @@ public class SpringGrid extends BaseSketch {
         }
         postDraw();
         BACKGROUND_COLOR = color(15 + alpha * 180);
-//        STROKE_WEIGHT = 3 * alpha;
         spacePressed = false;
     }
 
