@@ -20,7 +20,9 @@ Controls
 ====================
 
 WASD Controls the camera position.
- 
 T Toggles the debug view.
- 
 -/+ Controls the camera zoom.
+SHIFT Toggles camera information
+[ & ] Controls jHat
+{ & } Controls iHat
+Left and Right Arrow Keys Rotate The Camera

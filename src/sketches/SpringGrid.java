@@ -3,6 +3,11 @@ package sketches;
 import processing.core.PConstants;
 import processing.core.PVector;
 import util.SolMath;
+import util.geometry.Polygon;
+import util.steering.Automaton;
+import util.steering.Obstacle;
+
+import java.util.ArrayList;
 
 /**
  * Spring Grid
@@ -10,12 +15,23 @@ import util.SolMath;
 public class SpringGrid extends BaseSketch {
     Spring[] springs;
     int gridX = 19;
-    int gridY = 19;
+    int gridY = 19 ;
     float tension = 0.035f;
     float dampening = 0.03f;
     float topSpeed = 0.025f;
     boolean spacePressed = false;
     float averageSpeed = 0;
+
+    protected ArrayList<Automaton> automatons;
+    protected ArrayList<Obstacle> obstacles;
+    protected float automatonRadius = .0075f;
+    protected float obstacleRadius = .075f;
+    int obstacleCount = 30;
+    int automatonCount = 1;
+    int OBSTACLE_COLOR;
+    float maxAvoidForce = .18f;
+    Polygon obstacleShape = Polygon.generate(0, 0, obstacleRadius, 36);
+    Polygon automatonShape = Polygon.generate(0, 0, automatonRadius, 36);
 
     enum EditState {
         TENSION,
@@ -42,7 +58,28 @@ public class SpringGrid extends BaseSketch {
         DEBUG = false;
         springs = new Spring[gridX * gridY];
         zoomInc = 0.01f;
-        zoom = 2f;
+        zoom = 1.98f;
+        iHat.set(-0.51f, -0.47f);
+        jHat.set(-1.18f, 0.13f);
+        GRID_LOWER_X = -0.5f;
+        GRID_UPPER_X = 0.5f;
+        GRID_LOWER_Y = -0.31f;
+        GRID_UPPER_Y = 0.69f;
+
+        OBSTACLE_COLOR = color(0xFFD68A51);
+
+        obstacles = new ArrayList<Obstacle>();
+        automatons = new ArrayList<Automaton>();
+        PVector tmp;
+        for (int i = 0; i < obstacleCount; i++) {
+            tmp = new PVector(random(-0.5f, 0.5f), random(-0.5f, 0.5f));
+            obstacles.add(new Obstacle(tmp, random(obstacleRadius / 2, obstacleRadius * 2)));
+        }
+
+        for (int i = 0; i < automatonCount; i++) {
+            tmp = new PVector(random(-0.5f, 0.5f), random(-0.5f, 0.5f));
+            automatons.add(new Automaton(tmp, obstacles, 1, 1));
+        }
 
         int springCount = 0;
         float springArea = 1;
@@ -74,28 +111,58 @@ public class SpringGrid extends BaseSketch {
 
         textAlign(PConstants.CENTER, PConstants.CENTER);
         int springIndex = 0;
+        STROKE_WEIGHT = 0.75f;
         Spring s;
         for (int i = 0; i < gridX; i++) {
             for (int j = 0; j < gridY; j++) {
                 s = springs[springIndex];
-                drawWorldEllipse(s.position.copy().add(s.spring), s.size, STROKE_WEIGHT);
+//                drawMultipleEllipse(s.position.copy().add(s.spring), s.size, STROKE_WEIGHT, s.height / 4);
                 // Draw Neighbors
                 if (springIndex < springs.length - 1) {
                     if (j != gridY - 1) {
                         Spring spring = springs[springIndex + 1];
-                        drawWorldLine(spring.position.copy().add(spring.spring), s.position.copy().add(s.spring), STROKE_WEIGHT);
+                        drawMultipleWorldLine(
+                                spring.position.copy().add(spring.spring),
+                                s.position.copy().add(s.spring),
+                                STROKE_WEIGHT,
+                                s.height / 4);
                     }
 
                     if (springIndex + gridY < springs.length) {
                         Spring spring = springs[springIndex + gridY];
-                        drawWorldLine(spring.position.copy().add(spring.spring), s.position.copy().add(s.spring), STROKE_WEIGHT);
+                        drawMultipleWorldLine(
+                                spring.position.copy().add(spring.spring),
+                                s.position.copy().add(s.spring),
+                                STROKE_WEIGHT,
+                                s.height / 4);
                     }
                 }
                 springIndex ++;
             }
         }
+
+
+        if (DEBUG) {
+            for (Obstacle obstacle : obstacles) {
+                stroke(color(10, 120, 180));
+                obstacleShape.position.set(obstacle.position);
+                STROKE_WEIGHT = 2;
+                drawShape(obstacleShape);
+            }
+        }
+
+        for (Automaton automaton : automatons) {
+            automaton.update(delta, maxAvoidForce, DEBUG);
+            if (DEBUG) {
+                stroke(color(200, 60, 60));
+                automatonShape.position.set(automaton.position);
+                STROKE_WEIGHT = 2;
+                drawShape(automatonShape);
+            }
+        }
+
         postDraw();
-        BACKGROUND_COLOR = color(15 + alpha * 180);
+        BACKGROUND_COLOR = color(alpha / 40);
         spacePressed = false;
     }
 
@@ -176,14 +243,13 @@ public class SpringGrid extends BaseSketch {
         }
     }
 
-
     void updateSimulation() {
         averageSpeed = 0;
         for (Spring spring : springs) {
             spring.update(dampening, tension, topSpeed);
-            averageSpeed += spring.speed;
+            averageSpeed += spring.currentLength;
         }
-        averageSpeed /= springs.length;
+        averageSpeed /= 1;
 
     }
 
@@ -196,6 +262,8 @@ public class SpringGrid extends BaseSketch {
         boolean inRange;
         float rotation;
         float size = 0.005f;
+        float height = 0;
+        float attractRadius = 0.25f;
 
         void update(float dampening, float tension, float topSpeed) {
             float diff = length - currentLength;
@@ -207,6 +275,17 @@ public class SpringGrid extends BaseSketch {
                 rotation = rotation + random(-360, 360);
                 speed += 0.5 * delta;
             }
+
+            Automaton a = automatons.get(0);
+            float dst = abs(a.position.dist(position));
+            if (dst < attractRadius) {
+                height = ((dst) / attractRadius);
+            }
+            height -= 5 * delta;
+            if (height < 0) {
+                height = 0;
+            }
+
             if (speed > topSpeed) {
                 speed = topSpeed;
             }

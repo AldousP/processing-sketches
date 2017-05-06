@@ -15,6 +15,8 @@ import static util.SolMath.clamp;
 abstract class BaseSketch extends PApplet {
 
     protected float runTime = 0;
+    boolean paused = false;
+    float timeDilation = 1;
     protected int FRAME_RATE = 60;
     protected float STROKE_WEIGHT = .01f;
     protected boolean DEBUG = true;
@@ -74,6 +76,8 @@ abstract class BaseSketch extends PApplet {
     PVector jHat = new PVector(0, 1);
     float zoomInc = 0.1f;
 
+    boolean shiftDown = false;
+
     protected DecimalFormat decimal = new DecimalFormat("#.##");
 
     public void settings() {
@@ -117,6 +121,7 @@ abstract class BaseSketch extends PApplet {
 
     public void draw() {
         delta = (millis() - lastFrame) / 1000f;
+        delta *= timeDilation;
         FRAMETIMES.add(delta);
         if (FRAMETIMES.size() > FRAMETIME_QUEUE_SIZE) {
             FRAMETIMES.poll();
@@ -127,7 +132,6 @@ abstract class BaseSketch extends PApplet {
         if (DEBUG) {
             drawGridLines();
         }
-
     }
 
     public void postDraw() {
@@ -195,6 +199,21 @@ abstract class BaseSketch extends PApplet {
             text(date, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize);
             text(title, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize * 2);
             text("Zoom: " + zoom, CANVAS_X + CANVAS_WIDTH, CANVAS_Y - textSize * 3);
+            text("Time: " + timeDilation, CANVAS_X + CANVAS_WIDTH, CANVAS_Y + textSize);
+
+            if (shiftDown) {
+                String sb =
+                        "iHAT: " + decimal.format(iHat.x) + ", " + decimal.format(iHat.y) + '\n' +
+                        "jHAT: " + jHat.x + ", " + jHat.y + '\n' +
+                        "Z: " + decimal.format(zoom) + '\n' +
+                        "GRIDX-L: " + decimal.format(GRID_LOWER_X) + '\n' +
+                        "GRIDX-U: " + decimal.format(GRID_UPPER_X)+ '\n' +
+                        "GRIDY-L: " + decimal.format(GRID_LOWER_Y )+ '\n' +
+                        "GRIDY-U: " + decimal.format(GRID_UPPER_Y )+ '\n';
+                textSize(18);
+                textAlign(LEFT, CENTER);
+                text(sb, CANVAS_X, CANVAS_Y + CANVAS_HEIGHT / 2);
+            }
         }
     }
 
@@ -339,31 +358,22 @@ abstract class BaseSketch extends PApplet {
     public void keyPressed() {
         if (key == 'w') {
             translateViewport(0, GRID_HEIGHT / 64);
-            System.out.print("W");
+            System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
         }
 
         if (key == 'a') {
             translateViewport(-GRID_WIDTH / 64, 0);
+            System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
         }
 
         if (key == 's') {
             translateViewport(0, -GRID_HEIGHT / 64);
+            System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
         }
 
         if (key == 'd') {
             translateViewport(GRID_WIDTH / 64, 0);
-        }
-
-        if (key == '1') {
-            sketchOpacity = 0;
-        }
-
-        if (key == '2') {
-            sketchOpacity = .5f;
-        }
-
-        if (key == '3') {
-            sketchOpacity = 1;
+            System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
         }
 
         if (key == '+') {
@@ -382,8 +392,12 @@ abstract class BaseSketch extends PApplet {
             zoom = .0001f;
         }
 
-        if (key == ']') {
-            jHat.x += 0.5 * delta;
+        if (key == 'c') {
+            timeDilation = clamp(timeDilation -= 1 * delta, 0, 3);
+        }
+
+        if (key == 'v') {
+            timeDilation = clamp(timeDilation += 1 * delta, 0, 3);
         }
 
         if (key == '[') {
@@ -406,6 +420,12 @@ abstract class BaseSketch extends PApplet {
         if (key == CODED && keyCode == RIGHT) {
             iHat.rotate(radians(60 * delta));
             jHat.rotate(radians(60 * delta));
+        }
+
+        if (key == CODED && keyCode == SHIFT) {
+            shiftDown = true;
+        } else  {
+            shiftDown = false;
         }
     }
 
@@ -444,18 +464,55 @@ abstract class BaseSketch extends PApplet {
         ellipse(worldToScreen(adj.div(zoom)), r * H_FRAGMENTS_PER_UNIT / zoom);
     }
 
+    /**
+     * Experimental way to draw pseudo-3D volumes.
+     */
+    void drawMultipleEllipse(PVector pos, float r, float strokeWeight, float volHeight) {
+        volHeight = abs(volHeight) * -1;
+        PVector tempPos = pos.copy();
+        PVector prodA = iHat.copy().mult(tempPos.x);
+        PVector prodB = jHat.copy().mult(tempPos.y);
+        PVector adj = prodA.add(prodB);
+        strokeWeight(strokeWeight / zoom);
+        PVector dotLoc = worldToScreen(adj.div(zoom));
+        PVector dotLoc2 = dotLoc.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight * 2));
+        PVector dotLoc3 = dotLoc.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight));
+        ellipse(dotLoc, r * H_FRAGMENTS_PER_UNIT / zoom);
+        ellipse(dotLoc2, r * H_FRAGMENTS_PER_UNIT / zoom);
+        ellipse(dotLoc3, r * H_FRAGMENTS_PER_UNIT / zoom);
+        line(dotLoc.x, dotLoc.y, dotLoc2.x, dotLoc2.y);
+        line(dotLoc.x, dotLoc.y, dotLoc3.x, dotLoc3.y);
+    }
+
+    /**
+     * Experimental way to draw pseudo-3D volumes.
+     */
+    void drawMultipleWorldLine(PVector pt1, PVector pt2, float strokeWeight, float volHeight) {
+        volHeight = abs(volHeight) * -1;
+        PVector tempPos = pt1.copy();
+        PVector prodA = iHat.copy().mult(tempPos.x);
+        PVector prodB = jHat.copy().mult(tempPos.y);
+        PVector adj1 = prodA.add(prodB);
+        tempPos = pt2.copy();
+        prodA = iHat.copy().mult(tempPos.x);
+        prodB = jHat.copy().mult(tempPos.y);
+        PVector adj2 = prodA.add(prodB);
+        strokeWeight(strokeWeight / zoom);
+        PVector dotLocA = worldToScreen(adj1.copy().div(zoom));
+        PVector dotLocB = worldToScreen(adj2.copy().div(zoom));
+        dotLocB.y += volHeight * 50;
+        line(dotLocB, dotLocA);
+    }
+
     void drawWorldLine(PVector pt1, PVector pt2, float strokeWeight) {
         PVector tempPos = pt1.copy();
         PVector prodA = iHat.copy().mult(tempPos.x);
         PVector prodB = jHat.copy().mult(tempPos.y);
         PVector adj1 = prodA.add(prodB);
-
         tempPos = pt2.copy();
         prodA = iHat.copy().mult(tempPos.x);
         prodB = jHat.copy().mult(tempPos.y);
         PVector adj2 = prodA.add(prodB);
-
-
         strokeWeight(strokeWeight / zoom);
         line(worldToScreen(adj1.copy().div(zoom)), worldToScreen(adj2.copy().div(zoom)));
     }
@@ -465,7 +522,6 @@ abstract class BaseSketch extends PApplet {
         PVector prodA = iHat.copy().mult(tempPos.x);
         PVector prodB = jHat.copy().mult(tempPos.y);
         PVector adj = prodA.add(prodB);
-
         textSize(fontSize / zoom);
         tmp1 = worldToScreen(adj.x / zoom, adj.y / zoom);
         text(text, tmp1.x, tmp1.y);

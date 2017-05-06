@@ -1,10 +1,10 @@
 package sketches;
 
 import processing.core.PVector;
+import util.steering.Automaton;
+import util.steering.Obstacle;
 
 import java.util.ArrayList;
-
-import static util.SolMath.distance;
 
 public class Steering extends BaseSketch {
     protected ArrayList<Automaton> automatons;
@@ -15,6 +15,8 @@ public class Steering extends BaseSketch {
     int automatonCount = 1;
     int OBSTACLE_COLOR;
     float maxAvoidForce = .18f;
+    int GRID_X = 16;
+    int GRID_Y = 16;
 
     public void setup() {
         super.setup();
@@ -37,14 +39,14 @@ public class Steering extends BaseSketch {
 
         for (int i = 0; i < automatonCount; i++) {
             tmp = new PVector(random(-0.5f, 0.5f), random(-0.5f, 0.5f));
-            automatons.add(new Automaton(tmp, obstacles));
+            automatons.add(new Automaton(tmp, obstacles, GRID_X, GRID_Y));
         }
     }
 
     public void draw() {
         super.draw();
         for (Automaton automaton : automatons) {
-            automaton.update(delta);
+            automaton.update(delta, maxAvoidForce, DEBUG);
         }
         PVector pos;
         for (Obstacle obstacle : obstacles) {
@@ -65,101 +67,6 @@ public class Steering extends BaseSketch {
         postDraw();
     }
 
-    class Automaton {
-        PVector position;
-        PVector velocity;
-        ArrayList<Obstacle> obstacles;
-        float wanderCircleDistance = .045f;
-        float wanderCircleRadius = .1f;
-        float speed = 0;
-        float wanderAngle = 0;
-        float ANGLE_CHANGE = 0.02f;
-        float MAX_SPEED = .20f;
-        float MAX_SEE_AHEAD = wanderCircleDistance * 2;
-        float MAX_AVOID_FORCE = .15f;
-
-        Automaton(PVector position, ArrayList<Obstacle> obstacles) {
-            this.position = position;
-            this.obstacles = obstacles;
-            this.velocity = new PVector(speed, speed);
-        }
-
-        void update(float delta) {
-            float rotation = atan2(velocity.y, velocity.x);
-            float circleX = cos(rotation) * wanderCircleDistance;
-            float circleY = sin(rotation) * wanderCircleDistance;
-            PVector circleCenter = new PVector(circleX, circleY);
-            PVector displacement = new PVector(0, 0);
-
-            PVector wanderForce = circleCenter.add(displacement);
-
-            wanderForce.rotate(wanderAngle);
-            wanderAngle += delta * random(-ANGLE_CHANGE, ANGLE_CHANGE);
-            velocity.add(wanderForce);
-
-            PVector ahead = position.copy().add(velocity.copy().normalize().setMag(MAX_SEE_AHEAD));
-            PVector ahead2 = position.copy().add(velocity.copy().normalize().setMag(MAX_SEE_AHEAD * 0.5f));
-            Obstacle closest = null;
-            for (Obstacle obstacle : obstacles) {
-                if (obstacle.intersects(ahead) || obstacle.intersects(ahead2)) {
-                    if (closest == null || distance(position, obstacle.position) < distance(position, obstacle.position)) {
-                        closest = obstacle;
-                    }
-                }
-            }
-            if (closest != null) {
-                PVector avoidForce = ahead.copy().sub(closest.position);
-                avoidForce = avoidForce.normalize().setMag(maxAvoidForce);
-                velocity.add(avoidForce);
-            }
-
-            if (velocity.mag() > MAX_SPEED) {
-                velocity.setMag(MAX_SPEED);
-            }
-            position.add(velocity.x * delta, velocity.y * delta);
-
-            // Wrap Arounds
-            if (position.x > GRID_WIDTH / 2) {
-                position.x = position.x - GRID_WIDTH;
-            }
-
-            if (position.x < -GRID_WIDTH / 2) {
-                position.x = position.x + GRID_WIDTH;
-            }
-
-            if (position.y > GRID_HEIGHT / 2) {
-                position.y = position.y - GRID_HEIGHT;
-            }
-
-            if (position.y < -GRID_HEIGHT / 2) {
-                position.y = position.y + GRID_HEIGHT;
-            }
-
-            if (DEBUG) {
-                noFill();
-                stroke(0, 128, 64);
-                strokeWeight(1);
-                if (closest != null) {
-                    stroke(128, 0, 0);
-                }
-                ellipse(worldToScreen(circleX + position.x, circleY + position.y), wanderCircleRadius * 200);
-            }
-        }
-    }
-
-    class Obstacle {
-        PVector position;
-        float radius;
-
-        public Obstacle(PVector position, float radius) {
-            this.position = position;
-            this.radius = radius;
-        }
-
-        public boolean intersects(PVector pt) {
-            return distance(position, pt) < radius;
-        }
-    }
 }
 
 
