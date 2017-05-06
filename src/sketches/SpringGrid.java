@@ -2,16 +2,28 @@ package sketches;
 
 import processing.core.PConstants;
 import processing.core.PVector;
+import util.SolMath;
 
 /**
  * Spring Grid
  */
 public class SpringGrid extends BaseSketch {
     Spring[] springs;
-    int gridX = 20;
-    int gridY = 20;
-    float tension = 0.065f;
-    float dampening = 0.05f;
+    int gridX = 19;
+    int gridY = 19;
+    float tension = 0.035f;
+    float dampening = 0.03f;
+    float topSpeed = 0.025f;
+    boolean spacePressed = false;
+    float averageSpeed = 0;
+
+    enum EditState {
+        TENSION,
+        DAMPENING,
+        TOPSPEED
+    }
+
+    EditState editState = EditState.TENSION;
 
     public void settings() {
         size(700, 700);
@@ -29,20 +41,20 @@ public class SpringGrid extends BaseSketch {
         frameRate(30);
         DEBUG = false;
         springs = new Spring[gridX * gridY];
-        zoom = 1.5f;
+        zoomInc = 0.01f;
+        zoom = 2f;
 
         int springCount = 0;
-        float hAlpha;
-        float vAlpha;
+        float springArea = 1;
+        float hInc = springArea / gridX;
+        float vInc = springArea / gridY;
+        float originX = -.5f;
+        float originY = -.5f;
         for (int i = 0; i < gridX; i ++) {
             for (int j = 0; j < gridY; j ++) {
                 Spring s = new Spring();
-                hAlpha = (float) i / (float) gridX;
-                vAlpha = (float) j / (float) gridY;
-                s.position = new PVector(hAlpha + -.5f, vAlpha + -.5f);
+                s.position = new PVector(i * hInc + originX, j * vInc + originY);
                 s.length = 0;
-                s.currentLength = random(0, 0.025f);
-                s.rotation = random(0, 360);
                 springs[springCount] = s;
                 springCount ++;
             }
@@ -56,20 +68,18 @@ public class SpringGrid extends BaseSketch {
         fill(DRAW_COLOR);
         STROKE_WEIGHT = 2;
         strokeWeight(STROKE_WEIGHT);
+        tension = SolMath.clamp(tension, 0, 5);
+        dampening = SolMath.clamp(dampening, 0, 5);
+        topSpeed = SolMath.clamp(topSpeed, 0, 5);
+        float alpha = averageSpeed / topSpeed;
 
         textAlign(PConstants.CENTER, PConstants.CENTER);
-        if (DEBUG) {
-            noFill();
-            stroke(GRID_COLOR);
-            drawWorldText("THERE ARE " + springs.length + " SPRINGS", 0, 0, 24);
-        }
         int springIndex = 0;
         Spring s;
         for (int i = 0; i < gridX; i++) {
             for (int j = 0; j < gridY; j++) {
                 s = springs[springIndex];
                 drawWorldEllipse(s.position.copy().add(s.spring), s.size, STROKE_WEIGHT);
-                drawWorldLine(s.position, s.position.copy().add(s.spring), STROKE_WEIGHT);
                 // Draw Neighbors
                 if (springIndex < springs.length - 1) {
                     if (j != gridY - 1) {
@@ -86,12 +96,97 @@ public class SpringGrid extends BaseSketch {
             }
         }
         postDraw();
+        BACKGROUND_COLOR = color(15 + alpha * 180);
+//        STROKE_WEIGHT = 3 * alpha;
+        spacePressed = false;
     }
 
-    void updateSimulation() {
-        for (Spring spring : springs) {
-            spring.update(dampening, tension);
+    @Override
+    protected void drawDebug() {
+        super.drawDebug();
+        textAlign(CENTER, CENTER);
+        fill(BACKGROUND_COLOR);
+        stroke(color(255, 255, 255));
+        rect(tmp1.set(CANVAS_X + CANVAS_WIDTH / 2, CANVAS_Y), CANVAS_WIDTH / 6, CANVAS_HEIGHT / 16);
+        textSize(12);
+        fill(color(255, 255, 255));
+        text(editState + " ", tmp1.x, tmp1.y);
+        tmp1.y += CANVAS_HEIGHT / 16;
+        fill(BACKGROUND_COLOR);
+        rect(tmp1, CANVAS_WIDTH / 16, CANVAS_HEIGHT / 16);
+        String val = "";
+        switch (editState) {
+            case TENSION:
+                val = decimal.format(tension);
+                break;
+            case TOPSPEED:
+                val = decimal.format(topSpeed);
+                break;
+            case DAMPENING:
+                val = decimal.format(dampening);
+                break;
         }
+        fill(color(255, 255, 255));
+        text(val, tmp1.x, tmp1.y);
+    }
+
+    @Override
+    public void keyPressed() {
+        super.keyPressed();
+        if (key == ' ') {
+            spacePressed = true;
+        }
+
+        if (key == '4') {
+            editState = EditState.TENSION;
+        }
+
+        if (key == '5') {
+            editState = EditState.DAMPENING;
+        }
+
+        if (key == '6') {
+            editState = EditState.TOPSPEED;
+        }
+
+        if (key == CODED && keyCode == UP) {
+            switch (editState) {
+                case TENSION:
+                    tension += 1 * delta;
+                    break;
+                case TOPSPEED:
+                    topSpeed += 1 * delta;
+                    break;
+                case DAMPENING:
+                    dampening += 1 * delta;
+                    break;
+            }
+        }
+
+        if (key == CODED && keyCode == DOWN) {
+            switch (editState) {
+                case TENSION:
+                    tension -= 1 * delta;
+                    break;
+                case TOPSPEED:
+                    topSpeed -= 1 * delta;
+                    break;
+                case DAMPENING:
+                    dampening -= 1 * delta;
+                    break;
+            }
+        }
+    }
+
+
+    void updateSimulation() {
+        averageSpeed = 0;
+        for (Spring spring : springs) {
+            spring.update(dampening, tension, topSpeed);
+            averageSpeed += spring.speed;
+        }
+        averageSpeed /= springs.length;
+
     }
 
     protected class Spring {
@@ -104,15 +199,18 @@ public class SpringGrid extends BaseSketch {
         float rotation;
         float size = 0.005f;
 
-        void update(float dampening, float tension) {
+        void update(float dampening, float tension, float topSpeed) {
             float diff = length - currentLength;
             speed += tension * diff - speed * dampening;
             currentLength += speed;
             inRange = false;
             spring.set(cos(radians(rotation)) * currentLength, sin(radians(rotation)) * currentLength);
-            if (speed < 0.0000025f) {
-                speed = random(0.00025f, 0.0005f);
-                rotation = random(0, 360);
+            if (spacePressed) {
+                rotation = rotation + random(-360, 360);
+                speed += 0.5 * delta;
+            }
+            if (speed > topSpeed) {
+                speed = topSpeed;
             }
         }
     }

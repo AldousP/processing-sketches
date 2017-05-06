@@ -142,7 +142,6 @@ abstract class BaseSketch extends PApplet {
             drawFPS();
             togglePaletteLogging();
         }
-        fill(color(255, 255, 255));
     }
 
     private void drawGutterMask() {
@@ -234,6 +233,7 @@ abstract class BaseSketch extends PApplet {
 
     // Control the loading spinner
     private void drawSpinner() {
+        noStroke();
         spinnerRotationSpeed -= spinnerDecay * delta;
         if (spinnerAccelerating) {
             spinnerRotationSpeed += spinnerAcceleration * delta;
