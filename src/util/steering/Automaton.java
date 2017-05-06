@@ -14,24 +14,31 @@ public class Automaton {
     public PVector position;
     public PVector velocity;
     ArrayList<Obstacle> obstacles;
+    ArrayList<Automaton> neighbors;
     float wanderCircleDistance = .045f;
     float wanderCircleRadius = .1f;
     float speed = 0;
     float wanderAngle = 0;
-    float ANGLE_CHANGE = 0.02f;
-    float MAX_SPEED = .70f;
+    float ANGLE_CHANGE = 0.06f;
+    float MAX_SPEED = .450f;
     float MAX_SEE_AHEAD = wanderCircleDistance * 2;
     float MAX_AVOID_FORCE = .15f;
     float GRID_WIDTH;
     float GRID_HEIGHT;
+    float radius;
 
-    public Automaton(PVector position, ArrayList<Obstacle> obstacles, float gridW, float gridH) {
+    public Automaton(PVector position, ArrayList<Obstacle> obstacles, ArrayList<Automaton> neighbors, float gridW, float gridH, float radius) {
         this.steering = steering;
         this.position = position;
         this.obstacles = obstacles;
+        this.neighbors = neighbors;
         this.velocity = new PVector(speed, speed);
         this.GRID_WIDTH = gridW;
         this.GRID_HEIGHT = gridH;
+    }
+
+    public boolean intersects(PVector pt) {
+        return distance(position, pt) < radius;
     }
 
     public void update(float delta, float maxAvoidForce, boolean debug) {
@@ -57,9 +64,20 @@ public class Automaton {
                 }
             }
         }
+
+        Automaton closestNeighbor = null;
+        for (Automaton neighbor: neighbors) {
+            if (neighbor.intersects(ahead) || neighbor.intersects(ahead2)) {
+                if (closestNeighbor == null || distance(position, neighbor.position) < distance(position, neighbor.position)) {
+                    closestNeighbor = neighbor;
+                }
+            }
+        }
         if (closest != null) {
             PVector avoidForce = ahead.copy().sub(closest.position);
+//            PVector avoidForce2 = ahead.copy().sub(closestNeighbor.position);
             avoidForce = avoidForce.normalize().setMag(maxAvoidForce);
+//            avoidForce2 = avoidForce2.normalize().setMag(maxAvoidForce);
             velocity.add(avoidForce);
         }
 

@@ -77,6 +77,7 @@ abstract class BaseSketch extends PApplet {
     float zoomInc = 0.1f;
 
     boolean shiftDown = false;
+    boolean pausedLastFrame = false;
 
     protected DecimalFormat decimal = new DecimalFormat("#.##");
 
@@ -120,15 +121,28 @@ abstract class BaseSketch extends PApplet {
     }
 
     public void draw() {
-        delta = (millis() - lastFrame) / 1000f;
+        delta = pausedLastFrame ? 0 : (millis() - lastFrame) / 1000f;
         delta *= timeDilation;
-        FRAMETIMES.add(delta);
-        if (FRAMETIMES.size() > FRAMETIME_QUEUE_SIZE) {
-            FRAMETIMES.poll();
-        }
-        runTime += delta;
-        lastFrame = millis();
         background(BACKGROUND_COLOR);
+        sketchOpacity = 1;
+        if (paused) {
+            textAlign(CENTER, CENTER);
+            textSize(24);
+            fill(color(255, 255, 255));
+            stroke(color(255, 255, 255));
+            text("Paused.", width / 2, height / 2);
+            delta = 0;
+            sketchOpacity = 0.33f;
+            pausedLastFrame = true;
+        } else {
+            FRAMETIMES.add(delta);
+            if (FRAMETIMES.size() > FRAMETIME_QUEUE_SIZE) {
+                FRAMETIMES.poll();
+            }
+            runTime += delta;
+            lastFrame = millis();
+            pausedLastFrame = false;
+        }
         if (DEBUG) {
             drawGridLines();
         }
@@ -290,6 +304,9 @@ abstract class BaseSketch extends PApplet {
 
     private void drawFPS() {
         float frameTime = 0;
+        if (paused) {
+            return;
+        }
         Iterator<Float> iterator = FRAMETIMES.iterator();
         while (iterator.hasNext()) {
             frameTime += iterator.next();
@@ -318,7 +335,7 @@ abstract class BaseSketch extends PApplet {
         while (iterator.hasNext()) {
             float fps = iterator.next();
             float alpha = fps / FPS_GRAPH_HIGH_Y - FPS_GRAPH_LOW_Y;
-            drawPoint.set(BASE_X + i * FRAME_INCREMENT, BASE_Y - FRAME_SIZE * (alpha));
+            drawPoint.set(BASE_X + i * FRAME_INCREMENT, clamp((BASE_Y - FRAME_SIZE * (alpha)), BASE_Y - FRAME_SIZE ,BASE_Y));
             stroke(color(0, 255, 255));
             line(lastDrawPoint, drawPoint);
             i++;
@@ -422,6 +439,10 @@ abstract class BaseSketch extends PApplet {
             jHat.rotate(radians(60 * delta));
         }
 
+        if (keyCode == ENTER || keyCode == RETURN) {
+            paused = !paused;
+        }
+
         if (key == CODED && keyCode == SHIFT) {
             shiftDown = true;
         } else  {
@@ -478,10 +499,10 @@ abstract class BaseSketch extends PApplet {
         PVector dotLoc2 = dotLoc.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight * 2));
         PVector dotLoc3 = dotLoc.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight));
         ellipse(dotLoc, r * H_FRAGMENTS_PER_UNIT / zoom);
-        ellipse(dotLoc2, r * H_FRAGMENTS_PER_UNIT / zoom);
-        ellipse(dotLoc3, r * H_FRAGMENTS_PER_UNIT / zoom);
-        line(dotLoc.x, dotLoc.y, dotLoc2.x, dotLoc2.y);
-        line(dotLoc.x, dotLoc.y, dotLoc3.x, dotLoc3.y);
+//        ellipse(dotLoc2, r * H_FRAGMENTS_PER_UNIT / zoom);
+//        ellipse(dotLoc3, r * H_FRAGMENTS_PER_UNIT / zoom);
+//        line(dotLoc.x, dotLoc.y, dotLoc2.x, dotLoc2.y);
+//        line(dotLoc.x, dotLoc.y, dotLoc3.x, dotLoc3.y);
     }
 
     /**
@@ -502,6 +523,13 @@ abstract class BaseSketch extends PApplet {
         PVector dotLocB = worldToScreen(adj2.copy().div(zoom));
         dotLocB.y += volHeight * 50;
         line(dotLocB, dotLocA);
+//        PVector dotLocA1 = dotLocA.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight));
+//        PVector dotLocA2 = dotLocA.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight * 2));
+//        PVector dotLocB1 = dotLocB.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight));
+//        PVector dotLocB2 = dotLocB.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight * 2));
+        line(dotLocA, dotLocB);
+//        line(dotLocA1, dotLocB1);
+//        line(dotLocA2, dotLocB2);
     }
 
     void drawWorldLine(PVector pt1, PVector pt2, float strokeWeight) {

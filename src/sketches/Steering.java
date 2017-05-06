@@ -39,7 +39,7 @@ public class Steering extends BaseSketch {
 
         for (int i = 0; i < automatonCount; i++) {
             tmp = new PVector(random(-0.5f, 0.5f), random(-0.5f, 0.5f));
-            automatons.add(new Automaton(tmp, obstacles, GRID_X, GRID_Y));
+            automatons.add(new Automaton(tmp, obstacles, automatons, GRID_X, GRID_Y, automatonRadius));
         }
     }
 
