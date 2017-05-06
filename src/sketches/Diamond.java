@@ -31,7 +31,8 @@ public class Diamond extends BaseSketch {
         MAX_RADIUS = width / 4;
         MIDX = width / 2;
         MIDY = height / 2;
-        BACKGROUND_COLOR = color(0xFFFF6B6B);
+//        BACKGROUND_COLOR = color(0xFFFF6B6B);
+        BACKGROUND_COLOR = color(10, 100, 180);
         GRID_COLOR = color(0xFFFFFFFF);
         DRAW_COLOR = color(0xFF4ECDC4);
         strokeWeight(STROKE_WEIGHT);
