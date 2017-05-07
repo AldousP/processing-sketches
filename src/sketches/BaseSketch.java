@@ -187,10 +187,8 @@ abstract class BaseSketch extends PApplet {
             float alpha = clamp(diff / (GRID_HEIGHT), 0, 1);
             float canvasY = CANVAS_Y + ((1 - alpha) * CANVAS_HEIGHT);
             strokeWeight(STROKE_WEIGHT);
-            stroke(color(GRID_COLOR));
             line(CANVAS_X, canvasY, CANVAS_X + CANVAS_WIDTH, canvasY);
         }
-
         drawWorldText("iHat: " + iHat.x + ", " + iHat.y, iHat, 12);
         drawWorldText("jHat: " + jHat.x + ", " + jHat.y, jHat, 12);
     }
@@ -373,70 +371,78 @@ abstract class BaseSketch extends PApplet {
 
     @Override
     public void keyPressed() {
-        if (key == 'w') {
-            translateViewport(0, GRID_HEIGHT / 64);
-            System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
-        }
+        if (!paused) {
+            if (key == 'w') {
+                translateViewport(0, GRID_HEIGHT / 64);
+                System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
+            }
 
-        if (key == 'a') {
-            translateViewport(-GRID_WIDTH / 64, 0);
-            System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
-        }
+            if (key == 'a') {
+                translateViewport(-GRID_WIDTH / 64, 0);
+                System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
+            }
 
-        if (key == 's') {
-            translateViewport(0, -GRID_HEIGHT / 64);
-            System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
-        }
+            if (key == 's') {
+                translateViewport(0, -GRID_HEIGHT / 64);
+                System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
+            }
 
-        if (key == 'd') {
-            translateViewport(GRID_WIDTH / 64, 0);
-            System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
-        }
+            if (key == 'd') {
+                translateViewport(GRID_WIDTH / 64, 0);
+                System.out.println("GLX: " + GRID_LOWER_X + "\n GUX: " + GRID_UPPER_X + "\n GLY: " + GRID_LOWER_Y + "\n GUY: " + GRID_LOWER_Y);
+            }
 
-        if (key == '+') {
-            zoom -= zoomInc;
-        }
+            if (key == '+') {
+                zoom -= zoomInc;
+            }
 
-        if (key == '-') {
-            zoom += zoomInc;
+            if (key == '-') {
+                zoom += zoomInc;
+            }
+
+            if (zoom <= 0f ) {
+                zoom = .0001f;
+            }
+
+            if (key == 'c') {
+                timeDilation = clamp(timeDilation -= 1 * delta, 0, 3);
+            }
+
+            if (key == 'v') {
+                timeDilation = clamp(timeDilation += 1 * delta, 0, 3);
+            }
+
+            if (key == '[') {
+                jHat.x -= 0.5 * delta;
+            }
+
+            if (key == ']') {
+                jHat.x += 0.5 * delta;
+            }
+
+            if (key == '}') {
+                iHat.y += 0.5 * delta;
+            }
+
+            if (key == '{') {
+                iHat.y -= 0.5 * delta;
+            }
+
+            if (key == CODED && keyCode == LEFT) {
+                iHat.rotate(radians(-60 * delta));
+                jHat.rotate(radians(-60 * delta));
+            }
+
+            if (key == CODED && keyCode == RIGHT) {
+                iHat.rotate(radians(60 * delta));
+                jHat.rotate(radians(60 * delta));
+            }
+
+
         }
 
         if (key == 't') {
             DEBUG = !DEBUG;
-        }
-
-        if (zoom <= 0f ) {
-            zoom = .0001f;
-        }
-
-        if (key == 'c') {
-            timeDilation = clamp(timeDilation -= 1 * delta, 0, 3);
-        }
-
-        if (key == 'v') {
-            timeDilation = clamp(timeDilation += 1 * delta, 0, 3);
-        }
-
-        if (key == '[') {
-            jHat.x -= 0.5 * delta;
-        }
-
-        if (key == '}') {
-            iHat.y += 0.5 * delta;
-        }
-
-        if (key == '{') {
-            iHat.y -= 0.5 * delta;
-        }
-
-        if (key == CODED && keyCode == LEFT) {
-            iHat.rotate(radians(-60 * delta));
-            jHat.rotate(radians(-60 * delta));
-        }
-
-        if (key == CODED && keyCode == RIGHT) {
-            iHat.rotate(radians(60 * delta));
-            jHat.rotate(radians(60 * delta));
         }
 
         if (keyCode == ENTER || keyCode == RETURN) {
@@ -489,20 +495,13 @@ abstract class BaseSketch extends PApplet {
      * Experimental way to draw pseudo-3D volumes.
      */
     void drawMultipleEllipse(PVector pos, float r, float strokeWeight, float volHeight) {
-        volHeight = abs(volHeight) * -1;
         PVector tempPos = pos.copy();
         PVector prodA = iHat.copy().mult(tempPos.x);
         PVector prodB = jHat.copy().mult(tempPos.y);
         PVector adj = prodA.add(prodB);
         strokeWeight(strokeWeight / zoom);
         PVector dotLoc = worldToScreen(adj.div(zoom));
-        PVector dotLoc2 = dotLoc.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight * 2));
-        PVector dotLoc3 = dotLoc.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight));
         ellipse(dotLoc, r * H_FRAGMENTS_PER_UNIT / zoom);
-//        ellipse(dotLoc2, r * H_FRAGMENTS_PER_UNIT / zoom);
-//        ellipse(dotLoc3, r * H_FRAGMENTS_PER_UNIT / zoom);
-//        line(dotLoc.x, dotLoc.y, dotLoc2.x, dotLoc2.y);
-//        line(dotLoc.x, dotLoc.y, dotLoc3.x, dotLoc3.y);
     }
 
     /**
@@ -523,13 +522,7 @@ abstract class BaseSketch extends PApplet {
         PVector dotLocB = worldToScreen(adj2.copy().div(zoom));
         dotLocB.y += volHeight * 50;
         line(dotLocB, dotLocA);
-//        PVector dotLocA1 = dotLocA.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight));
-//        PVector dotLocA2 = dotLocA.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight * 2));
-//        PVector dotLocB1 = dotLocB.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight));
-//        PVector dotLocB2 = dotLocB.copy().add(tmp1.set(0, CANVAS_HEIGHT / 3 * volHeight * 2));
         line(dotLocA, dotLocB);
-//        line(dotLocA1, dotLocB1);
-//        line(dotLocA2, dotLocB2);
     }
 
     void drawWorldLine(PVector pt1, PVector pt2, float strokeWeight) {
@@ -654,32 +647,25 @@ abstract class BaseSketch extends PApplet {
         return midDst < dstAvg;
     }
 
-    @SuppressWarnings("SuspiciousNameCombination")
     protected boolean collides(Polygon polyA, Polygon polyB, PVector penA) {
-        penA = new PVector(0, 0);
+        penA.set(0, 0);
         boolean collides = true;
+        PVector shortest = null;
         for (int t = 0; t < 2; t++) {
             Polygon target = t == 0 ? polyA : polyB;
             for (int i = 0; i < target.vertices.size(); i++) {
                 PVector ptA = target.vertices.get(i);
                 PVector ptB = target.vertices.get(SolMath.wrapIndex(i + 1, target.vertices.size()));
                 PVector diff = ptA.copy().sub(ptB);
+                PVector mid = diff.mult(0.5f);
                 PVector perp = diff.set(diff.y, -diff.x);
-                PVector projA = project(polyA, perp);
-                PVector projB = project(polyB, perp);
-                PVector overlap = SolMath.overlap(projA.x, projA.y, projB.x, projB.y);
-                if (overlap.x == 0 && overlap.y == 0) {
-                    collides = false;
-                } else {
-                    PVector newPen = perp.copy().normalize().setMag(overlap.y - overlap.x);
-                    PVector penTarget = penA;
 
-                    if (newPen.mag() < penTarget.mag()) {
-                        penTarget.set(newPen);
-                    }
-                }
             }
         }
+        if (DEBUG) {
+            drawWorldLine(new PVector(), shortest, 3);
+        }
+        penA.set(shortest);
         return collides;
     }
 

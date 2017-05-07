@@ -37,6 +37,7 @@ public class Geometry extends BaseSketch {
         for (Polygon polygon : polygons) {
             for (Polygon collider : polygons) {
                 if (collider != polygon && collides(polygon, collider, tmp1)) {
+                    fill(color(255, 255, 255));
                     drawWorldText("I'm colliding", polygon.position, 12);
                 }
             }

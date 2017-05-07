@@ -20,7 +20,7 @@ public class Automaton {
     float speed = 0;
     float wanderAngle = 0;
     float ANGLE_CHANGE = 0.06f;
-    float MAX_SPEED = .450f;
+    float MAX_SPEED = .150f;
     float MAX_SEE_AHEAD = wanderCircleDistance * 2;
     float MAX_AVOID_FORCE = .15f;
     float GRID_WIDTH;
