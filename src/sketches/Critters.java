@@ -65,9 +65,7 @@ public class Critters extends BaseSketch {
         GRID_UPPER_X = 0.5f;
         GRID_LOWER_Y = -0.31f;
         GRID_UPPER_Y = 0.69f;
-
         OBSTACLE_COLOR = color(0xFFD68A51);
-
         obstacles = new ArrayList<Obstacle>();
         automatons = new ArrayList<Automaton>();
         PVector tmp;

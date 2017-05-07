@@ -19,7 +19,7 @@ public class Collision extends BaseSketch {
         title = "Collision";
         date = "04.30.17";
         DEBUG = true;
-        polygons.add(Polygon.generate(0f , .35f, 0.075f, 4).rotate(45).tag("dynamic"));
+        polygons.add(Polygon.generate(0f , .35f, 0.075f, 8).rotate(45).tag("dynamic"));
         polygons.add(Polygon.generate(0, -.35f, 0.075f, 4).rotate(45).scale(3, 1));
     }
 
@@ -74,27 +74,27 @@ public class Collision extends BaseSketch {
 
                             for (PVector axe : polyAxes) {
                                 tmp1.set(0, 0);
-                                stroke(color(255, 255, 255));
-                                STROKE_WEIGHT = 0.05f;
                                 PVector proj1 = project(polygon, axe);
                                 PVector proj2 = project(collider, axe);
                                 PVector overlap = SolMath.overlap(proj1.x, proj1.y, proj2.x, proj2.y);
                                 polyOverlaps.add(new PVector().set(axe).setMag(overlap.y - overlap.x));
                                 if (DEBUG) {
+                                    STROKE_WEIGHT = 0.05f;
+                                    stroke(color(255, 255, 255));
                                     drawWorldLine(polygon.position, polygon.position.copy().add(axe), STROKE_WEIGHT);
                                     noFill();
                                     STROKE_WEIGHT *= 2f;
-                                    stroke(color(0, 255, 0));
+                                    stroke(color(100));
                                     drawWorldLine(
                                             axe.copy().setMag(proj1.x).add(polygon.position),
                                             axe.copy().setMag(proj1.y).add(polygon.position),
                                             2);
-                                    stroke(color(0, 0, 255));
+                                    stroke(color(200));
                                     drawWorldLine(
                                             axe.copy().setMag(proj2.x).add(polygon.position),
                                             axe.copy().setMag(proj2.y).add(polygon.position),
                                             2);
-                                    stroke(color(255, 0, 0));
+                                    stroke(color(255));
                                     STROKE_WEIGHT = 3;
                                     drawWorldLine(
                                             axe.copy().setMag(overlap.x).add(polygon.position),
@@ -114,18 +114,18 @@ public class Collision extends BaseSketch {
                                     drawWorldLine(collider.position, collider.position.copy().add(axe), STROKE_WEIGHT);
                                     noFill();
                                     STROKE_WEIGHT *= 2f;
-                                    stroke(color(0, 255, 0));
+                                    stroke(color(100));
                                     drawWorldLine(
                                             axe.copy().setMag(proj1.x).add(collider.position),
                                             axe.copy().setMag(proj1.y).add(collider.position),
                                             2);
-                                    stroke(color(0, 0, 255));
+                                    stroke(color(200));
                                     drawWorldLine(
                                             axe.copy().setMag(proj2.x).add(collider.position),
                                             axe.copy().setMag(proj2.y).add(collider.position),
                                             2);
 
-                                    stroke(color(255, 0, 0));
+                                    stroke(color(255));
                                     STROKE_WEIGHT = 3;
                                     drawWorldLine(
                                             axe.copy().setMag(overlap.x).add(collider.position),
