@@ -24,6 +24,7 @@ public class BlankSlate extends BaseSketch {
 
     @Override
     public void keyPressed() {
+        super.keyPressed();
         if (key == 'a') {
         }
 
