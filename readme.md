@@ -32,3 +32,5 @@ SHIFT Toggles camera information
 { & } Controls iHat
 
 Left and Right Arrow Keys Rotate The Camera
+
+ENTER Pauses the simulation
