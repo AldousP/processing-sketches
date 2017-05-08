@@ -8,7 +8,7 @@ public class Diamond extends BaseSketch {
     protected float DEGREES_PER_SECOND = 180;
     protected float V_SCALING_FACTOR = 0.4f;
     protected float MIN_RADIUS = 0;
-    protected float RADIUS_INCREMENT = 25;
+    protected float RADIUS_INCREMENT = .5f;
     protected float baseDegree = 0;
     protected float tempDegree;
     protected float x = 0;
@@ -27,11 +27,10 @@ public class Diamond extends BaseSketch {
         date = "06.19.16";
         STROKE_WEIGHT = 2;
         DEBUG = false;
-        DIAMOND_HEIGHT = height * 0.75f;
-        MAX_RADIUS = width / 4;
-        MIDX = width / 2;
-        MIDY = height / 2;
-//        BACKGROUND_COLOR = color(0xFFFF6B6B);
+        DIAMOND_HEIGHT = 1f;
+        MAX_RADIUS = .35f;
+        MIDX = 0;
+        MIDY = 0;
         BACKGROUND_COLOR = color(10, 100, 180);
         GRID_COLOR = color(0xFFFFFFFF);
         DRAW_COLOR = color(0xFF4ECDC4);
@@ -53,17 +52,17 @@ public class Diamond extends BaseSketch {
             tempDegree = tempDegree % 360;
             x = (sin(radians(tempDegree)) * radius) + MIDX;
             y = (cos(radians(tempDegree)) * radius * V_SCALING_FACTOR) + MIDY;
-            line(x, y, MIDX, MIDY + DIAMOND_HEIGHT / 2);
-            line(x, y, MIDX, MIDY - DIAMOND_HEIGHT / 2);
-            line(x, y, lastX1, lastY1);
+            drawWorldLine(tmp1.set(x, y), tmp2.set(MIDX, MIDY + DIAMOND_HEIGHT / 2), STROKE_WEIGHT);
+            drawWorldLine(tmp1.set(x, y), tmp2.set(MIDX, MIDY - DIAMOND_HEIGHT / 2), STROKE_WEIGHT);
+            drawWorldLine(tmp1.set(x, y), tmp2.set(lastX1, lastY1), STROKE_WEIGHT);
             lastX1 = x;
             lastY1 = y;
 
             x = (sin(radians(tempDegree)) * radius / 2) + MIDX;
             y = (cos(radians(tempDegree)) * radius / 2 * V_SCALING_FACTOR) + MIDY;
-            line(x, y, MIDX, MIDY + DIAMOND_HEIGHT / 2);
-            line(x, y, MIDX, MIDY - DIAMOND_HEIGHT / 2);
-            line(x, y, lastX2, lastY2);
+            drawWorldLine(tmp1.set(x, y), tmp2.set(MIDX, MIDY + DIAMOND_HEIGHT / 2), STROKE_WEIGHT);
+            drawWorldLine(tmp1.set(x, y), tmp2.set(MIDX, MIDY - DIAMOND_HEIGHT / 2), STROKE_WEIGHT);
+            drawWorldLine(tmp1.set(x, y), tmp2.set(lastX2, lastY2), STROKE_WEIGHT);
             lastX2 = x;
             lastY2 = y;
         }

@@ -9,23 +9,32 @@ import java.util.ArrayList;
 
 public class Collision extends BaseSketch {
     ArrayList<Polygon> polygons = new ArrayList<>();
-    PVector gravity = new PVector(0, -0.05f);
+    PVector gravity = new PVector(0, -0.15f);
 
     public void setup() {
         super.setup();
         STROKE_WEIGHT = 1.5f;
-        BACKGROUND_COLOR = color(40, 21, 71);
+        BACKGROUND_COLOR = color(20, 50, 60);
         DRAW_COLOR = color(255, 255, 255);
         title = "Collision";
         date = "04.30.17";
         DEBUG = true;
-        polygons.add(Polygon.generate(0f , .35f, 0.075f, 8).rotate(45).tag("dynamic"));
-        polygons.add(Polygon.generate(0, -.35f, 0.075f, 4).rotate(45).scale(3, 1));
+        polygons.add(Polygon.generate(0, -.35f, 0.075f, 4).rotate(45).scale(30, 1));
     }
 
     @Override
     public void keyPressed() {
         super.keyPressed();
+        if (key == ' ') {
+            tmp1.set(screenToWorld(mouseX, height - mouseY));
+            polygons.add(Polygon.generate(tmp1, 0.045f, 4).rotate(45).tag("dynamic"));
+        }
+
+        if (key == 'r') {
+            polygons.clear();
+            polygons.add(Polygon.generate(0, -.35f, 0.075f, 4).rotate(45).scale(30, 1));
+        }
+
     }
 
     public void draw() {
@@ -61,7 +70,7 @@ public class Collision extends BaseSketch {
                 if (polygon.hasTag("dynamic")) {
                     polygon.position.add(gravity.copy().mult(delta));
                     for (Polygon collider : polygons) {
-                        if (collider != polygon) {
+                        if (collider != polygon && !collider.hasTag("dynamic")) {
                             for (int i = 0; i < collider.vertices.size(); i++) {
                                 PVector ptA = collider.vertices.get(i);
                                 PVector ptB = collider.vertices.get(SolMath.wrapIndex(i + 1, collider.vertices.size()));
@@ -79,22 +88,20 @@ public class Collision extends BaseSketch {
                                 PVector overlap = SolMath.overlap(proj1.x, proj1.y, proj2.x, proj2.y);
                                 polyOverlaps.add(new PVector().set(axe).setMag(overlap.y - overlap.x));
                                 if (DEBUG) {
-                                    STROKE_WEIGHT = 0.05f;
-                                    stroke(color(255, 255, 255));
                                     drawWorldLine(polygon.position, polygon.position.copy().add(axe), STROKE_WEIGHT);
                                     noFill();
                                     STROKE_WEIGHT *= 2f;
-                                    stroke(color(100));
+                                    stroke(color(0, 255, 0, 100));
                                     drawWorldLine(
                                             axe.copy().setMag(proj1.x).add(polygon.position),
                                             axe.copy().setMag(proj1.y).add(polygon.position),
                                             2);
-                                    stroke(color(200));
+                                    stroke(color(0, 0, 255, 100));
                                     drawWorldLine(
                                             axe.copy().setMag(proj2.x).add(polygon.position),
                                             axe.copy().setMag(proj2.y).add(polygon.position),
                                             2);
-                                    stroke(color(255));
+                                    stroke(color(255, 0, 0, 100));
                                     STROKE_WEIGHT = 3;
                                     drawWorldLine(
                                             axe.copy().setMag(overlap.x).add(polygon.position),
@@ -114,18 +121,18 @@ public class Collision extends BaseSketch {
                                     drawWorldLine(collider.position, collider.position.copy().add(axe), STROKE_WEIGHT);
                                     noFill();
                                     STROKE_WEIGHT *= 2f;
-                                    stroke(color(100));
+                                    stroke(color(0, 255, 0));
                                     drawWorldLine(
                                             axe.copy().setMag(proj1.x).add(collider.position),
                                             axe.copy().setMag(proj1.y).add(collider.position),
                                             2);
-                                    stroke(color(200));
+                                    stroke(color(0, 0, 255));
                                     drawWorldLine(
                                             axe.copy().setMag(proj2.x).add(collider.position),
                                             axe.copy().setMag(proj2.y).add(collider.position),
                                             2);
 
-                                    stroke(color(255));
+                                    stroke(color(255, 0, 0));
                                     STROKE_WEIGHT = 3;
                                     drawWorldLine(
                                             axe.copy().setMag(overlap.x).add(collider.position),
