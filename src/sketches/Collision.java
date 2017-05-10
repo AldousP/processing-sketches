@@ -10,6 +10,7 @@ import java.util.ArrayList;
 public class Collision extends BaseSketch {
     ArrayList<Polygon> polygons = new ArrayList<>();
     PVector gravity = new PVector(0, -0.15f);
+    int polyCount = 4;
 
     public void setup() {
         super.setup();
@@ -19,7 +20,7 @@ public class Collision extends BaseSketch {
         title = "Collision";
         date = "04.30.17";
         DEBUG = true;
-        polygons.add(Polygon.generate(0, -.35f, 0.075f, 4).rotate(45).scale(30, 1));
+        polygons.add(Polygon.generate(0, -.45f, 0.075f, 4).rotate(45).scale(30, 1));
     }
 
     @Override
@@ -27,14 +28,24 @@ public class Collision extends BaseSketch {
         super.keyPressed();
         if (key == ' ') {
             tmp1.set(screenToWorld(mouseX, height - mouseY));
-            polygons.add(Polygon.generate(tmp1, 0.045f, 4).rotate(45).tag("dynamic"));
+            polygons.add(Polygon.generate(tmp1, 0.045f, polyCount).rotate(45).tag("dynamic"));
         }
 
         if (key == 'r') {
             polygons.clear();
-            polygons.add(Polygon.generate(0, -.35f, 0.075f, 4).rotate(45).scale(30, 1));
+            polygons.add(Polygon.generate(0, -.45f, 0.075f, 4).rotate(45).scale(30, 1));
         }
 
+        if (key == 'h') {
+            polyCount --;
+            if (polyCount < 3) {
+                polyCount = 3;
+            }
+        }
+
+        if (key == 'y') {
+            polyCount ++;
+        }
     }
 
     public void draw() {
@@ -70,7 +81,7 @@ public class Collision extends BaseSketch {
                 if (polygon.hasTag("dynamic")) {
                     polygon.position.add(gravity.copy().mult(delta));
                     for (Polygon collider : polygons) {
-                        if (collider != polygon && !collider.hasTag("dynamic")) {
+                        if (!collider.hasTag("dynamic")) {
                             for (int i = 0; i < collider.vertices.size(); i++) {
                                 PVector ptA = collider.vertices.get(i);
                                 PVector ptB = collider.vertices.get(SolMath.wrapIndex(i + 1, collider.vertices.size()));
@@ -152,6 +163,17 @@ public class Collision extends BaseSketch {
                     }
                 }
             }
+            fill(color(DRAW_COLOR, 128));
+            drawWorldText("Work In Progress SAT implementation. Enjoy the glitches!", 0, .45f, 12);
+            drawWorldText("Move the cursor with the mouse.", 0, -.15f, 12);
+            drawWorldText("Spawn shapes with space.", 0, -.20f, 12);
+            drawWorldText("Clear the stage with R.", 0, -.25f, 12);
+            drawWorldText("[I Am A Floor!]", 0, -.45f, 12);
+            drawWorldText("Y & H control the vertices count.", 0, -.30f, 12);
+            textAlign(LEFT);
+            textSize(12);
+            text("verts:"  + polyCount, CANVAS_X + 25, CANVAS_Y + 25);
+            text("polygons:"  + polygons.size(), CANVAS_X + 25, CANVAS_Y + 45);
         }
         postDraw();
     }
