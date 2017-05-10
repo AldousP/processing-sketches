@@ -19,6 +19,8 @@ import as a Gradle project. Run using a Gradle run configuration which executes 
 
 ![Processing Sketches](img/launcher.png "Launcher")
 
+<img src="img/launcher.png" width="300" height="350" />
+
 Once built and run correctly, you will see the launcher which will allow you to run any of the sketches in the library.
 
 
