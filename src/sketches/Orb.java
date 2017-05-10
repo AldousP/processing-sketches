@@ -21,12 +21,12 @@ public class Orb extends BaseSketch {
         zoom = .008f;
         DEBUG = false;
         zoomInc = .05f;
-        iHat.set(-0.51f, -0.47f);
-        jHat.set(-1.18f, 0.13f);
-        GRID_LOWER_X = -0.5f;
-        GRID_UPPER_X = 0.5f;
-        GRID_LOWER_Y = -0.31f;
-        GRID_UPPER_Y = 0.69f;
+//        iHat.set(-0.51f, -0.47f);
+//        jHat.set(-1.18f, 0.13f);
+//        GRID_LOWER_X = -0.5f;
+//        GRID_UPPER_X = 0.5f;
+//        GRID_LOWER_Y = -0.31f;
+//        GRID_UPPER_Y = 0.69f;
         BACKGROUND_COLOR = color(25, 25, 25);
         for (int i = 0; i < 45; i++) {
             points.add(new PVector(
@@ -40,8 +40,8 @@ public class Orb extends BaseSketch {
         super.draw();
         zoom += zoomInc * delta;
         rotationSpeed += .001f * delta;
-//        iHat.rotate(radians(5 * delta));
-//        jHat.rotate(radians(5 * delta));
+        iHat.rotate(radians(5 * delta));
+        jHat.rotate(radians(5 * delta));
         for (PVector point : points) {
             point.rotate(rotationSpeed * delta);
         }
