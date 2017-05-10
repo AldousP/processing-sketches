@@ -44,8 +44,7 @@ ENTER Pauses the simulation
 
 Links
 ====================
-You can view video exports of the sketches I've made sprinkled 
+You can view video exports of the sketches I've made sprinkled throughout my 
+<a href="https://www.instagram.com/p/BTzxbfVlofk/">Instagram. </a>
 
-https://www.instagram.com/p/BTzxbfVlofk/
-
-![Processing Sketches](img/launcher.png "Launcher")
+<a href="https://www.instagram.com/p/BTzxbfVlofk/">![Processing Sketches](img/instagramlogo.png "I'm on Myspace.")</a>
