@@ -650,7 +650,6 @@ abstract class BaseSketch extends PApplet {
     protected boolean collides(Polygon polyA, Polygon polyB, PVector penA) {
         penA.set(0, 0);
         boolean collides = true;
-        PVector shortest = null;
         for (int t = 0; t < 2; t++) {
             Polygon target = t == 0 ? polyA : polyB;
             for (int i = 0; i < target.vertices.size(); i++) {
@@ -659,13 +658,24 @@ abstract class BaseSketch extends PApplet {
                 PVector diff = ptA.copy().sub(ptB);
                 PVector mid = diff.mult(0.5f);
                 PVector perp = diff.set(diff.y, -diff.x);
+                if (DEBUG) {
+                    drawWorldEllipse(mid.copy().add(target.position), 0.008f, STROKE_WEIGHT);
+                    drawWorldLine(mid.copy().add(perp).setMag(1f).add(target.position), mid.copy().add(target.position), STROKE_WEIGHT);
+                }
 
+                PVector projA = project(polyA, perp);
+                PVector projB = project(polyB, perp);
+                PVector overlap = SolMath.overlap(projA.x, projA.y, projB.x, projB.y);
+                if (overlap.x == 0 && overlap.y == 0) {
+                    collides = false;
+                } else {
+                    float diffVal = abs(overlap.y - overlap.x);
+                    if (penA.mag() == 0 || diffVal < penA.mag()) {
+                        penA.set(perp).setMag(overlap.y - overlap.x);
+                    }
+                }
             }
         }
-        if (DEBUG) {
-            drawWorldLine(new PVector(), shortest, 3);
-        }
-        penA.set(shortest);
         return collides;
     }
 
