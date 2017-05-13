@@ -1,14 +1,14 @@
 package sketches;
 
 public class Diamond extends BaseSketch {
-    protected int DIAMOND_VERTICES = 6;
+    protected int DIAMOND_VERTICES = 9;
     protected float DIAMOND_HEIGHT;
     protected float MAX_RADIUS;
     protected float SUBDIVISION = 360 / DIAMOND_VERTICES;
-    protected float DEGREES_PER_SECOND = 180;
-    protected float V_SCALING_FACTOR = 0.4f;
+    protected float DEGREES_PER_SECOND = 45;
+    protected float V_SCALING_FACTOR = 0.25f;
     protected float MIN_RADIUS = 0;
-    protected float RADIUS_INCREMENT = .5f;
+    protected float RADIUS_INCREMENT = .015f;
     protected float baseDegree = 0;
     protected float tempDegree;
     protected float x = 0;
@@ -17,7 +17,7 @@ public class Diamond extends BaseSketch {
     protected float lastY1;
     protected float lastX2;
     protected float lastY2;
-    protected float radius;
+    protected float radius = 0;
     protected int MIDX;
     protected int MIDY;
 
@@ -25,15 +25,19 @@ public class Diamond extends BaseSketch {
         super.setup();
         title = "Diamond";
         date = "06.19.16";
-        STROKE_WEIGHT = 2;
+        STROKE_WEIGHT = 2.35f;
         DEBUG = false;
-        DIAMOND_HEIGHT = 1f;
-        MAX_RADIUS = .35f;
+        DIAMOND_HEIGHT = .35f;
+        MAX_RADIUS = .2f;
+        zoomInc = 0.05f;
+        zoom = 0.5f;
         MIDX = 0;
         MIDY = 0;
-        BACKGROUND_COLOR = color(10, 100, 180);
+        paused = true;
+        BACKGROUND_COLOR = color(19, 19, 60);
         GRID_COLOR = color(0xFFFFFFFF);
         DRAW_COLOR = color(0xFF4ECDC4);
+        FRAME_RATE = 30;
         strokeWeight(STROKE_WEIGHT);
         fill(DRAW_COLOR);
     }
@@ -41,6 +45,7 @@ public class Diamond extends BaseSketch {
     public void draw() {
         super.draw();
         stroke(DRAW_COLOR);
+        STROKE_WEIGHT = random(1.9f, 2.5f);
         radius += RADIUS_INCREMENT * delta;
         if ( ((RADIUS_INCREMENT < 0) && radius < MIN_RADIUS) || ((RADIUS_INCREMENT > 0) && radius > MAX_RADIUS)) {
             RADIUS_INCREMENT *= -1;

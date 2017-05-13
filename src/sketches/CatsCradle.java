@@ -12,7 +12,7 @@ public class CatsCradle extends BaseSketch {
     float SPAWN_REGION_WIDTH;
     float SPAWN_REGION_HEIGHT;
 
-    int NODE_COUNT = 7;
+    int NODE_COUNT = 10;
     float NODE_MIN_DIAMETER = 0.035f;
     float NODE_MAX_DIAMETER = 2.75f;
     float NODE_MIN_SPEED = 45;
@@ -32,7 +32,8 @@ public class CatsCradle extends BaseSketch {
         title = "Cat's Cradle";
         date = "12.23.16";
         DEBUG = false;
-        BACKGROUND_COLOR = color(0xFFFFFF);
+        FRAME_RATE = 30;
+        BACKGROUND_COLOR = color(22, 6, 40);
         DRAW_COLOR = color(0xC2F5E);
         SPAWN_REGION_WIDTH = CANVAS_WIDTH * SPAWN_REGION_PERCENTAGE;
         SPAWN_REGION_HEIGHT = CANVAS_HEIGHT * SPAWN_REGION_PERCENTAGE;
