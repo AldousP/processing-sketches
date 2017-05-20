@@ -41,6 +41,8 @@ public class Interpolations extends BaseSketch {
         bezPts.add(cp2);
         bezPts.add(bez2);
         buttons.put("mouse_down", false);
+
+        BACKGROUND_COLOR = color(10);
     }
 
     public void draw() {
@@ -86,11 +88,11 @@ public class Interpolations extends BaseSketch {
         fill(lerpColor(startColor, endColor, sequenceAlpha));
         drawWorldEllipse(tmp1.set(val, 0), orbSize, STROKE_WEIGHT);
         fill(255, 255, 255);
-        drawWorldText(val + "", 0, .35f, 14);
-        drawWorldText("PT1 " + decimal.format(bez1.x) + ", " + decimal.format(bez1.y), 0, -.15f, 12);
-        drawWorldText("PT2 " + decimal.format(bez2.x) + ", " + decimal.format(bez2.y), 0, -.2f, 12);
-        drawWorldText("CP1 " + decimal.format(cp1.x) + ", " + decimal.format(cp1.y), 0, -.25f, 12);
-        drawWorldText("CP2 " + decimal.format(cp2.x) + ", " + decimal.format(cp2.y), 0, -.3f, 12);
+        drawWorldText(decimal.format(val), 0, .35f, 14);
+        drawWorldText("pt1 " + decimal.format(bez1.x) + ", " + decimal.format(bez1.y), 0, -.15f, 12);
+        drawWorldText("pt2 " + decimal.format(bez2.x) + ", " + decimal.format(bez2.y), 0, -.175f, 12);
+        drawWorldText("cp1 " + decimal.format(cp1.x) + ", " + decimal.format(cp1.y), 0, -.2f, 12);
+        drawWorldText("cp2 " + decimal.format(cp2.x) + ", " + decimal.format(cp2.y), 0, -.225f, 12);
         postDraw();
     }
 
