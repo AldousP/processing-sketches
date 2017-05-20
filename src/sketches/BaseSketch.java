@@ -552,6 +552,40 @@ abstract class BaseSketch extends PApplet {
         drawWorldText(text, tmp1.set(x, y), fontSize);
     }
 
+    void drawWorldCurve(PVector pt1, PVector cp1, PVector pt2, PVector cp2) {
+        PVector a = pt1.copy();
+        PVector b = cp1.copy();
+        PVector c = pt2.copy();
+        PVector d = cp2.copy();
+
+        PVector prodA = iHat.copy().mult(a.x);
+        PVector prodB = jHat.copy().mult(a.y);
+        PVector adj = prodA.add(prodB);
+        a.set(worldToScreen(adj.div(zoom)));
+
+        prodA = iHat.copy().mult(b.x);
+        prodB = jHat.copy().mult(b.y);
+        adj = prodA.add(prodB);
+        b.set(worldToScreen(adj.div(zoom)));
+
+        prodA = iHat.copy().mult(c.x);
+        prodB = jHat.copy().mult(c.y);
+        adj = prodA.add(prodB);
+        c.set(worldToScreen(adj.div(zoom)));
+
+        prodA = iHat.copy().mult(d.x);
+        prodB = jHat.copy().mult(d.y);
+        adj = prodA.add(prodB);
+        d.set(worldToScreen(adj.div(zoom)));
+
+        bezier(
+                a.x, a.y,
+                b.x, b.y,
+                c.x, c.y,
+                d.x, d.y
+        );
+    }
+
     // Color
     @Override
     public void fill(int c) {
