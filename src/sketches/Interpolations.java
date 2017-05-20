@@ -74,6 +74,8 @@ public class Interpolations extends BaseSketch {
         drawWorldCurve(bez1, cp1, bez2, cp2);
         drawWorldLine(bez1, cp1, STROKE_WEIGHT);
         drawWorldLine(bez2, cp2, STROKE_WEIGHT);
+        drawWorldLine(cp1, cp2, STROKE_WEIGHT);
+
         int i = 0;
         for (PVector bezPt : bezPts) {
             drawWorldEllipse(bezPt, orbSize, STROKE_WEIGHT);
