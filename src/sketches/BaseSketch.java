@@ -8,6 +8,7 @@ import processing.core.PConstants;
 import processing.core.PVector;
 import processing.event.KeyEvent;
 import util.SolMath;
+import util.geometry.Curve;
 import util.geometry.Polygon;
 
 import static util.SolMath.clamp;
@@ -552,7 +553,11 @@ abstract class BaseSketch extends PApplet {
         drawWorldText(text, tmp1.set(x, y), fontSize);
     }
 
-    void drawWorldCurve(PVector pt1, PVector cp1, PVector pt2, PVector cp2) {
+    void drawWorldCurve(Curve curve) {
+        drawWorldCurve(curve.pt1, curve.cp1, curve.cp2, curve.pt2);
+    }
+
+    void drawWorldCurve(PVector pt1, PVector cp1, PVector cp2, PVector pt2) {
         PVector a = pt1.copy();
         PVector b = cp1.copy();
         PVector c = pt2.copy();

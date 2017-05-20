@@ -21,14 +21,14 @@ public class Interpolations extends BaseSketch {
     boolean inv = false;
     EasingFilter tween = new EasingFilter();
     Polygon circle = Polygon.generate(0, 0, orbSize, 36);
+    Polygon box = Polygon.generate(0, 0, .5f, 4).rotate(45);
 
-    PVector cp1 = new PVector(0, 0.25f);
-    PVector cp2 = new PVector(0, -.25f);
-    PVector bez1 = new PVector(-.25f, 0);
-    PVector bez2 = new PVector(.25f, 0);
+    PVector cp1 = new PVector(-.25f, .25f);
+    PVector cp2 = new PVector(.25f, -.25f);
+    PVector bez1 = new PVector(-.25f, -.25f);
+    PVector bez2 = new PVector(.25f, .25f);
 
     ArrayList<PVector> bezPts = new ArrayList<>();
-
     HashMap<String, Boolean> buttons = new HashMap<>();
 
     public void setup() {
@@ -51,8 +51,6 @@ public class Interpolations extends BaseSketch {
             inv = !inv;
         }
 
-
-        screenToWorld(mouseX, height - mouseY);
         float vAlpha;
         float vDiff = vRange.y - vRange.x;
         float hDiff = hRange.y - hRange.x;
@@ -72,6 +70,7 @@ public class Interpolations extends BaseSketch {
         noFill();
         stroke(255, 255, 255);
         strokeWeight(STROKE_WEIGHT);
+        drawShape(box);
         drawWorldCurve(bez1, cp1, bez2, cp2);
         drawWorldLine(bez1, cp1, STROKE_WEIGHT);
         drawWorldLine(bez2, cp2, STROKE_WEIGHT);
