@@ -10,19 +10,14 @@ import java.util.HashMap;
  * BlankSlate.
  */
 public class Interpolations extends BaseSketch {
-    PVector vRange = new PVector(0f, -0.25f);
-    PVector hRange = new PVector(-0.25f, 0.25f);
     float sequenceLength = 3f;
     float sequenceDelta = 0f;
-    int orbCount = 0;
+    float sequenceAlpha = 0;
     int startColor = color(128, 64, 255);
     int endColor = color(0, 255, 128);
     float orbSize = 0.045f;
     boolean inv = false;
-    EasingFilter tween = new EasingFilter();
-    Polygon circle = Polygon.generate(0, 0, orbSize, 36);
     Polygon box = Polygon.generate(0, 0, .5f, 4).rotate(45);
-
     PVector cp1 = new PVector(-.25f, .25f);
     PVector cp2 = new PVector(.25f, -.25f);
     PVector bez1 = new PVector(-.25f, -.25f);
@@ -30,14 +25,20 @@ public class Interpolations extends BaseSketch {
 
     ArrayList<PVector> bezPts = new ArrayList<>();
     HashMap<String, Boolean> buttons = new HashMap<>();
+    PVector[] pts = new PVector[] {
+            bez1,
+            cp1,
+            cp2,
+            bez2
+    };
 
     public void setup() {
         super.setup();
         title = "Interpolations";
         date = "05.12.17";
+        bezPts.add(bez1);
         bezPts.add(cp1);
         bezPts.add(cp2);
-        bezPts.add(bez1);
         bezPts.add(bez2);
         buttons.put("mouse_down", false);
     }
@@ -51,24 +52,8 @@ public class Interpolations extends BaseSketch {
             inv = !inv;
         }
 
-        float vAlpha;
-        float vDiff = vRange.y - vRange.x;
-        float hDiff = hRange.y - hRange.x;
-        float hAlpha = sequenceDelta / sequenceLength;
-        float modAlpha;
-
-        for (int i = 0; i < orbCount; i++) {
-            vAlpha = i / (float) orbCount;
-            modAlpha = tween.filter(hAlpha);
-            circle.position(
-                    inv ? hRange.y - modAlpha * hDiff : hRange.x + modAlpha * hDiff,
-                    vRange.x + vDiff * vAlpha);
-            stroke(color(lerpColor(startColor, endColor, vAlpha)));
-            drawShape(circle);
-        }
-
         noFill();
-        stroke(255, 255, 255);
+        stroke(255, 255, 255, 64);
         strokeWeight(STROKE_WEIGHT);
         drawShape(box);
         drawWorldCurve(bez1, cp1, bez2, cp2);
@@ -76,15 +61,52 @@ public class Interpolations extends BaseSketch {
         drawWorldLine(bez2, cp2, STROKE_WEIGHT);
         drawWorldLine(cp1, cp2, STROKE_WEIGHT);
 
-        int i = 0;
         for (PVector bezPt : bezPts) {
-            drawWorldEllipse(bezPt, orbSize, STROKE_WEIGHT);
+            fill(255, 255, 255,54);
+            noStroke();
+            drawWorldEllipse(bezPt, orbSize / 2, STROKE_WEIGHT);
             if (mousePressed && bezPt.dist(screenToWorld(mouseX, height - mouseY)) < orbSize * 1.5f) {
                 bezPt.set(screenToWorld(mouseX, height - mouseY));
             }
-            i ++;
         }
+
+        sequenceAlpha = sequenceDelta / sequenceLength;
+        if (inv) {
+            sequenceAlpha = 1 - sequenceAlpha;
+        }
+
+        pts = new PVector[] {
+                bez1,
+                cp1,
+                cp2,
+                bez2
+        };
+
+        float val = bezierNIH(pts, sequenceAlpha);
+        fill(lerpColor(startColor, endColor, sequenceAlpha));
+        drawWorldEllipse(tmp1.set(val, 0), orbSize, STROKE_WEIGHT);
+        fill(255, 255, 255);
+        drawWorldText(val + "", 0, .35f, 14);
+        drawWorldText("PT1 " + decimal.format(bez1.x) + ", " + decimal.format(bez1.y), 0, -.15f, 12);
+        drawWorldText("PT2 " + decimal.format(bez2.x) + ", " + decimal.format(bez2.y), 0, -.2f, 12);
+        drawWorldText("CP1 " + decimal.format(cp1.x) + ", " + decimal.format(cp1.y), 0, -.25f, 12);
+        drawWorldText("CP2 " + decimal.format(cp2.x) + ", " + decimal.format(cp2.y), 0, -.3f, 12);
         postDraw();
+    }
+
+    protected float bezierNIH (PVector[] points, float t) {
+        PVector[] newpoints;
+        if (points.length == 1 ) {
+            return points[0].y;
+        } else {
+            newpoints = new PVector[points.length - 1];
+            for(int i = 0; i < newpoints.length; i++) {
+                PVector tmpVec = new PVector();
+                tmpVec.set(points[i].copy().mult(1 - t).add(points[i + 1].copy().mult(t)));
+                newpoints[i] = tmpVec;
+            }
+            return bezierNIH(newpoints, t);
+        }
     }
 
     @Override
