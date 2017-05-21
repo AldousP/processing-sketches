@@ -41,8 +41,7 @@ public class Interpolations extends BaseSketch {
         bezPts.add(cp2);
         bezPts.add(bez2);
         buttons.put("mouse_down", false);
-
-        BACKGROUND_COLOR = color(10);
+        BACKGROUND_COLOR = color(25);
     }
 
     public void draw() {

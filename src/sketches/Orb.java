@@ -18,15 +18,15 @@ public class Orb extends BaseSketch {
         frameRate(30);
         title = "Orb";
         date = "05.07.17";
-        zoom = .008f;
+        zoom = 1.45f;
         DEBUG = false;
         zoomInc = .05f;
-//        iHat.set(-0.51f, -0.47f);
-//        jHat.set(-1.18f, 0.13f);
-//        GRID_LOWER_X = -0.5f;
-//        GRID_UPPER_X = 0.5f;
-//        GRID_LOWER_Y = -0.31f;
-//        GRID_UPPER_Y = 0.69f;
+        iHat.set(-0.51f, -0.47f);
+        jHat.set(-1.18f, 0.13f);
+        GRID_LOWER_X = -0.5f;
+        GRID_UPPER_X = 0.5f;
+        GRID_LOWER_Y = -0.31f;
+        GRID_UPPER_Y = 0.69f;
         BACKGROUND_COLOR = color(25, 25, 25);
         for (int i = 0; i < 45; i++) {
             points.add(new PVector(

@@ -33,7 +33,6 @@ public class Diamond extends BaseSketch {
         zoom = 0.5f;
         MIDX = 0;
         MIDY = 0;
-        paused = true;
         BACKGROUND_COLOR = color(19, 19, 60);
         GRID_COLOR = color(0xFFFFFFFF);
         DRAW_COLOR = color(0xFF4ECDC4);

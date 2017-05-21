@@ -16,8 +16,8 @@ public class Critters extends BaseSketch {
     Spring[] springs;
     int gridX = 25;
     int gridY = 25 ;
-    float tension = 0.035f;
-    float dampening = 0.03f;
+    float tension = 0.28f;
+    float dampening = 0.23f;
     float topSpeed = 0.025f;
     boolean spacePressed = false;
     float averageSpeed = 0;
