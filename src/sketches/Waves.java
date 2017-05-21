@@ -1,10 +1,13 @@
 package sketches;
 
 import processing.core.PVector;
-import util.SolMath;
+import util.Sequence;
+import util.VelocityPoly;
+import util.geometry.Polygon;
 import util.geometry.Spring;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * BlankSlate.
@@ -12,13 +15,27 @@ import java.util.ArrayList;
 public class Waves extends BaseSketch {
 
     ArrayList<Spring> springs = new ArrayList<>();
-    private float tension = .005f;
-    private float topSpeed = .005f;
-    private float dampening = .005f;
-    PVector springRange = new PVector(-.5f, .5f);
-    float attractRadius = 0.005f;
+    private float tension = .93f;
+    private float topSpeed = .05f;
+    private float dampening = .12f;
 
-    int springCount = 3;
+    float topLength = 0.35f;
+    PVector springRange = new PVector(-.25f, .25f);
+    float attractRadius = 0.5f;
+    int springCount = 64;
+
+    PVector gravity = new PVector(0, -.2f);
+    ArrayList<VelocityPoly> rainDrops = new ArrayList<>();
+    ArrayList<VelocityPoly> buffer = new ArrayList<>();
+
+    Sequence rainSpawner = new Sequence(3f, false) {
+        @Override
+        public void event() {
+            rainDrops.add(new VelocityPoly(
+                    Polygon.generate(random(-.25f, .25f), .5f, random(0.0075f, 0.015f), (int) random(3, 24)),
+                    new PVector(0 ,0)));
+        }
+    };
 
     enum EditState {
         TENSION,
@@ -47,23 +64,19 @@ public class Waves extends BaseSketch {
         stroke(255, 255, 255);
         Spring last = null;
 
+        rainSpawner.update(delta);
+        for (VelocityPoly rainDrop : rainDrops) {
+            rainDrop.update(delta, gravity);
+            drawShape(rainDrop.polygon);
+        }
+
         for (Spring spring : springs) {
             STROKE_WEIGHT = 1.5f;
             if (!paused) {
                 spring.update(delta, tension, dampening);
             }
-            PVector mouse = screenToWorld(mouseX, height - mouseY);
-            float mouseDst = spring.worldSpace().dist(mouse);
-            float rotation = SolMath.getRelativeRotationOfPoint(mouse, spring.worldSpace());
-            spring.rotation(rotation);
-
-            if (mouseDst < attractRadius) {
-                float alpha = 1 - mouseDst / attractRadius;
-                spring.speed(topSpeed * alpha);
-            }
-
-            drawWorldEllipse(spring.worldSpace(), 0.03f, STROKE_WEIGHT);
-            if (DEBUG) {
+//            drawWorldEllipse(spring.worldSpace(), 0.03f, STROKE_WEIGHT);
+            if (DEBUG)  {
                 drawWorldLine(spring.pos, spring.worldSpace(), STROKE_WEIGHT);
                 stroke(color(0, 128, 255));
                 STROKE_WEIGHT = 3;
@@ -73,6 +86,37 @@ public class Waves extends BaseSketch {
             if (last != null) {
                 drawWorldLine(last.pos.copy().add(last.displace), spring.pos.copy().add(spring.displace), STROKE_WEIGHT);
             }
+
+            Iterator<VelocityPoly> iterator = rainDrops.iterator();
+            while (iterator.hasNext()) {
+                VelocityPoly drop = iterator.next();
+                float dist = drop.polygon.position.dist(spring.worldSpace());
+                if (dist < attractRadius) {
+                    float alpha = 1 - dist/ attractRadius;
+                    spring.speed(topSpeed * alpha);
+                    if (dist < attractRadius / 64) {
+                        buffer.add(new VelocityPoly(
+                                Polygon.generate(drop.polygon.position, random(0.001f, 0.003f),
+                                        (int) random(3, 24)),
+                                new PVector(.01f, .315f)
+                        ));
+
+                        buffer.add(new VelocityPoly(
+                                Polygon.generate(drop.polygon.position, random(0.001f, 0.003f),
+                                        (int) random(3, 24)),
+                                new PVector(-.01f, .315f)
+                        ));
+                        iterator.remove();
+                    }
+                }
+            }
+            rainDrops.addAll(buffer);
+            buffer.clear();
+
+            if (spring.displace.mag() > topLength) {
+                spring.displace.setMag(topLength);
+            }
+
             last = spring;
         }
         postDraw();
