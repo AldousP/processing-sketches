@@ -12,7 +12,7 @@ public class Spring {
     float dampening = 0.015f;
     float rotation = 90;
     public float length = 0.1f;
-    public float maxLength = .2f;
+    public float maxLength = .5f;
 
     public Spring(PVector pos) {
         this.pos = pos;

@@ -1,4 +1,4 @@
-package util;
+package util.geometry;
 
 import processing.core.PVector;
 import util.geometry.Polygon;
