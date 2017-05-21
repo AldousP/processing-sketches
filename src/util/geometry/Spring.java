@@ -8,10 +8,11 @@ public class Spring {
     public PVector pos;
     public PVector displace;
     public float speed;
-    float tension = 0.0f;
-    float dampening = 0.0f;
+    float tension = 0.015f;
+    float dampening = 0.015f;
     float rotation = 90;
-    public float maxLength = 0.05f;
+    public float length = 0.1f;
+    public float maxLength = .2f;
 
     public Spring(PVector pos) {
         this.pos = pos;
@@ -39,12 +40,15 @@ public class Spring {
     }
 
     public void update(float delta, float tension, float dampening) {
-        float diff = maxLength - displace.mag();
+        float diff = length - displace.mag();
         speed += tension * diff - speed * dampening;
         displace.add(0, speed * delta);
         float oX = (float) (Math.cos(radians(rotation)) * displace.mag());
         float oY = (float) (Math.sin(radians(rotation)) * displace.mag());
         displace.set(oX, oY);
+        if (displace.mag() > maxLength) {
+            displace.setMag(maxLength);
+        }
     }
 
     public PVector worldSpace() {

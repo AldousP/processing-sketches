@@ -3,23 +3,29 @@ package util;
 public abstract class Sequence {
     float length = 0;
     float current = 0;
-//    boolean pingPong = false;
+    public float alpha = 0;
+    boolean pingPong = false;
+    boolean reverse = false;
 
     public Sequence(float length, boolean pingPong) {
         this.length = length;
-//        this.pingPong = pingPong;
+        this.pingPong = pingPong;
     }
 
-    public float update(float delta) {
+    public void update(float delta) {
         current += delta;
         if (current > length) {
             event();
             current -= length;
-//            if (pingPong) {
-//                current = 1 - current;
-//            }
+            if (pingPong) {
+                reverse = !reverse;
+            }
+
+            if (reverse) {
+                current = 1 - current;
+            }
         }
-        return current / length;
+        alpha = current / length;
     }
 
     public abstract void event ();

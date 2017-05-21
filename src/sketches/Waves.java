@@ -15,32 +15,24 @@ import java.util.Iterator;
 public class Waves extends BaseSketch {
 
     ArrayList<Spring> springs = new ArrayList<>();
-    private float tension = .93f;
-    private float topSpeed = .05f;
-    private float dampening = .12f;
+    private float tension = .08f;
+    private float dampening = .03f;
+    private float spread = 0.25f;
+    private int passCount = 8;
 
-    float topLength = 0.35f;
     PVector springRange = new PVector(-.25f, .25f);
-    float attractRadius = 0.5f;
-    int springCount = 64;
+    int springCount = 32;
 
     PVector gravity = new PVector(0, -.2f);
     ArrayList<VelocityPoly> rainDrops = new ArrayList<>();
     ArrayList<VelocityPoly> buffer = new ArrayList<>();
 
-    Sequence rainSpawner = new Sequence(3f, false) {
-        @Override
-        public void event() {
-            rainDrops.add(new VelocityPoly(
-                    Polygon.generate(random(-.25f, .25f), .5f, random(0.0075f, 0.015f), (int) random(3, 24)),
-                    new PVector(0 ,0)));
-        }
-    };
+    int startColor = color(145, 36, 36);
+    int endColor = color(36, 145, 145);
 
     enum EditState {
         TENSION,
-        DAMPENING,
-        TOPSPEED
+        DAMPENING
     }
 
     EditState editState = EditState.TENSION;
@@ -53,9 +45,31 @@ public class Waves extends BaseSketch {
         float inc = range / springCount;
         for (int i = 0; i < springCount; i++) {
             springs.add(new Spring(new PVector(springRange.x + (springCount % 2 != 0 ? inc / 2 : 0) + inc * i, 0)).speed(0.05f));
-            springs.get(i).displace.setMag(random(0, 0.15f));
-            springs.get(i).speed(random(0, 0.15f));
+            springs.get(i);
         }
+
+        sequences.add(new Sequence(3f, true) {
+            public void update(float delta) {
+                super.update(delta);
+                BACKGROUND_COLOR = lerpColor(startColor, endColor, this.alpha);
+            }
+
+            @Override
+            public void event() {
+                rainDrops.add(new VelocityPoly(
+                        Polygon.generate(random(-.25f, .25f), .5f, random(0.0075f, 0.015f), (int) random(3, 24)),
+                        new PVector(0 ,0)));
+            }
+        });
+
+        sequences.add( new Sequence(5f, false) {
+            @Override
+            public void event() {
+                rainDrops.add(new VelocityPoly(
+                        Polygon.generate(random(-.25f, .25f), .5f, random(0.0075f, 0.015f), (int) random(3, 24)),
+                        new PVector(0 ,0)));
+            }
+        });
     }
 
     public void draw() {
@@ -64,18 +78,17 @@ public class Waves extends BaseSketch {
         stroke(255, 255, 255);
         Spring last = null;
 
-        rainSpawner.update(delta);
         for (VelocityPoly rainDrop : rainDrops) {
             rainDrop.update(delta, gravity);
             drawShape(rainDrop.polygon);
         }
 
         for (Spring spring : springs) {
+            drawWorldEllipse(spring.worldSpace(), 0.005f, STROKE_WEIGHT);
             STROKE_WEIGHT = 1.5f;
             if (!paused) {
                 spring.update(delta, tension, dampening);
             }
-//            drawWorldEllipse(spring.worldSpace(), 0.03f, STROKE_WEIGHT);
             if (DEBUG)  {
                 drawWorldLine(spring.pos, spring.worldSpace(), STROKE_WEIGHT);
                 stroke(color(0, 128, 255));
@@ -87,38 +100,29 @@ public class Waves extends BaseSketch {
                 drawWorldLine(last.pos.copy().add(last.displace), spring.pos.copy().add(spring.displace), STROKE_WEIGHT);
             }
 
+            // Listen for impacts
             Iterator<VelocityPoly> iterator = rainDrops.iterator();
             while (iterator.hasNext()) {
                 VelocityPoly drop = iterator.next();
                 float dist = drop.polygon.position.dist(spring.worldSpace());
-                if (dist < attractRadius) {
-                    float alpha = 1 - dist/ attractRadius;
-                    spring.speed(topSpeed * alpha);
-                    if (dist < attractRadius / 64) {
-                        buffer.add(new VelocityPoly(
-                                Polygon.generate(drop.polygon.position, random(0.001f, 0.003f),
-                                        (int) random(3, 24)),
-                                new PVector(.01f, .315f)
-                        ));
-
-                        buffer.add(new VelocityPoly(
-                                Polygon.generate(drop.polygon.position, random(0.001f, 0.003f),
-                                        (int) random(3, 24)),
-                                new PVector(-.01f, .315f)
-                        ));
-                        iterator.remove();
-                    }
+                float attractRadius = 0.05f;
+                if (dist < attractRadius && abs(spring.worldSpace().y - drop.polygon.position.y) < 0.01f) {
+                    stroke(255);
+                    iterator.remove();
+                    spring.speed += drop.velocity.y;
                 }
             }
             rainDrops.addAll(buffer);
             buffer.clear();
-
-            if (spring.displace.mag() > topLength) {
-                spring.displace.setMag(topLength);
-            }
-
             last = spring;
         }
+
+
+        for (int i = 0; i < passCount; i++) {
+//            springs.
+
+        }
+
         postDraw();
     }
 
@@ -140,17 +144,10 @@ public class Waves extends BaseSketch {
             editState = EditState.DAMPENING;
         }
 
-        if (key == '6') {
-            editState = EditState.TOPSPEED;
-        }
-
         if (key == CODED && keyCode == UP) {
             switch (editState) {
                 case TENSION:
                     tension += 1 * delta;
-                    break;
-                case TOPSPEED:
-                    topSpeed += 1 * delta;
                     break;
                 case DAMPENING:
                     dampening += 1 * delta;
@@ -162,9 +159,6 @@ public class Waves extends BaseSketch {
             switch (editState) {
                 case TENSION:
                     tension -= 1 * delta;
-                    break;
-                case TOPSPEED:
-                    topSpeed -= 1 * delta;
                     break;
                 case DAMPENING:
                     dampening -= 1 * delta;
@@ -190,9 +184,6 @@ public class Waves extends BaseSketch {
         switch (editState) {
             case TENSION:
                 val = decimal.format(tension);
-                break;
-            case TOPSPEED:
-                val = decimal.format(topSpeed);
                 break;
             case DAMPENING:
                 val = decimal.format(dampening);

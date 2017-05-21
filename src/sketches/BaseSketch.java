@@ -7,6 +7,7 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PVector;
 import processing.event.KeyEvent;
+import util.Sequence;
 import util.SolMath;
 import util.geometry.Curve;
 import util.geometry.Polygon;
@@ -82,6 +83,8 @@ abstract class BaseSketch extends PApplet {
 
     protected DecimalFormat decimal = new DecimalFormat("#.##");
 
+    ArrayList<Sequence> sequences = new ArrayList<Sequence>();
+
     public void settings() {
         size(700, 700);
     }
@@ -124,6 +127,10 @@ abstract class BaseSketch extends PApplet {
     public void draw() {
         delta = pausedLastFrame ? 0 : (millis() - lastFrame) / 1000f;
         delta *= timeDilation;
+        for (Sequence sequence : sequences) {
+            sequence.update(delta);
+        }
+
         background(BACKGROUND_COLOR);
         sketchOpacity = 1;
         if (paused) {
@@ -733,5 +740,9 @@ abstract class BaseSketch extends PApplet {
             }
         }
         return new PVector(min, max);
+    }
+
+    protected void addSequence(Sequence sequence) {
+        this.sequences.add(sequence);
     }
 }
