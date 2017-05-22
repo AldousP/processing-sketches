@@ -24,7 +24,7 @@ public class Waves extends BaseSketch {
     private int springCount = 32;
 
     PVector springRange = new PVector(-.5f, .5f);
-    PVector gravity = new PVector(0f, -.1f);
+    PVector gravity = new PVector(-0.0015f, -.1f);
     ArrayList<VelocityPoly> rainDrops = new ArrayList<>();
     ArrayList<VelocityPoly> buffer = new ArrayList<>();
     Polygon water = new Polygon();
@@ -46,8 +46,8 @@ public class Waves extends BaseSketch {
             springs.add(new Spring(new PVector(springRange.x + (springCount % 2 != 0 ? inc / 2 : 0) + inc * i, -.25f)).speed(0.05f));
             springs.get(i);
         }
-        camSpring.speed = 0;
-        camSpring.maxLength = 0;
+        camSpring.speed = 1f;
+        camSpring.maxLength = .1f;
 
         sequences.add(new Sequence(60f, true) {
             public void update(float delta) {
@@ -64,7 +64,7 @@ public class Waves extends BaseSketch {
             }
         });
 
-        sequences.add( new Sequence(.2f, false) {
+        sequences.add( new Sequence(.0002f, false) {
             @Override
             public void event() {
                 rainDrops.add(new VelocityPoly(
@@ -83,6 +83,9 @@ public class Waves extends BaseSketch {
         stroke(255, 255, 255);
         Spring last = springs.get(1);
 
+        camSpring.length = 0.025f;
+        camSpring.rotation += 5 * delta;
+        camSpring.update(delta, tension, .4F);
         for (VelocityPoly rainDrop : rainDrops) {
             STROKE_WEIGHT = 1.5f;
             rainDrop.update(delta, gravity);
@@ -91,7 +94,6 @@ public class Waves extends BaseSketch {
 
         for (Spring spring : springs) {
             STROKE_WEIGHT = 3f;
-//            drawWorldEllipse(spring.worldSpace(), 0.005f, STROKE_WEIGHT);
             if (!paused) {
                 spring.update(delta, tension, dampening);
             }
@@ -116,13 +118,13 @@ public class Waves extends BaseSketch {
                     stroke(255);
                     iterator.remove();
                     spring.speed += drop.velocity.y;
+                    camSpring.speed += 10 * delta;
                 }
             }
             rainDrops.addAll(buffer);
             buffer.clear();
             last = spring;
         }
-
 
         float[] lDeltas = new float[springs.size()];
         float[] rDeltas = new float[springs.size()];
@@ -152,6 +154,14 @@ public class Waves extends BaseSketch {
             }
 
         }
+
+
+        float GRID_HALF_W = GRID_WIDTH / 2;
+        float GRID_HALF_H = GRID_HEIGHT / 2;
+        GRID_UPPER_X = camSpring.worldSpace().x + GRID_HALF_W;
+        GRID_LOWER_X = camSpring.worldSpace().x - GRID_HALF_W;
+        GRID_UPPER_Y = camSpring.worldSpace().y + GRID_HALF_H;
+        GRID_LOWER_Y = camSpring.worldSpace().y - GRID_HALF_H;
         postDraw();
     }
 
@@ -159,7 +169,7 @@ public class Waves extends BaseSketch {
     public void keyPressed() {
         super.keyPressed();
         if (key == 'h') {
-            springs.get(0).speed(springs.get(0).speed +  5f * delta);
+            camSpring.speed(springs.get(0).speed +  5f * delta);
         }
 
         if (key == CODED && keyCode == LEFT) {

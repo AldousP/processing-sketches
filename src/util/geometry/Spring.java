@@ -10,7 +10,7 @@ public class Spring {
     public float speed;
     float tension = 0.015f;
     float dampening = 0.015f;
-    float rotation = 90;
+    public float rotation = 90;
     public float length = 0.1f;
     public float maxLength = .5f;
 
