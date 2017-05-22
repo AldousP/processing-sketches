@@ -11,31 +11,30 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- * BlankSlate.
+ * BlankSlate
  */
 public class Waves extends BaseSketch {
 
     ArrayList<Spring> springs = new ArrayList<>();
-    private float tension = .08f;
+    private float tension = .22f;
     private float dampening = .03f;
     private float spread = 0.25f;
     private int passCount = 8;
+    private float colAlpha = 0;
+    private int springCount = 32;
 
     PVector springRange = new PVector(-.5f, .5f);
-    int springCount = 32;
-
-    PVector gravity = new PVector(0, -.1f);
+    PVector gravity = new PVector(0f, -.1f);
     ArrayList<VelocityPoly> rainDrops = new ArrayList<>();
     ArrayList<VelocityPoly> buffer = new ArrayList<>();
+    Polygon water = new Polygon();
+    EditState editState = EditState.TENSION;
+    Spring camSpring = new Spring(new PVector(0, 0));
 
     enum EditState {
         TENSION,
         DAMPENING
-    }
-
-    float colAlpha = 0;
-
-    EditState editState = EditState.TENSION;
+        }
 
     public void setup() {
         super.setup();
@@ -47,11 +46,13 @@ public class Waves extends BaseSketch {
             springs.add(new Spring(new PVector(springRange.x + (springCount % 2 != 0 ? inc / 2 : 0) + inc * i, -.25f)).speed(0.05f));
             springs.get(i);
         }
+        camSpring.speed = 0;
+        camSpring.maxLength = 0;
 
         sequences.add(new Sequence(60f, true) {
             public void update(float delta) {
                 super.update(delta);
-                PVector lerped = SolColor.lerpSpectrum(this.alpha, 64);
+                PVector lerped = SolColor.lerpSpectrum(this.alpha, 160);
                 BACKGROUND_COLOR = color(lerped.x, lerped.y, lerped.z);
                 fill(64);
                 colAlpha = alpha;
@@ -63,15 +64,15 @@ public class Waves extends BaseSketch {
             }
         });
 
-        sequences.add( new Sequence(.15f, false) {
+        sequences.add( new Sequence(.2f, false) {
             @Override
             public void event() {
                 rainDrops.add(new VelocityPoly(
                         Polygon.generate(
-                                random(springRange.x, springRange.y), .5f,
+                                random(springRange.x, springRange.y), 1f,
                                 random(0.0035f, 0.0075f),
                                 (int) random(3, 24)).rotate(random(0, 360)),
-                        new PVector(0 ,-.05f)));
+                        new PVector(0 ,-.5f)));
             }
         });
     }
@@ -83,13 +84,14 @@ public class Waves extends BaseSketch {
         Spring last = springs.get(1);
 
         for (VelocityPoly rainDrop : rainDrops) {
+            STROKE_WEIGHT = 1.5f;
             rainDrop.update(delta, gravity);
             drawShape(rainDrop.polygon);
         }
 
         for (Spring spring : springs) {
-            STROKE_WEIGHT = .75f;
-            drawWorldEllipse(spring.worldSpace(), 0.005f, STROKE_WEIGHT);
+            STROKE_WEIGHT = 3f;
+//            drawWorldEllipse(spring.worldSpace(), 0.005f, STROKE_WEIGHT);
             if (!paused) {
                 spring.update(delta, tension, dampening);
             }
@@ -97,20 +99,20 @@ public class Waves extends BaseSketch {
                 drawWorldLine(spring.pos, spring.worldSpace(), STROKE_WEIGHT);
                 fill(255);
                 STROKE_WEIGHT = 3;
-                drawWorldText(decimal.format(spring.speed), spring.pos, 12);
+                drawWorldText(decimal.format(spring.speed), spring.pos, 6);
             }
 
             if (last != null) {
                 drawWorldLine(last.pos.copy().add(last.displace), spring.pos.copy().add(spring.displace), STROKE_WEIGHT);
             }
 
-            // Listen for impacts
+            // Listen for impactsw
             Iterator<VelocityPoly> iterator = rainDrops.iterator();
             while (iterator.hasNext()) {
                 VelocityPoly drop = iterator.next();
                 float dist = drop.polygon.position.dist(spring.worldSpace());
                 float attractRadius = last.worldSpace().dist(spring.worldSpace());
-                if (dist < attractRadius && abs(spring.worldSpace().y - drop.polygon.position.y) < 0.01f) {
+                if (dist < attractRadius && spring.worldSpace().y - drop.polygon.position.y < 0) {
                     stroke(255);
                     iterator.remove();
                     spring.speed += drop.velocity.y;
@@ -122,8 +124,32 @@ public class Waves extends BaseSketch {
         }
 
 
+        float[] lDeltas = new float[springs.size()];
+        float[] rDeltas = new float[springs.size()];
         for (int i = 0; i < passCount; i++) {
-//            springs.
+            for (int j = 0; j < springs.size(); j ++) {
+                if (j > 0) {
+                    lDeltas[j] = spread * (springs.get(j).displace.mag() - springs.get(j - 1).displace.mag());
+                    springs.get(j - 1).speed += lDeltas[j];
+                }
+
+                if (j < springs.size() - 1) {
+                    rDeltas[j] = spread * (springs.get(j).displace.mag() - springs.get(j + 1).displace.mag());
+                    springs.get(j + 1).speed += rDeltas[j];
+                }
+            }
+
+            for (int j = 0; j < springs.size() - 1; j++) {
+                float len = 0;
+                if (j > 0) {
+                    len = springs.get(j - 1).displace.mag();
+                    springs.get(j - 1).displace.setMag(len + lDeltas[j]);
+                }
+
+                if (j < springs.size() - 1)
+                    len = springs.get(j + 1).displace.mag();
+                    springs.get(j + 1).displace.setMag(len + rDeltas[j]);
+            }
 
         }
         postDraw();
